@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CourseStructureSection } from '@/components/CourseStructureSection';
 import { PlanActions } from '@/components/PlanActions';
 import { PlanHeader } from '@/components/PlanHeader';
@@ -25,6 +26,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
+  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&retry=${Date.now()}`;
 
   if (rawGoal) {
     try {
@@ -47,13 +49,25 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} />
-        <section
-          className={`rounded-3xl border p-4 text-sm font-medium shadow-sm shadow-sky-900/5 ${
-            isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'
-          }`}
-        >
-          {isAIPlan ? '已生成真实 AI 学习方案' : `AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
-        </section>
+        {rawGoal ? (
+          <section
+            className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm font-medium shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
+              isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'
+            }`}
+          >
+            <span>
+              {isAIPlan ? '已生成真实 AI 学习方案' : `AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
+            </span>
+            {!isAIPlan ? (
+              <Link
+                href={retryHref}
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-200"
+              >
+                重新生成
+              </Link>
+            ) : null}
+          </section>
+        ) : null}
         <RoadmapSection stages={plan.roadmap} />
         <CourseStructureSection stages={plan.courseStructure} />
         <ResourcesSection resources={plan.resources} />
