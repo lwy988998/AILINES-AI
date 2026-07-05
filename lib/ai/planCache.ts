@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { GeneratedPlan } from '@/lib/ai/types';
 
 const CACHE_DIR = path.join(process.cwd(), 'data', 'ai-plan-cache');
-const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_CACHE_TTL_SECONDS = 604_800;
 
 type CachedPlanFile = {
   goal: string;
@@ -17,8 +17,9 @@ function normalizeGoal(goal: string) {
 }
 
 function getCacheTtlMs() {
-  const configuredTtl = Number(process.env.AI_PLAN_CACHE_TTL_MS);
-  return Number.isFinite(configuredTtl) && configuredTtl > 0 ? configuredTtl : DEFAULT_CACHE_TTL_MS;
+  const configuredTtlSeconds = Number(process.env.AI_PLAN_CACHE_TTL_SECONDS);
+  const ttlSeconds = Number.isFinite(configuredTtlSeconds) && configuredTtlSeconds > 0 ? configuredTtlSeconds : DEFAULT_CACHE_TTL_SECONDS;
+  return ttlSeconds * 1000;
 }
 
 function getCacheFilePath(goal: string) {
@@ -35,12 +36,62 @@ function isFresh(createdAt: string | number) {
   return Number.isFinite(createdAtMs) && Date.now() - createdAtMs < getCacheTtlMs();
 }
 
+function isStringArray(value: unknown) {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+export function isValidGeneratedPlan(plan: unknown): plan is GeneratedPlan {
+  if (!plan || typeof plan !== 'object') {
+    return false;
+  }
+
+  const candidate = plan as GeneratedPlan;
+
+  return (
+    typeof candidate.title === 'string' &&
+    typeof candidate.goal === 'string' &&
+    typeof candidate.durationWeeks === 'number' &&
+    typeof candidate.summary === 'string' &&
+    Array.isArray(candidate.phases) &&
+    candidate.phases.length > 0 &&
+    candidate.phases.every(
+      (phase) =>
+        typeof phase.name === 'string' &&
+        typeof phase.durationWeeks === 'number' &&
+        typeof phase.objective === 'string' &&
+        typeof phase.description === 'string' &&
+        isStringArray(phase.topics),
+    ) &&
+    Array.isArray(candidate.resources) &&
+    candidate.resources.length > 0 &&
+    candidate.resources.every(
+      (resource) =>
+        typeof resource.name === 'string' &&
+        typeof resource.type === 'string' &&
+        typeof resource.difficulty === 'string' &&
+        typeof resource.free === 'boolean' &&
+        typeof resource.description === 'string' &&
+        typeof resource.url === 'string',
+    ) &&
+    Array.isArray(candidate.projects) &&
+    candidate.projects.length > 0 &&
+    candidate.projects.every(
+      (project) =>
+        typeof project.name === 'string' &&
+        typeof project.difficulty === 'string' &&
+        typeof project.estimatedHours === 'number' &&
+        typeof project.output === 'string' &&
+        isStringArray(project.acceptanceCriteria),
+    )
+  );
+}
+
 export async function readCachedPlan(goal: string): Promise<GeneratedPlan | null> {
   try {
     const cachedFile = await readFile(getCacheFilePath(goal), 'utf8');
     const cachedPlan = JSON.parse(cachedFile) as CachedPlanFile;
 
-    if (!cachedPlan.plan || !isFresh(cachedPlan.createdAt)) {
+    if (!cachedPlan.plan || !isFresh(cachedPlan.createdAt) || !isValidGeneratedPlan(cachedPlan.plan)) {
       return null;
     }
 
@@ -51,12 +102,20 @@ export async function readCachedPlan(goal: string): Promise<GeneratedPlan | null
 }
 
 export async function writeCachedPlan(goal: string, plan: GeneratedPlan) {
-  await mkdir(CACHE_DIR, { recursive: true });
-  const cachedPlan: CachedPlanFile = {
-    goal: goal.trim(),
-    createdAt: new Date().toISOString(),
-    plan,
-  };
+  if (!isValidGeneratedPlan(plan)) {
+    return;
+  }
 
-  await writeFile(getCacheFilePath(goal), JSON.stringify(cachedPlan, null, 2), 'utf8');
+  try {
+    await mkdir(CACHE_DIR, { recursive: true });
+    const cachedPlan: CachedPlanFile = {
+      goal: goal.trim(),
+      createdAt: new Date().toISOString(),
+      plan,
+    };
+
+    await writeFile(getCacheFilePath(goal), JSON.stringify(cachedPlan, null, 2), 'utf8');
+  } catch (error) {
+    console.warn('AI plan cache write failed', error instanceof Error ? error.message : 'unknown error');
+  }
 }
