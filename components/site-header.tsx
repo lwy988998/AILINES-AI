@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const navItems = [
-  { label: '我的路线', href: '/plan' },
+  { label: '我的路线', href: '/routes' },
   { label: '会员', href: '#membership' },
   { label: '登录', href: '#login' },
 ];
