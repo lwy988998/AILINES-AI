@@ -68,7 +68,7 @@ function writeSavedRoutes(routes: SavedRoute[]) {
   }
 }
 
-export function saveRoute(goal: string): SaveRouteResult {
+export function saveRoute(goal: string, title?: string): SaveRouteResult {
   const safeGoal = goal.trim() || '我的目标';
   const now = new Date().toISOString();
   const existingRoutes = getSavedRoutes();
@@ -76,7 +76,7 @@ export function saveRoute(goal: string): SaveRouteResult {
   const route: SavedRoute = {
     id: existingRoute?.id || `${normalizeGoalForId(safeGoal)}-${Date.now()}`,
     goal: safeGoal,
-    title: `${safeGoal} 学习方案`,
+    title: title?.trim() || `${safeGoal} 学习方案`,
     createdAt: existingRoute?.createdAt || now,
     updatedAt: now,
     ...getRouteUrls(safeGoal),

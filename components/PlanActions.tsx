@@ -6,9 +6,10 @@ import { saveRoute } from '@/lib/savedRoutesStorage';
 
 type PlanActionsProps = {
   goal: string;
+  title?: string;
 };
 
-export function PlanActions({ goal }: PlanActionsProps) {
+export function PlanActions({ goal, title }: PlanActionsProps) {
   const encodedGoal = encodeURIComponent(goal);
 
   return (
@@ -16,7 +17,7 @@ export function PlanActions({ goal }: PlanActionsProps) {
       <button
         type="button"
         onClick={() => {
-          const result = saveRoute(goal);
+          const result = saveRoute(goal, title);
           alert(result.status === 'updated' ? '路线已更新到我的路线' : '已保存到我的路线');
         }}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
