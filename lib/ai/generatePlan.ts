@@ -4,7 +4,12 @@ import type { GeneratedPlan } from '@/lib/ai/types';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
-const REQUEST_TIMEOUT_MS = 45_000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 90_000;
+
+function getRequestTimeoutMs() {
+  const configuredTimeout = Number(process.env.AI_TIMEOUT_MS);
+  return Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : DEFAULT_REQUEST_TIMEOUT_MS;
+}
 
 type ChatCompletionResponse = {
   choices?: Array<{
@@ -40,14 +45,14 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
   const baseUrl = process.env.AI_BASE_URL || DEFAULT_AI_BASE_URL;
   const model = process.env.AI_MODEL || DEFAULT_AI_MODEL;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), getRequestTimeoutMs());
 
   let completionResponse: Response;
   const requestBody = {
     model,
     messages: createGeneratePlanMessages(safeGoal),
-    temperature: 0.2,
-    max_tokens: 1800,
+    temperature: 0.3,
+    max_tokens: 2200,
     response_format: { type: 'json_object' },
   };
 

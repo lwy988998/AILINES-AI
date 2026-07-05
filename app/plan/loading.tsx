@@ -17,7 +17,7 @@ export default function PlanLoading() {
             AI 正在根据你的学习目标规划路线、课程、资源和项目实战路径。
           </p>
           <p className="mt-6 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm leading-6 text-slate-600">
-            通常需要 10-30 秒，请稍候。
+            通常需要 10-60 秒，请稍候。
           </p>
         </section>
         <section className="grid gap-4 lg:grid-cols-2">
