@@ -19,24 +19,27 @@ type PlanPageProps = {
 
 export default async function PlanPage({ searchParams }: PlanPageProps) {
   const params = await searchParams;
-  const goal = params.goal?.trim() || '你的目标';
+  const rawGoal = params.goal?.trim() || '';
+  const goal = rawGoal || '你的目标';
   const fallbackPlan = getMockPlanByGoal(goal);
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
 
-  try {
-    const generatedPlan = await generatePlanWithAI(goal);
-    const adaptedPlan = adaptGeneratedPlan(generatedPlan);
+  if (rawGoal) {
+    try {
+      const generatedPlan = await generatePlanWithAI(rawGoal);
+      const adaptedPlan = adaptGeneratedPlan(generatedPlan);
 
-    if (!isRenderablePlan(adaptedPlan)) {
-      throw new Error('AI 返回内容格式异常，请稍后重试');
+      if (!isRenderablePlan(adaptedPlan)) {
+        throw new Error('AI 返回内容格式异常，请稍后重试');
+      }
+
+      plan = adaptedPlan;
+      isAIPlan = true;
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : 'AI 生成暂时失败';
     }
-
-    plan = adaptedPlan;
-    isAIPlan = true;
-  } catch (error) {
-    errorMessage = error instanceof Error ? error.message : 'AI 生成暂时失败';
   }
 
   return (
