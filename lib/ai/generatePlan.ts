@@ -4,7 +4,7 @@ import type { GeneratedPlan } from '@/lib/ai/types';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
-const REQUEST_TIMEOUT_MS = 60_000;
+const REQUEST_TIMEOUT_MS = 120_000;
 
 type ChatCompletionResponse = {
   choices?: Array<{
