@@ -5,11 +5,16 @@ import { AskHeader } from '@/components/AskHeader';
 import { AskInput } from '@/components/AskInput';
 import { ChatMessageList } from '@/components/ChatMessageList';
 import { QuestionExamples } from '@/components/QuestionExamples';
-import { ChatMessage, getMockAnswer } from '@/lib/mockAnswers';
+import { ChatMessage, getMockAnswer, type AskAnswer } from '@/lib/mockAnswers';
 
 type AskClientProps = {
   goal: string;
   title: string;
+};
+
+type AskApiResponse = {
+  answer?: AskAnswer;
+  error?: string;
 };
 
 function createMessageId() {
@@ -19,27 +24,73 @@ function createMessageId() {
 export function AskClient({ goal, title }: AskClientProps) {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isSending, setIsSending] = useState(false);
 
-  function sendQuestion(question = inputValue) {
+  async function sendQuestion(question = inputValue) {
     const trimmedQuestion = question.trim();
-    if (!trimmedQuestion) {
+    if (!trimmedQuestion || isSending) {
       return;
     }
 
+    const assistantMessageId = createMessageId();
     const userMessage: ChatMessage = {
       id: createMessageId(),
       role: 'user',
       content: trimmedQuestion,
     };
     const assistantMessage: ChatMessage = {
-      id: createMessageId(),
+      id: assistantMessageId,
       role: 'assistant',
       content: '',
-      answer: getMockAnswer(trimmedQuestion),
+      pending: true,
     };
 
     setMessages((currentMessages) => [...currentMessages, userMessage, assistantMessage]);
     setInputValue('');
+    setIsSending(true);
+
+    try {
+      const response = await fetch('/api/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ goal, question: trimmedQuestion }),
+      });
+      const data = (await response.json()) as AskApiResponse;
+
+      if (!response.ok || !data.answer) {
+        throw new Error(data.error || 'AI 暂时无法回答，请稍后重试');
+      }
+
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                pending: false,
+                answer: data.answer,
+              }
+            : message,
+        ),
+      );
+    } catch (error) {
+      const fallbackAnswer = getMockAnswer(trimmedQuestion);
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                pending: false,
+                error: error instanceof Error ? error.message : 'AI 暂时无法回答，请稍后重试',
+                answer: fallbackAnswer,
+              }
+            : message,
+        ),
+      );
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
@@ -47,7 +98,7 @@ export function AskClient({ goal, title }: AskClientProps) {
       <AskHeader goal={goal} title={title} />
       <QuestionExamples onSelectQuestion={sendQuestion} />
       <ChatMessageList messages={messages} />
-      <AskInput value={inputValue} onChange={setInputValue} onSend={() => sendQuestion()} />
+      <AskInput value={inputValue} onChange={setInputValue} onSend={() => sendQuestion()} disabled={isSending} />
     </div>
   );
 }

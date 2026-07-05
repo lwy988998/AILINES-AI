@@ -1,15 +1,17 @@
-export type MockAnswer = {
+export type AskAnswer = {
   title?: string;
   steps: string[];
-  command?: string;
-  note?: string;
+  commands: string[];
+  tips: string[];
 };
 
 export type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  answer?: MockAnswer;
+  answer?: AskAnswer;
+  pending?: boolean;
+  error?: string;
 };
 
 export const exampleQuestions = [
@@ -19,14 +21,15 @@ export const exampleQuestions = [
   'GitHub 怎么注册？',
 ];
 
-export function getMockAnswer(question: string): MockAnswer {
+export function getMockAnswer(question: string): AskAnswer {
   const normalizedQuestion = question.toLowerCase();
 
   if (question.includes('安装') || normalizedQuestion.includes('python')) {
     return {
       title: 'Python 安装步骤',
       steps: ['访问 Python 官网下载安装包', '安装时勾选 Add Python to PATH', '打开终端检查版本'],
-      command: 'python --version',
+      commands: ['python --version'],
+      tips: ['如果命令无法识别，通常是 PATH 没配置成功。'],
     };
   }
 
@@ -34,7 +37,8 @@ export function getMockAnswer(question: string): MockAnswer {
     return {
       title: 'VS Code 配置 Python 环境',
       steps: ['安装 VS Code', '安装 Python 插件', '选择解释器', '新建 `.py` 文件运行'],
-      command: 'print("Hello AILINES AI")',
+      commands: ['print("Hello AILINES AI")'],
+      tips: ['先确认 VS Code 右下角选择的是正确 Python 解释器。'],
     };
   }
 
@@ -42,7 +46,8 @@ export function getMockAnswer(question: string): MockAnswer {
     return {
       title: 'pip 安装失败排查',
       steps: ['检查 Python 是否安装成功', '检查 pip 版本', '尝试升级 pip'],
-      command: 'python -m pip install --upgrade pip',
+      commands: ['python -m pip install --upgrade pip'],
+      tips: ['如果网络较慢，可以稍后换网络重试。'],
     };
   }
 
@@ -50,11 +55,14 @@ export function getMockAnswer(question: string): MockAnswer {
     return {
       title: 'GitHub 注册步骤',
       steps: ['打开 github.com', '使用邮箱注册账号', '验证邮箱', '创建或收藏学习资源仓库'],
+      commands: [],
+      tips: ['注册后建议开启两步验证，保护账号安全。'],
     };
   }
 
   return {
     steps: [],
-    note: '这是一个静态演示回答。真实 AI 问答将在后续任务中接入。你可以先尝试描述具体报错、操作系统和当前学习目标。',
+    commands: [],
+    tips: ['AI 暂时不可用。你可以补充具体报错、操作系统和当前学习目标后再试。'],
   };
 }

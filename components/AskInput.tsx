@@ -7,10 +7,11 @@ type AskInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
+  disabled?: boolean;
 };
 
-export function AskInput({ value, onChange, onSend }: AskInputProps) {
-  const canSend = value.trim().length > 0;
+export function AskInput({ value, onChange, onSend, disabled = false }: AskInputProps) {
+  const canSend = value.trim().length > 0 && !disabled;
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -43,7 +44,7 @@ export function AskInput({ value, onChange, onSend }: AskInputProps) {
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
         >
           <Send className="h-4 w-4" />
-          发送
+          {disabled ? '回答中...' : '发送'}
         </button>
       </div>
       <p className="mt-3 text-xs leading-5 text-slate-500">Enter 发送，Shift + Enter 换行。</p>
