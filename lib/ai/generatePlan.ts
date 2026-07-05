@@ -40,8 +40,11 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
   const cachedPlan = await readCachedPlan(safeGoal);
 
   if (cachedPlan) {
+    console.log('AI plan cache hit');
     return cachedPlan;
   }
+
+  console.log('AI plan cache miss');
 
   const apiKey = process.env.AI_API_KEY;
 
