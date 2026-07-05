@@ -1,5 +1,6 @@
 import { createGeneratePlanMessages } from '@/lib/ai/generatePlanPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
+import { readCachedPlan, writeCachedPlan } from '@/lib/ai/planCache';
 import type { GeneratedPlan } from '@/lib/ai/types';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
@@ -34,6 +35,12 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
 
   if (!safeGoal) {
     throw new GeneratePlanError('请提供学习目标', 400);
+  }
+
+  const cachedPlan = await readCachedPlan(safeGoal);
+
+  if (cachedPlan) {
+    return cachedPlan;
   }
 
   const apiKey = process.env.AI_API_KEY;
@@ -102,7 +109,9 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
   }
 
   try {
-    return parseAIJson<GeneratedPlan>(content);
+    const plan = parseAIJson<GeneratedPlan>(content);
+    await writeCachedPlan(safeGoal, plan);
+    return plan;
   } catch {
     throw new GeneratePlanError('AI 返回内容格式异常，请稍后重试', 502);
   }
