@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Bookmark, PlayCircle } from 'lucide-react';
+import { Bookmark, MessageCircle, PlayCircle } from 'lucide-react';
 
 type PlanActionsProps = {
   goal: string;
@@ -19,6 +19,14 @@ export function PlanActions({ goal }: PlanActionsProps) {
       >
         <Bookmark className="h-4 w-4" />
         保存路线
+      </button>
+      <button
+        type="button"
+        onClick={() => router.push(`/ask?goal=${encodeURIComponent(goal)}`)}
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
+      >
+        <MessageCircle className="h-4 w-4" />
+        问 AI
       </button>
       <button
         type="button"

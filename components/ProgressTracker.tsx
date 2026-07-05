@@ -53,11 +53,7 @@ export function ProgressTracker({ goal, title }: ProgressTrackerProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <ProgressHeader
-        goal={goal}
-        title={title}
-        onAskAi={() => alert('轻量问答功能将在后续任务中开放')}
-      />
+      <ProgressHeader goal={goal} title={title} />
       <ProgressOverview
         completedCount={completedCount}
         totalCount={totalCount}

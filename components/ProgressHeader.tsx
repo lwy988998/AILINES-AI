@@ -4,10 +4,9 @@ import { ArrowLeft, MessageCircle } from 'lucide-react';
 type ProgressHeaderProps = {
   goal: string;
   title: string;
-  onAskAi: () => void;
 };
 
-export function ProgressHeader({ goal, title, onAskAi }: ProgressHeaderProps) {
+export function ProgressHeader({ goal, title }: ProgressHeaderProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -18,14 +17,13 @@ export function ProgressHeader({ goal, title, onAskAi }: ProgressHeaderProps) {
           <ArrowLeft className="h-4 w-4" />
           返回方案页
         </Link>
-        <button
-          type="button"
-          onClick={onAskAi}
+        <Link
+          href={`/ask?goal=${encodeURIComponent(goal)}`}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
         >
           <MessageCircle className="h-4 w-4" />
           问 AI
-        </button>
+        </Link>
       </div>
 
       <div className="mt-8">
