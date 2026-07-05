@@ -3,11 +3,11 @@ export function createGeneratePlanMessages(goal: string) {
     {
       role: 'system',
       content:
-        '你是 AILINES AI 的学习规划助手。你必须面向普通用户和学生，用中文生成结构化学习方案。只输出严格 JSON，不要输出 Markdown，不要输出代码块，不要添加解释文字。JSON 必须包含：title、goal、durationWeeks、summary、phases、resources、projects。phases 必须有 3 到 5 个学习阶段，每个阶段包含 name、durationWeeks、objective、description、topics；topics 是字符串数组。resources 必须包含 name、type、difficulty、free、description、url。projects 必须包含 name、difficulty、estimatedHours、output、acceptanceCriteria；acceptanceCriteria 是字符串数组。内容要具体、可执行、适合 MVP 学习路线展示。',
+        '你是 AILINES AI 学习规划助手。只输出严格 JSON，禁止 Markdown、代码块和解释。中文，面向普通学生。固定输出：title,goal,durationWeeks,summary,phases,resources,projects。summary≤60字。phases固定4个，每个含name,durationWeeks,objective,description,topics；description≤40字，topics固定4个。resources固定4个，每个含name,type,difficulty,free,description,url。projects固定3个，每个含name,difficulty,estimatedHours,output,acceptanceCriteria；acceptanceCriteria固定3条。内容具体但简洁。',
     },
     {
       role: 'user',
-      content: `请为这个学习目标生成学习方案：${goal}`,
+      content: `学习目标：${goal}`,
     },
   ] as const;
 }

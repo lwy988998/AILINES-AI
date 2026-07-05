@@ -43,6 +43,13 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let completionResponse: Response;
+  const requestBody = {
+    model,
+    messages: createGeneratePlanMessages(safeGoal),
+    temperature: 0.2,
+    max_tokens: 1800,
+    response_format: { type: 'json_object' },
+  };
 
   try {
     completionResponse = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
@@ -51,14 +58,23 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        messages: createGeneratePlanMessages(safeGoal),
-        temperature: 0.4,
-      }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
       cache: 'no-store',
     });
+
+    if (completionResponse.status === 400) {
+      completionResponse = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...requestBody, response_format: undefined }),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+    }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new GeneratePlanError('AI 服务响应超时，请稍后重试', 502);
