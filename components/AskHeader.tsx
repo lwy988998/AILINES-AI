@@ -27,7 +27,7 @@ export function AskHeader({ goal, title }: AskHeaderProps) {
           </Link>
         </div>
         <span className="rounded-full bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800">
-          免费用户每日可体验 5 次问答，当前为静态演示。
+          轻量 AI 问答已开启。
         </span>
       </div>
 

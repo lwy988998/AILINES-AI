@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const answer = await generateAskAnswerWithAI(goal, question);
-    return NextResponse.json(answer);
+    return NextResponse.json({ answer });
   } catch (error) {
     if (error instanceof GenerateAskAnswerError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    return NextResponse.json({ error: 'AI 服务暂时不可用，请稍后重试' }, { status: 502 });
+    return NextResponse.json({ error: 'AI 问答暂时失败，请稍后重试' }, { status: 502 });
   }
 }

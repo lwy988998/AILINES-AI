@@ -1,17 +1,15 @@
-import { createGenerateAskAnswerMessages } from '@/lib/ai/generateAskAnswerPrompt';
+import { createAskPromptMessages } from '@/lib/ai/askPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
-const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 export type GeneratedAskAnswer = {
-  answer: {
-    title: string;
-    steps: string[];
-    commands: string[];
-    tips: string[];
-  };
+  title: string;
+  steps: string[];
+  commands: string[];
+  tips: string[];
 };
 
 type ChatCompletionResponse = {
@@ -46,10 +44,9 @@ function isValidAskAnswer(value: unknown): value is GeneratedAskAnswer {
     return false;
   }
 
-  const answer = (value as GeneratedAskAnswer).answer;
+  const answer = value as GeneratedAskAnswer;
 
   return (
-    Boolean(answer) &&
     typeof answer.title === 'string' &&
     isStringArray(answer.steps) &&
     isStringArray(answer.commands) &&
@@ -77,7 +74,7 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
   const timeoutId = setTimeout(() => controller.abort(), getRequestTimeoutMs());
   const requestBody = {
     model,
-    messages: createGenerateAskAnswerMessages(safeGoal, safeQuestion),
+    messages: createAskPromptMessages(safeGoal, safeQuestion),
     temperature: 0.3,
     max_tokens: 900,
     response_format: { type: 'json_object' },
@@ -109,25 +106,21 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
         cache: 'no-store',
       });
     }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new GenerateAskAnswerError('AI 回答超时，请稍后重试', 502);
-    }
-
-    throw new GenerateAskAnswerError('AI 服务暂时不可用，请稍后重试', 502);
+  } catch {
+    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!completionResponse.ok) {
-    throw new GenerateAskAnswerError('AI 服务暂时不可用，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
   }
 
   const completion = (await completionResponse.json()) as ChatCompletionResponse;
   const content = completion.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new GenerateAskAnswerError('AI 返回内容格式异常，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
   }
 
   try {
@@ -139,6 +132,6 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
 
     return answer;
   } catch {
-    throw new GenerateAskAnswerError('AI 返回内容格式异常，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
   }
 }
