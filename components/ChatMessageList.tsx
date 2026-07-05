@@ -42,7 +42,7 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
                 <p className="whitespace-pre-wrap text-sm leading-6 sm:text-base">{message.content}</p>
               ) : (
                 <div className="space-y-3">
-                  {message.pending ? <p className="text-sm leading-6 text-slate-600">AI 正在回答，请稍候...</p> : null}
+                  {message.pending ? <p className="text-sm leading-6 text-slate-600">AI 正在思考...</p> : null}
                   {message.error ? <p className="text-sm leading-6 text-amber-700">{message.error}</p> : null}
                   {message.answer?.title ? <h3 className="text-base font-semibold text-slate-950">{message.answer.title}</h3> : null}
                   {message.answer?.steps.length ? (

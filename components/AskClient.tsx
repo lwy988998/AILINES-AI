@@ -60,7 +60,7 @@ export function AskClient({ goal, title }: AskClientProps) {
       const data = (await response.json()) as AskApiResponse;
 
       if (!response.ok || !data.answer) {
-        throw new Error(data.error || 'AI 暂时无法回答，请稍后重试');
+        throw new Error(data.error || 'AI 问答暂时不可用，已展示基础示例回答。');
       }
 
       setMessages((currentMessages) =>
@@ -82,7 +82,7 @@ export function AskClient({ goal, title }: AskClientProps) {
             ? {
                 ...message,
                 pending: false,
-                error: error instanceof Error ? error.message : 'AI 暂时无法回答，请稍后重试',
+                error: 'AI 问答暂时不可用，已展示基础示例回答。',
                 answer: fallbackAnswer,
               }
             : message,
