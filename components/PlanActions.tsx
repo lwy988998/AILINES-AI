@@ -16,8 +16,8 @@ export function PlanActions({ goal }: PlanActionsProps) {
       <button
         type="button"
         onClick={() => {
-          saveRoute(goal);
-          alert('路线已保存到本地');
+          const result = saveRoute(goal);
+          alert(result.status === 'updated' ? '路线已更新到我的路线' : '已保存到我的路线');
         }}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
       >

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { BookOpen, MessageCircle, PlayCircle, Trash2 } from 'lucide-react';
-import { deleteSavedRoute, readSavedRoutes, SavedRoute } from '@/lib/savedRoutesStorage';
+import { getSavedRoutes, removeSavedRoute, SavedRoute } from '@/lib/savedRoutesStorage';
 
 function formatDate(value: string) {
   try {
@@ -23,7 +23,7 @@ export function RoutesClient() {
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
 
   useEffect(() => {
-    setRoutes(readSavedRoutes());
+    setRoutes(getSavedRoutes());
   }, []);
 
   function removeRoute(routeId: string) {
@@ -31,7 +31,7 @@ export function RoutesClient() {
       return;
     }
 
-    setRoutes(deleteSavedRoute(routeId));
+    setRoutes(removeSavedRoute(routeId));
   }
 
   return (
@@ -40,19 +40,19 @@ export function RoutesClient() {
         <p className="text-sm font-semibold text-sky-700">本地保存</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">我的路线</h1>
         <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-          这里展示你在当前浏览器中保存的学习路线。数据仅保存在本地 localStorage，不会上传到服务器。
+          这里展示你保存过的学习路线。当前为本地演示数据，登录后可跨设备同步。
         </p>
       </section>
 
       {routes.length === 0 ? (
         <section className="rounded-3xl border border-dashed border-sky-200 bg-sky-50/60 p-8 text-center">
           <p className="text-xl font-semibold text-slate-950">还没有保存路线</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">先从首页输入学习目标，进入方案页后点击“保存路线”。</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">回到首页输入学习目标，生成并保存你的第一条路线。</p>
           <Link
             href="/"
             className="mt-6 inline-flex items-center justify-center rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
           >
-            返回首页创建路线
+            去生成路线
           </Link>
         </section>
       ) : (
@@ -63,7 +63,7 @@ export function RoutesClient() {
                 <div>
                   <p className="text-sm font-semibold text-sky-700">{route.goal}</p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{route.title}</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-500">保存时间：{formatDate(route.createdAt)}</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-500">学习目标：{route.goal}</p>
                   <p className="text-sm leading-6 text-slate-500">更新时间：{formatDate(route.updatedAt)}</p>
                 </div>
                 <button
@@ -82,21 +82,21 @@ export function RoutesClient() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
                 >
                   <BookOpen className="h-4 w-4" />
-                  看方案
+                  查看方案
                 </Link>
                 <Link
                   href={route.progressUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
                 >
                   <PlayCircle className="h-4 w-4" />
-                  进度
+                  继续学习
                 </Link>
                 <Link
                   href={route.askUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  问答
+                  问 AI
                 </Link>
               </div>
             </article>

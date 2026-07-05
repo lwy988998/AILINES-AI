@@ -9,6 +9,11 @@ export type SavedRoute = {
   askUrl: string;
 };
 
+export type SaveRouteResult = {
+  route: SavedRoute;
+  status: 'created' | 'updated';
+};
+
 const SAVED_ROUTES_KEY = 'ailines-saved-routes';
 
 function canUseLocalStorage() {
@@ -29,13 +34,17 @@ function getRouteUrls(goal: string) {
   };
 }
 
-export function readSavedRoutes(): SavedRoute[] {
+export function getRouteStorageKey() {
+  return SAVED_ROUTES_KEY;
+}
+
+export function getSavedRoutes(): SavedRoute[] {
   if (!canUseLocalStorage()) {
     return [];
   }
 
   try {
-    const rawValue = window.localStorage.getItem(SAVED_ROUTES_KEY);
+    const rawValue = window.localStorage.getItem(getRouteStorageKey());
     if (!rawValue) {
       return [];
     }
@@ -47,22 +56,22 @@ export function readSavedRoutes(): SavedRoute[] {
   }
 }
 
-export function writeSavedRoutes(routes: SavedRoute[]) {
+function writeSavedRoutes(routes: SavedRoute[]) {
   if (!canUseLocalStorage()) {
     return;
   }
 
   try {
-    window.localStorage.setItem(SAVED_ROUTES_KEY, JSON.stringify(routes));
+    window.localStorage.setItem(getRouteStorageKey(), JSON.stringify(routes));
   } catch {
     // Keep the UI usable if storage is unavailable or full.
   }
 }
 
-export function saveRoute(goal: string): SavedRoute {
+export function saveRoute(goal: string): SaveRouteResult {
   const safeGoal = goal.trim() || '我的目标';
   const now = new Date().toISOString();
-  const existingRoutes = readSavedRoutes();
+  const existingRoutes = getSavedRoutes();
   const existingRoute = existingRoutes.find((route) => route.goal.toLowerCase() === safeGoal.toLowerCase());
   const route: SavedRoute = {
     id: existingRoute?.id || `${normalizeGoalForId(safeGoal)}-${Date.now()}`,
@@ -74,11 +83,15 @@ export function saveRoute(goal: string): SavedRoute {
   };
   const nextRoutes = [route, ...existingRoutes.filter((item) => item.id !== route.id)];
   writeSavedRoutes(nextRoutes);
-  return route;
+
+  return {
+    route,
+    status: existingRoute ? 'updated' : 'created',
+  };
 }
 
-export function deleteSavedRoute(routeId: string) {
-  const nextRoutes = readSavedRoutes().filter((route) => route.id !== routeId);
+export function removeSavedRoute(routeId: string) {
+  const nextRoutes = getSavedRoutes().filter((route) => route.id !== routeId);
   writeSavedRoutes(nextRoutes);
   return nextRoutes;
 }
