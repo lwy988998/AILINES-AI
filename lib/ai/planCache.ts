@@ -8,7 +8,7 @@ const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 type CachedPlanFile = {
   goal: string;
-  createdAt: number;
+  createdAt: string | number;
   plan: GeneratedPlan;
 };
 
@@ -26,8 +26,13 @@ function getCacheFilePath(goal: string) {
   return path.join(CACHE_DIR, `${key}.json`);
 }
 
-function isFresh(createdAt: number) {
-  return Date.now() - createdAt < getCacheTtlMs();
+function getCreatedAtMs(createdAt: string | number) {
+  return typeof createdAt === 'number' ? createdAt : new Date(createdAt).getTime();
+}
+
+function isFresh(createdAt: string | number) {
+  const createdAtMs = getCreatedAtMs(createdAt);
+  return Number.isFinite(createdAtMs) && Date.now() - createdAtMs < getCacheTtlMs();
 }
 
 export async function readCachedPlan(goal: string): Promise<GeneratedPlan | null> {
@@ -49,7 +54,7 @@ export async function writeCachedPlan(goal: string, plan: GeneratedPlan) {
   await mkdir(CACHE_DIR, { recursive: true });
   const cachedPlan: CachedPlanFile = {
     goal: goal.trim(),
-    createdAt: Date.now(),
+    createdAt: new Date().toISOString(),
     plan,
   };
 
