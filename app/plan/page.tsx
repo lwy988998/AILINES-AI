@@ -75,6 +75,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
+  let resourceSourceMessage = '以下为 AI 推荐资源';
   const deepModeHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep${forcePlan ? '&forcePlan=1' : ''}`;
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
@@ -115,6 +116,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
           ...plan,
           resources: searchedResources,
         };
+        resourceSourceMessage = '已为你补充全网真实学习资源';
       }
     } catch (error) {
       console.warn('Resource search fallback', error instanceof Error ? error.message : 'unknown error');
@@ -159,6 +161,9 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         ) : null}
         <RoadmapSection goal={goal} stages={plan.roadmap} />
         <CourseStructureSection stages={plan.courseStructure} />
+        <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
+          {resourceSourceMessage}
+        </section>
         <ResourcesSection resources={plan.resources} />
         <ProjectsSection projects={plan.projects} />
         <PlanActions goal={goal} title={plan.title} />
