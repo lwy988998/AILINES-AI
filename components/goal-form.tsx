@@ -72,33 +72,31 @@ export function GoalForm() {
 
         <fieldset className="rounded-2xl border border-sky-100 bg-white/55 p-3">
           <legend className="px-1 text-xs font-semibold text-slate-600">生成模式</legend>
+          <input type="hidden" name="mode" value={modeValue} />
           <div className="grid gap-2 sm:grid-cols-2">
             {planningModes.map((mode) => {
               const selected = modeValue === mode.value;
 
               return (
-                <label
+                <button
                   key={mode.value}
-                  className={`cursor-pointer rounded-2xl border p-3 text-left transition hover:border-sky-300 hover:bg-sky-50/80 ${
+                  type="button"
+                  onClick={() => setModeValue(mode.value)}
+                  aria-pressed={selected}
+                  className={`cursor-pointer rounded-2xl border p-3 text-left transition hover:border-sky-300 hover:bg-sky-50/80 focus:outline-none focus:ring-4 focus:ring-sky-100 ${
                     selected ? 'border-sky-500 bg-sky-50 ring-4 ring-sky-100' : 'border-slate-200 bg-white/75'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="mode"
-                    value={mode.value}
-                    checked={selected}
-                    onChange={() => setModeValue(mode.value)}
-                    className="sr-only"
-                  />
                   <span className="flex items-start gap-3">
-                    <span className={`mt-1 h-4 w-4 rounded-full border ring-4 ring-white ${selected ? 'border-sky-700 bg-sky-700' : 'border-sky-200 bg-white'}`} />
+                    <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ring-4 ring-white ${selected ? 'border-sky-700 bg-sky-700' : 'border-sky-200 bg-white'}`}>
+                      {selected ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+                    </span>
                     <span>
                       <span className="block text-sm font-semibold text-slate-950">{mode.title}</span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">{mode.description}</span>
                     </span>
                   </span>
-                </label>
+                </button>
               );
             })}
           </div>
