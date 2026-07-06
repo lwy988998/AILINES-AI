@@ -1,4 +1,5 @@
 import type { LearningDomain } from '@/lib/learningDomain';
+import type { SearchProvider } from '@/lib/search/searchProvider';
 
 export type ResourceType =
   | '官方文档'
@@ -33,5 +34,7 @@ export type SearchResourcesResult = {
   domain: LearningDomain;
   queries: string[];
   resources: SearchResource[];
+  provider: SearchProvider;
+  fallbackUsed: boolean;
   cache: 'hit' | 'miss';
 };

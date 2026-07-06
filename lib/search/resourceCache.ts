@@ -2,13 +2,15 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { LearningDomain } from '@/lib/learningDomain';
+import type { SearchProvider } from '@/lib/search/searchProvider';
 import type { SearchResourcesResult } from '@/lib/search/resourceTypes';
 
 const CACHE_DIR = path.join(process.cwd(), 'data', 'resource-search-cache');
 const DEFAULT_CACHE_TTL_SECONDS = 604_800;
 
 type CachedResourceSearch = Omit<SearchResourcesResult, 'cache'> & {
-  provider: string;
+  provider: SearchProvider;
+  fallbackUsed: boolean;
   createdAt: string | number;
 };
 
@@ -22,8 +24,8 @@ function getCacheTtlMs() {
   return ttlSeconds * 1000;
 }
 
-function getCacheFilePath(provider: string, domain: LearningDomain, goal: string) {
-  const key = createHash('sha256').update(`${provider}:${domain}:${normalizeGoal(goal)}`).digest('hex');
+function getCacheFilePath(primaryProvider: SearchProvider, fallbackProvider: SearchProvider | null, domain: LearningDomain, goal: string) {
+  const key = createHash('sha256').update(`${primaryProvider}:${fallbackProvider || 'none'}:${domain}:${normalizeGoal(goal)}`).digest('hex');
   return path.join(CACHE_DIR, `${key}.json`);
 }
 
@@ -50,9 +52,14 @@ function isValidCachedResourceSearch(value: unknown): value is CachedResourceSea
   );
 }
 
-export async function readCachedResourceSearch(provider: string, domain: LearningDomain, goal: string): Promise<SearchResourcesResult | null> {
+export async function readCachedResourceSearch(
+  primaryProvider: SearchProvider,
+  fallbackProvider: SearchProvider | null,
+  domain: LearningDomain,
+  goal: string,
+): Promise<SearchResourcesResult | null> {
   try {
-    const cachedFile = await readFile(getCacheFilePath(provider, domain, goal), 'utf8');
+    const cachedFile = await readFile(getCacheFilePath(primaryProvider, fallbackProvider, domain, goal), 'utf8');
     const cached = JSON.parse(cachedFile) as unknown;
 
     if (!isValidCachedResourceSearch(cached) || !isFresh(cached.createdAt)) {
@@ -64,6 +71,8 @@ export async function readCachedResourceSearch(provider: string, domain: Learnin
       domain: cached.domain,
       queries: cached.queries,
       resources: cached.resources,
+      provider: cached.provider,
+      fallbackUsed: Boolean(cached.fallbackUsed),
       cache: 'hit',
     };
   } catch {
@@ -71,7 +80,7 @@ export async function readCachedResourceSearch(provider: string, domain: Learnin
   }
 }
 
-export async function writeCachedResourceSearch(provider: string, result: SearchResourcesResult) {
+export async function writeCachedResourceSearch(primaryProvider: SearchProvider, fallbackProvider: SearchProvider | null, result: SearchResourcesResult) {
   if (!result.resources.length) {
     return;
   }
@@ -83,11 +92,12 @@ export async function writeCachedResourceSearch(provider: string, result: Search
       domain: result.domain,
       queries: result.queries,
       resources: result.resources,
-      provider,
+      provider: result.provider,
+      fallbackUsed: result.fallbackUsed,
       createdAt: new Date().toISOString(),
     };
 
-    await writeFile(getCacheFilePath(provider, result.domain, result.goal), JSON.stringify(cached, null, 2), 'utf8');
+    await writeFile(getCacheFilePath(primaryProvider, fallbackProvider, result.domain, result.goal), JSON.stringify(cached, null, 2), 'utf8');
   } catch (error) {
     console.warn('Resource search cache write failed', error instanceof Error ? error.message : 'unknown error');
   }

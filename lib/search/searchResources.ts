@@ -1,8 +1,8 @@
 import { detectLearningDomain } from '@/lib/learningDomain';
 import { normalizeResource } from '@/lib/search/normalizeResource';
 import { readCachedResourceSearch, writeCachedResourceSearch } from '@/lib/search/resourceCache';
+import { normalizeSearchProvider, searchWithProvider, type RawSearchResult, type SearchProvider } from '@/lib/search/searchProvider';
 import type { SearchResource, SearchResourcesResult } from '@/lib/search/resourceTypes';
-import { searchTavily, TavilySearchError } from '@/lib/search/tavilyClient';
 
 export class ResourceSearchError extends Error {
   status: number;
@@ -12,10 +12,6 @@ export class ResourceSearchError extends Error {
     this.name = 'ResourceSearchError';
     this.status = status;
   }
-}
-
-function normalizeProvider() {
-  return 'tavily';
 }
 
 function buildQueries(goal: string, domain: ReturnType<typeof detectLearningDomain>) {
@@ -92,6 +88,33 @@ function dedupeAndLimit(resources: SearchResource[]) {
   return deduped.sort((a, b) => b.score - a.score).slice(0, 20);
 }
 
+function getConfiguredProviders() {
+  const primaryProvider = normalizeSearchProvider(process.env.SEARCH_PROVIDER, 'tavily');
+  const fallbackProvider = normalizeSearchProvider(process.env.SEARCH_FALLBACK_PROVIDER, primaryProvider === 'bocha' ? 'tavily' : 'bocha');
+
+  return {
+    primaryProvider,
+    fallbackProvider: fallbackProvider === primaryProvider ? null : fallbackProvider,
+  };
+}
+
+async function searchProviderOrNull(provider: SearchProvider, queries: string[]) {
+  try {
+    const rawResults = await searchWithProvider(provider, queries);
+    return rawResults;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRawResults(rawResults: RawSearchResult[], domain: ReturnType<typeof detectLearningDomain>) {
+  return dedupeAndLimit(
+    rawResults
+      .map((result) => normalizeResource(result, domain))
+      .filter((resource): resource is SearchResource => Boolean(resource)),
+  );
+}
+
 export async function searchResources(goal: string): Promise<SearchResourcesResult> {
   const safeGoal = goal.trim();
 
@@ -99,40 +122,49 @@ export async function searchResources(goal: string): Promise<SearchResourcesResu
     throw new ResourceSearchError('请提供学习目标', 400);
   }
 
-  const provider = normalizeProvider();
-
+  const { primaryProvider, fallbackProvider } = getConfiguredProviders();
   const domain = detectLearningDomain(safeGoal);
-  const cached = await readCachedResourceSearch(provider, domain, safeGoal);
+  const cached = await readCachedResourceSearch(primaryProvider, fallbackProvider, domain, safeGoal);
 
   if (cached) {
     return cached;
   }
 
   const queries = buildQueries(safeGoal, domain);
+  let successfulProvider: SearchProvider | null = null;
+  let fallbackUsed = false;
+  let rawResults = await searchProviderOrNull(primaryProvider, queries);
 
-  try {
-    const results = await Promise.all(queries.map((query) => searchTavily(query)));
-    const resources = dedupeAndLimit(
-      results
-        .flat()
-        .map((result) => normalizeResource(result, domain))
-        .filter((resource): resource is SearchResource => Boolean(resource)),
-    );
-    const response: SearchResourcesResult = {
-      goal: safeGoal,
-      domain,
-      queries,
-      resources,
-      cache: 'miss',
-    };
-
-    await writeCachedResourceSearch(provider, response);
-    return response;
-  } catch (error) {
-    if (error instanceof TavilySearchError) {
-      throw new ResourceSearchError(error.message, error.status);
+  if (rawResults?.length) {
+    successfulProvider = primaryProvider;
+  } else if (fallbackProvider) {
+    rawResults = await searchProviderOrNull(fallbackProvider, queries);
+    if (rawResults?.length) {
+      successfulProvider = fallbackProvider;
+      fallbackUsed = true;
     }
+  }
 
+  if (!successfulProvider || !rawResults?.length) {
     throw new ResourceSearchError('资源搜索暂时失败，请稍后重试', 502);
   }
+
+  const resources = normalizeRawResults(rawResults, domain);
+
+  if (!resources.length) {
+    throw new ResourceSearchError('资源搜索暂时失败，请稍后重试', 502);
+  }
+
+  const response: SearchResourcesResult = {
+    goal: safeGoal,
+    domain,
+    queries,
+    resources,
+    provider: successfulProvider,
+    fallbackUsed,
+    cache: 'miss',
+  };
+
+  await writeCachedResourceSearch(primaryProvider, fallbackProvider, response);
+  return response;
 }

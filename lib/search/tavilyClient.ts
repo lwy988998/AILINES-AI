@@ -1,9 +1,6 @@
-type TavilySearchResult = {
-  title?: string;
-  url?: string;
-  content?: string;
-  score?: number;
-};
+import type { RawSearchResult } from '@/lib/search/searchProvider';
+
+type TavilySearchResult = RawSearchResult;
 
 type TavilySearchResponse = {
   results?: TavilySearchResult[];
@@ -19,7 +16,7 @@ export class TavilySearchError extends Error {
   }
 }
 
-export async function searchTavily(query: string): Promise<TavilySearchResult[]> {
+export async function searchTavily(query: string): Promise<RawSearchResult[]> {
   const apiKey = process.env.TAVILY_API_KEY;
 
   if (!apiKey) {

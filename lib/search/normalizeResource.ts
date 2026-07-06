@@ -5,6 +5,7 @@ type TavilyLikeResult = {
   title?: unknown;
   url?: unknown;
   content?: unknown;
+  source?: unknown;
   score?: unknown;
 };
 
@@ -120,7 +121,7 @@ export function normalizeResource(result: TavilyLikeResult, domain: LearningDoma
   return {
     title,
     url,
-    source: inferSource(url, title),
+    source: typeof result.source === 'string' && result.source.trim() ? result.source.trim() : inferSource(url, title),
     type,
     difficulty: inferDifficulty(title, description),
     language: inferLanguage(title, description),
