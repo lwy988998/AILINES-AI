@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProgressHeader } from '@/components/ProgressHeader';
 import { ProgressOverview } from '@/components/ProgressOverview';
 import { ProgressStageCard } from '@/components/ProgressStageCard';
-import { progressStages } from '@/lib/mockProgress';
+import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/progressStorage';
 
 type ProgressTrackerProps = {
@@ -16,7 +16,8 @@ export function ProgressTracker({ goal, title }: ProgressTrackerProps) {
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const allTaskIds = useMemo(() => progressStages.flatMap((stage) => stage.tasks.map((task) => task.id)), []);
+  const progressStages = useMemo(() => getProgressStagesByGoal(goal), [goal]);
+  const allTaskIds = useMemo(() => progressStages.flatMap((stage) => stage.tasks.map((task) => task.id)), [progressStages]);
   const totalCount = allTaskIds.length;
   const completedCount = completedTaskIds.filter((taskId) => allTaskIds.includes(taskId)).length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
