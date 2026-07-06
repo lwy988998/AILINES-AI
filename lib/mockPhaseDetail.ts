@@ -179,18 +179,18 @@ function getDesignTheme(goal: string, phaseName: string): PhaseTheme {
 function getAiTheme(goal: string, phaseName: string): PhaseTheme {
   return {
     duration: '1-2 周',
-    objective: '理解 AI 核心概念、典型场景和基本使用方法，避免只会套模板。',
-    audience: '适合希望学习人工智能、机器学习、大模型或 AI 应用的学习者。',
+    objective: '理解 AILINES AI 核心概念、典型场景和基本使用方法，避免只会套模板。',
+    audience: '适合希望学习人工智能、机器学习、大模型或 AILINES AI 应用的学习者。',
     tasks: [
       ['梳理核心概念', '2 小时', '理解模型、数据、训练、推理、提示词等基础概念。', '一份术语表。'],
       ['分析应用场景', '2-3 小时', `围绕「${goal}」整理可落地的使用场景。`, '3 个场景卡片。'],
       ['练习结构化提问', '2-4 小时', '学习描述目标、约束、输入和输出格式。', '5 个提示词样例。'],
       ['评估输出质量', '2 小时', '从准确性、完整性、可执行性和风险角度检查结果。', '一份评估清单。'],
-      ['完成小型应用练习', '4-6 小时', '用 AI 辅助完成一个学习或工作任务。', '一份可展示成果和复盘。'],
+      ['完成小型应用练习', '4-6 小时', '用 AILINES AI 辅助完成一个学习或工作任务。', '一份可展示成果和复盘。'],
     ],
     practices: [
-      { name: `${phaseName} 概念解释`, difficulty: '入门', duration: '1 小时', goal: '建立正确认知。', acceptance: '能解释 5 个 AI 相关术语。' },
-      { name: `${phaseName} 场景练习`, difficulty: '中级', duration: '2-4 小时', goal: '把 AI 用到具体任务中。', acceptance: '完成 3 次提示迭代并记录差异。' },
+      { name: `${phaseName} 概念解释`, difficulty: '入门', duration: '1 小时', goal: '建立正确认知。', acceptance: '能解释 5 个 AILINES AI 相关术语。' },
+      { name: `${phaseName} 场景练习`, difficulty: '中级', duration: '2-4 小时', goal: '把 AILINES AI 用到具体任务中。', acceptance: '完成 3 次提示迭代并记录差异。' },
       { name: '质量评估挑战', difficulty: '中级', duration: '1 小时', goal: '避免盲目信任输出。', acceptance: '能指出输出中的不足和修正方案。' },
     ],
     checklist: ['能解释核心概念', '能设计清晰提示词', '能判断输出质量', '能完成一个小型应用练习', '能说明风险和限制'],
@@ -296,7 +296,7 @@ function getResources(goal: string, phaseName: string, domain: LearningDomain): 
   if (domain === 'ai') {
     return [
       { name: 'Google Machine Learning Crash Course', type: '互动课程', difficulty: '入门', free: true, description: '理解机器学习基本概念和流程。', href: 'https://developers.google.com/machine-learning/crash-course' },
-      { name: 'Microsoft AI Learning Hub', type: '官方文档', difficulty: '入门', free: true, description: '了解 AI 应用、概念和实践路线。', href: 'https://learn.microsoft.com/ai/' },
+      { name: 'Microsoft AI Learning Hub', type: '官方文档', difficulty: '入门', free: true, description: '了解 AILINES AI 应用、概念和实践路线。', href: 'https://learn.microsoft.com/ai/' },
       { name: '阶段提示词记录表', type: '工具', difficulty: '入门', free: true, description: '记录提示词、输出质量和迭代过程。', href: '#' },
     ];
   }

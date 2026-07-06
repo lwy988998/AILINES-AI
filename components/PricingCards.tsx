@@ -6,7 +6,7 @@ const plans = [
   {
     name: '免费版',
     price: '¥0',
-    description: '适合初次体验 AI 学习规划',
+    description: '适合初次体验 AILINES AI 学习规划',
     benefits: ['每日 1 条基础学习路线', '每日 5 次轻量问答', '可保存 1 条路线', '查看基础资源推荐'],
     buttonLabel: '当前方案',
     featured: false,

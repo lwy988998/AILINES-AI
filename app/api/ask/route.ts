@@ -21,6 +21,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    return NextResponse.json({ error: 'AI 问答暂时失败，请稍后重试' }, { status: 502 });
+    return NextResponse.json({ error: 'AILINES AI 问答暂时失败，请稍后重试' }, { status: 502 });
   }
 }

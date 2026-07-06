@@ -217,7 +217,7 @@ export function InteractivePhaseTasks({ tasks, goal, phaseIndex, phaseName }: In
                   </div>
                   <div className="rounded-xl bg-white p-4">
                     <p className="font-semibold text-slate-950">记录提示</p>
-                    <p className="mt-2">可以把疑问整理后点击“问 AI”继续追问，也可以记录本任务遇到的卡点。</p>
+                    <p className="mt-2">可以把疑问整理后点击“问 AILINES AI”继续追问，也可以记录本任务遇到的卡点。</p>
                   </div>
                 </div>
               ) : null}

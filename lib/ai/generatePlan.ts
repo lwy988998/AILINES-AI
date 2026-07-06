@@ -93,23 +93,23 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
     }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new GeneratePlanError('AI 服务响应超时，请稍后重试', 502);
+      throw new GeneratePlanError('AILINES AI 服务响应超时，请稍后重试', 502);
     }
 
-    throw new GeneratePlanError('AI 服务暂时不可用，请稍后重试', 502);
+    throw new GeneratePlanError('AILINES AI 服务暂时不可用，请稍后重试', 502);
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!completionResponse.ok) {
-    throw new GeneratePlanError('AI 服务暂时不可用，请稍后重试', 502);
+    throw new GeneratePlanError('AILINES AI 服务暂时不可用，请稍后重试', 502);
   }
 
   const completion = (await completionResponse.json()) as ChatCompletionResponse;
   const content = completion.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new GeneratePlanError('AI 返回内容格式异常，请稍后重试', 502);
+    throw new GeneratePlanError('AILINES AI 返回内容格式异常，请稍后重试', 502);
   }
 
   try {
@@ -117,6 +117,6 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
     await writeCachedPlan(safeGoal, safeMode, plan);
     return plan;
   } catch {
-    throw new GeneratePlanError('AI 返回内容格式异常，请稍后重试', 502);
+    throw new GeneratePlanError('AILINES AI 返回内容格式异常，请稍后重试', 502);
   }
 }

@@ -96,7 +96,7 @@ export function RoutesClient() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  问 AI
+                  问 AILINES AI
                 </Link>
               </div>
             </article>

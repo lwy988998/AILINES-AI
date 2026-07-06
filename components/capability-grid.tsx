@@ -12,7 +12,7 @@ export function CapabilityGrid() {
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">从目标到行动计划</h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-slate-600">
-          当前版本先完成入口与页面骨架，后续可以逐步接入 AI 生成、账户、会员和进度数据。
+          当前版本先完成入口与页面骨架，后续可以逐步接入 AILINES AI 生成、账户、会员和进度数据。
         </p>
       </div>
 

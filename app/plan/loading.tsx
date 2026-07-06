@@ -8,13 +8,13 @@ export default function PlanLoading() {
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800">
             <span className="h-2 w-2 animate-pulse rounded-full bg-sky-700" />
-            AI 生成中
+            AILINES AI 生成中
           </div>
           <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
             正在生成你的学习方案
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-            AI 正在根据你的学习目标规划路线、课程、资源和项目实战路径。
+            AILINES AI 正在根据你的学习目标规划路线、课程、资源和项目实战路径。
           </p>
           <p className="mt-6 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm leading-6 text-slate-600">
             通常需要 10-60 秒，请稍候。

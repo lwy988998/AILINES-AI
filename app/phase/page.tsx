@@ -129,7 +129,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
               >
                 <Bot className="h-4 w-4" />
-                问 AI
+                问 AILINES AI
               </Link>
             </div>
           </div>
@@ -240,7 +240,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
               <Trophy className="h-4 w-4" />
               阶段完成后
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AI 追问本阶段卡点。</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AILINES AI 追问本阶段卡点。</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href={`/progress?goal=${encodedGoal}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
@@ -249,7 +249,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             </Link>
             <Link href={`/ask?goal=${encodedGoal}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
               <Bot className="h-4 w-4" />
-              问 AI
+              问 AILINES AI
             </Link>
           </div>
         </section>

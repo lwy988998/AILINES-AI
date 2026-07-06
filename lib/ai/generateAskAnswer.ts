@@ -107,20 +107,20 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
       });
     }
   } catch {
-    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!completionResponse.ok) {
-    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
   }
 
   const completion = (await completionResponse.json()) as ChatCompletionResponse;
   const content = completion.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
   }
 
   try {
@@ -132,6 +132,6 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
 
     return answer;
   } catch {
-    throw new GenerateAskAnswerError('AI 问答暂时失败，请稍后重试', 502);
+    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
   }
 }

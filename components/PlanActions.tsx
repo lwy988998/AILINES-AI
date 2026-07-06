@@ -30,7 +30,7 @@ export function PlanActions({ goal, title }: PlanActionsProps) {
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
       >
         <MessageCircle className="h-4 w-4" />
-        问 AI
+        问 AILINES AI
       </Link>
       <Link
         href={`/progress?goal=${encodedGoal}`}

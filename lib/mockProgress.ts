@@ -227,7 +227,7 @@ const progressTemplates: Record<LearningDomain, ProgressStage[]> = {
       id: 'foundation',
       title: '阶段一：基础认知',
       tasks: [
-        { id: 'ai-concepts', title: '理解 AI、机器学习和大模型基本概念' },
+        { id: 'ai-concepts', title: '理解 AILINES AI、机器学习和大模型基本概念' },
         { id: 'ai-use-cases', title: '梳理典型应用场景' },
         { id: 'ai-terms', title: '整理常见术语表' },
         { id: 'ai-safety', title: '了解基本限制和风险' },
@@ -237,7 +237,7 @@ const progressTemplates: Record<LearningDomain, ProgressStage[]> = {
       id: 'methods',
       title: '阶段二：方法与工具',
       tasks: [
-        { id: 'ai-workflow', title: '学习常见 AI 工作流' },
+        { id: 'ai-workflow', title: '学习常见 AILINES AI 工作流' },
         { id: 'ai-prompt', title: '练习结构化提问和提示词' },
         { id: 'ai-eval', title: '学习结果评估方法' },
         { id: 'ai-notes', title: '整理案例和反例' },
@@ -257,7 +257,7 @@ const progressTemplates: Record<LearningDomain, ProgressStage[]> = {
       id: 'project',
       title: '阶段四：综合应用',
       tasks: [
-        { id: 'ai-solution', title: '设计一个 AI 辅助工作方案' },
+        { id: 'ai-solution', title: '设计一个 AILINES AI 辅助工作方案' },
         { id: 'ai-checklist', title: '制定质量与风险检查清单' },
         { id: 'ai-deliverable', title: '完成可展示成果' },
         { id: 'ai-next', title: '规划下一阶段深入方向' },

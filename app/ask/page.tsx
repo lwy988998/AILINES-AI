@@ -23,7 +23,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
   const params = await searchParams;
   const goal = params.goal?.trim() || '学习';
   const question = params.question?.trim() || '';
-  const title = question ? 'AI 问答' : params.goal?.trim() ? `${goal} 学习问答` : '学习问答';
+  const title = question ? 'AILINES AI 问答' : params.goal?.trim() ? `${goal} 学习问答` : '学习问答';
   const messages: ChatMessage[] = [];
 
   if (question) {
@@ -46,7 +46,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
         id: createMessageId('assistant'),
         role: 'assistant',
         content: '',
-        error: 'AI 问答暂时不可用，已展示基础示例回答。',
+        error: 'AILINES AI 问答暂时不可用，已展示基础示例回答。',
         answer: getMockAnswer(question),
       });
     }

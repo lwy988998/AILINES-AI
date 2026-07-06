@@ -56,7 +56,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                 href={askHref}
                 className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
-                去问 AI
+                去问 AILINES AI
               </Link>
               <Link
                 href={forcePlanHref}
@@ -75,7 +75,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
-  let resourceSourceMessage = '以下为 AI 推荐资源';
+  let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
   const deepModeHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep${forcePlan ? '&forcePlan=1' : ''}`;
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
@@ -85,13 +85,13 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
       const adaptedPlan = adaptGeneratedPlan(generatedPlan);
 
       if (!isRenderablePlan(adaptedPlan)) {
-        throw new Error('AI 返回内容格式异常，请稍后重试');
+        throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
       }
 
       plan = adaptedPlan;
       isAIPlan = true;
     } catch (error) {
-      errorMessage = error instanceof Error ? error.message : 'AI 生成暂时失败';
+      errorMessage = error instanceof Error ? error.message : 'AILINES AI 生成暂时失败';
     }
 
     try {
@@ -137,16 +137,16 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             <span>
               {isAIPlan
                 ? mode === 'lite'
-                  ? '已生成快速 AI 学习方案'
-                  : '已生成深度 AI 学习方案'
-                : `AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
+                  ? '已生成快速 AILINES AI 学习方案'
+                  : '已生成深度 AILINES AI 学习方案'
+                : `AILINES AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
             </span>
             {mode === 'lite' ? (
               <Link
                 href={deepModeHref}
                 className="inline-flex min-h-10 items-center justify-center rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
-                切换为深度 AI 规划
+                切换为深度 AILINES AI 规划
               </Link>
             ) : null}
             {!isAIPlan ? (

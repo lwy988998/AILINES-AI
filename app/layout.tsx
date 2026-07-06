@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AILINES AI - AI 学习规划助手',
+  title: 'AILINES AI - AILINES AI 学习规划助手',
   description: '输入学习目标，生成学习路线、课程结构、开源资源与项目实战路径。',
 };
 
