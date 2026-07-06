@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AskHeader } from '@/components/AskHeader';
 import { AskInput } from '@/components/AskInput';
 import { ChatMessageList } from '@/components/ChatMessageList';
@@ -10,6 +10,7 @@ import { ChatMessage, getMockAnswer, type AskAnswer } from '@/lib/mockAnswers';
 type AskClientProps = {
   goal: string;
   title: string;
+  initialQuestion?: string;
 };
 
 type AskApiResponse = {
@@ -21,10 +22,11 @@ function createMessageId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function AskClient({ goal, title }: AskClientProps) {
-  const [inputValue, setInputValue] = useState('');
+export function AskClient({ goal, title, initialQuestion = '' }: AskClientProps) {
+  const [inputValue, setInputValue] = useState(initialQuestion);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const hasAutoSentRef = useRef(false);
 
   async function sendQuestion(question = inputValue) {
     const trimmedQuestion = question.trim();
@@ -93,9 +95,23 @@ export function AskClient({ goal, title }: AskClientProps) {
     }
   }
 
+  useEffect(() => {
+    if (!initialQuestion.trim() || hasAutoSentRef.current) {
+      return;
+    }
+
+    hasAutoSentRef.current = true;
+    void sendQuestion(initialQuestion);
+  }, [initialQuestion]);
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <AskHeader goal={goal} title={title} />
+      {initialQuestion ? (
+        <section className="rounded-3xl border border-sky-100 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm shadow-sky-900/5 sm:p-5">
+          当前问题：{initialQuestion}
+        </section>
+      ) : null}
       <QuestionExamples onSelectQuestion={sendQuestion} />
       <ChatMessageList messages={messages} />
       <AskInput value={inputValue} onChange={setInputValue} onSend={() => sendQuestion()} disabled={isSending} />

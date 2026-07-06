@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { GeneratedPlan } from '@/lib/ai/types';
+import type { GeneratedPlan, PlanMode } from '@/lib/ai/types';
 
 const CACHE_DIR = path.join(process.cwd(), 'data', 'ai-plan-cache');
 const DEFAULT_CACHE_TTL_SECONDS = 604_800;
 
 type CachedPlanFile = {
   goal: string;
+  mode?: PlanMode;
   createdAt: string | number;
   plan: GeneratedPlan;
 };
@@ -22,8 +23,12 @@ function getCacheTtlMs() {
   return ttlSeconds * 1000;
 }
 
-function getCacheFilePath(goal: string) {
-  const key = createHash('sha256').update(normalizeGoal(goal)).digest('hex');
+function normalizeMode(mode: PlanMode = 'deep') {
+  return mode === 'lite' ? 'lite' : 'deep';
+}
+
+function getCacheFilePath(goal: string, mode: PlanMode = 'deep') {
+  const key = createHash('sha256').update(`${normalizeMode(mode)}:${normalizeGoal(goal)}`).digest('hex');
   return path.join(CACHE_DIR, `${key}.json`);
 }
 
@@ -86,9 +91,9 @@ export function isValidGeneratedPlan(plan: unknown): plan is GeneratedPlan {
   );
 }
 
-export async function readCachedPlan(goal: string): Promise<GeneratedPlan | null> {
+export async function readCachedPlan(goal: string, mode: PlanMode = 'deep'): Promise<GeneratedPlan | null> {
   try {
-    const cachedFile = await readFile(getCacheFilePath(goal), 'utf8');
+    const cachedFile = await readFile(getCacheFilePath(goal, mode), 'utf8');
     const cachedPlan = JSON.parse(cachedFile) as CachedPlanFile;
 
     if (!cachedPlan.plan || !isFresh(cachedPlan.createdAt) || !isValidGeneratedPlan(cachedPlan.plan)) {
@@ -101,7 +106,7 @@ export async function readCachedPlan(goal: string): Promise<GeneratedPlan | null
   }
 }
 
-export async function writeCachedPlan(goal: string, plan: GeneratedPlan) {
+export async function writeCachedPlan(goal: string, mode: PlanMode = 'deep', plan: GeneratedPlan) {
   if (!isValidGeneratedPlan(plan)) {
     return;
   }
@@ -110,11 +115,12 @@ export async function writeCachedPlan(goal: string, plan: GeneratedPlan) {
     await mkdir(CACHE_DIR, { recursive: true });
     const cachedPlan: CachedPlanFile = {
       goal: goal.trim(),
+      mode: normalizeMode(mode),
       createdAt: new Date().toISOString(),
       plan,
     };
 
-    await writeFile(getCacheFilePath(goal), JSON.stringify(cachedPlan, null, 2), 'utf8');
+    await writeFile(getCacheFilePath(goal, mode), JSON.stringify(cachedPlan, null, 2), 'utf8');
   } catch (error) {
     console.warn('AI plan cache write failed', error instanceof Error ? error.message : 'unknown error');
   }

@@ -1,3 +1,5 @@
+export type PlanMode = 'lite' | 'deep';
+
 export type GeneratedPlanPhase = {
   name: string;
   durationWeeks: number;

@@ -1,7 +1,7 @@
 import { createGeneratePlanMessages } from '@/lib/ai/generatePlanPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import { readCachedPlan, writeCachedPlan } from '@/lib/ai/planCache';
-import type { GeneratedPlan } from '@/lib/ai/types';
+import type { GeneratedPlan, PlanMode } from '@/lib/ai/types';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
@@ -30,21 +30,22 @@ export class GeneratePlanError extends Error {
   }
 }
 
-export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
+export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'): Promise<GeneratedPlan> {
   const safeGoal = goal.trim();
+  const safeMode: PlanMode = mode === 'lite' ? 'lite' : 'deep';
 
   if (!safeGoal) {
     throw new GeneratePlanError('请提供学习目标', 400);
   }
 
-  const cachedPlan = await readCachedPlan(safeGoal);
+  const cachedPlan = await readCachedPlan(safeGoal, safeMode);
 
   if (cachedPlan) {
-    console.log('AI plan cache hit');
+    console.log(`AI plan cache hit (${safeMode})`);
     return cachedPlan;
   }
 
-  console.log('AI plan cache miss');
+  console.log(`AI plan cache miss (${safeMode})`);
 
   const apiKey = process.env.AI_API_KEY;
 
@@ -60,9 +61,9 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
   let completionResponse: Response;
   const requestBody = {
     model,
-    messages: createGeneratePlanMessages(safeGoal),
-    temperature: 0.3,
-    max_tokens: 2200,
+    messages: createGeneratePlanMessages(safeGoal, safeMode),
+    temperature: safeMode === 'lite' ? 0.25 : 0.3,
+    max_tokens: safeMode === 'lite' ? 1400 : 2200,
     response_format: { type: 'json_object' },
   };
 
@@ -113,7 +114,7 @@ export async function generatePlanWithAI(goal: string): Promise<GeneratedPlan> {
 
   try {
     const plan = parseAIJson<GeneratedPlan>(content);
-    await writeCachedPlan(safeGoal, plan);
+    await writeCachedPlan(safeGoal, safeMode, plan);
     return plan;
   } catch {
     throw new GeneratePlanError('AI 返回内容格式异常，请稍后重试', 502);

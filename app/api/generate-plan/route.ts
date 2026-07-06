@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GeneratePlanError, generatePlanWithAI } from '@/lib/ai/generatePlan';
+import type { PlanMode } from '@/lib/ai/types';
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -11,9 +12,11 @@ export async function POST(request: NextRequest) {
   }
 
   const goal = typeof body === 'object' && body !== null && 'goal' in body ? String(body.goal).trim() : '';
+  const rawMode = typeof body === 'object' && body !== null && 'mode' in body ? String(body.mode).trim() : 'deep';
+  const mode: PlanMode = rawMode === 'lite' ? 'lite' : 'deep';
 
   try {
-    const plan = await generatePlanWithAI(goal);
+    const plan = await generatePlanWithAI(goal, mode);
     return NextResponse.json(plan);
   } catch (error) {
     if (error instanceof GeneratePlanError) {

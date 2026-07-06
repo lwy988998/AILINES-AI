@@ -8,6 +8,8 @@ import { RoadmapSection } from '@/components/RoadmapSection';
 import { SiteHeader } from '@/components/site-header';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
+import type { PlanMode } from '@/lib/ai/types';
+import { detectUserIntent } from '@/lib/intent';
 import { getMockPlanByGoal } from '@/lib/mockPlan';
 
 export const dynamic = 'force-dynamic';
@@ -16,24 +18,66 @@ type PlanPageProps = {
   searchParams: Promise<{
     goal?: string;
     mode?: string;
+    forcePlan?: string;
   }>;
 };
 
 export default async function PlanPage({ searchParams }: PlanPageProps) {
   const params = await searchParams;
   const rawGoal = params.goal?.trim() || '';
-  const mode = params.mode === 'lite' ? 'lite' : 'deep';
+  const mode: PlanMode = params.mode === 'lite' ? 'lite' : 'deep';
+  const forcePlan = params.forcePlan === '1';
   const goal = rawGoal || '你的目标';
+  const intent = detectUserIntent(rawGoal);
+  const askHref = `/ask?goal=${encodeURIComponent(goal)}&question=${encodeURIComponent(goal)}`;
+  const forcePlanHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep&forcePlan=1`;
+
+  if (rawGoal && intent.intent === 'ask' && !forcePlan) {
+    return (
+      <main className="min-h-screen bg-[#f5f9ff]">
+        <SiteHeader />
+        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+            <p className="text-sm font-semibold text-sky-700">输入识别：具体问答</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+              这更像一个具体问题
+            </h1>
+            <p className="mt-4 text-base leading-8 text-slate-600 sm:text-lg">
+              你输入的内容更适合通过轻量问答获得步骤化解答，而不是生成长期学习路线。
+            </p>
+            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+              当前输入：{goal}
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={askHref}
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
+              >
+                去问 AI
+              </Link>
+              <Link
+                href={forcePlanHref}
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              >
+                仍然生成学习路线
+              </Link>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   const fallbackPlan = getMockPlanByGoal(goal);
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
-  const deepModeHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep`;
-  const retryHref = `${deepModeHref}&retry=${Date.now()}`;
+  const deepModeHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep${forcePlan ? '&forcePlan=1' : ''}`;
+  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
-  if (rawGoal && mode === 'deep') {
+  if (rawGoal) {
     try {
-      const generatedPlan = await generatePlanWithAI(rawGoal);
+      const generatedPlan = await generatePlanWithAI(rawGoal, mode);
       const adaptedPlan = adaptGeneratedPlan(generatedPlan);
 
       if (!isRenderablePlan(adaptedPlan)) {
@@ -55,15 +99,15 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         {rawGoal ? (
           <section
             className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm font-medium shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
-              isAIPlan || mode === 'lite' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'
+              isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'
             }`}
           >
             <span>
-              {mode === 'lite'
-                ? '当前为快速规划模式，已为你生成基础学习方案。'
-                : isAIPlan
-                  ? '已生成深度 AI 学习方案'
-                  : `AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
+              {isAIPlan
+                ? mode === 'lite'
+                  ? '已生成快速 AI 学习方案'
+                  : '已生成深度 AI 学习方案'
+                : `AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
             </span>
             {mode === 'lite' ? (
               <Link
@@ -73,7 +117,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                 切换为深度 AI 规划
               </Link>
             ) : null}
-            {mode === 'deep' && !isAIPlan ? (
+            {!isAIPlan ? (
               <Link
                 href={retryHref}
                 className="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-200"

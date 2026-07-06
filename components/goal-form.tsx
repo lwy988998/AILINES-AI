@@ -1,10 +1,35 @@
-import { ArrowRight } from "lucide-react";
-import { quickGoals } from "@/lib/examples";
+'use client';
+
+import { FormEvent } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { quickGoals } from '@/lib/examples';
+import { detectUserIntent } from '@/lib/intent';
 
 export function GoalForm() {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const goal = String(formData.get('goal') || '').trim();
+    const mode = formData.get('mode') === 'lite' ? 'lite' : 'deep';
+
+    if (!goal) {
+      return;
+    }
+
+    const intent = detectUserIntent(goal);
+    event.preventDefault();
+
+    if (intent.intent === 'ask') {
+      window.location.href = `/ask?goal=${encodeURIComponent(intent.suggestedGoal)}&question=${encodeURIComponent(intent.suggestedQuestion)}`;
+      return;
+    }
+
+    window.location.href = `/plan?goal=${encodeURIComponent(intent.suggestedGoal)}&mode=${mode}`;
+  }
+
   return (
     <div className="rounded-2xl border border-sky-100 bg-white/95 p-4 shadow-sm shadow-sky-900/5 sm:p-5">
-      <form action="/plan" method="GET" className="space-y-4">
+      <form action="/plan" method="GET" className="space-y-4" onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="block text-sm font-medium text-slate-700">
           你的学习目标
         </label>
@@ -17,7 +42,7 @@ export function GoalForm() {
                 <span className="mt-1 h-4 w-4 rounded-full border border-sky-200 bg-white ring-4 ring-white transition group-has-[:checked]:border-sky-700 group-has-[:checked]:bg-sky-700" />
                 <span>
                   <span className="block text-sm font-semibold text-slate-900">快速规划</span>
-                  <span className="mt-1 block text-sm leading-6 text-slate-500">秒级生成基础路线，适合先快速了解学习方向。</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">真实 AI 快速生成基础学习方案</span>
                 </span>
               </span>
             </label>
@@ -27,7 +52,7 @@ export function GoalForm() {
                 <span className="mt-1 h-4 w-4 rounded-full border border-sky-200 bg-white ring-4 ring-white transition group-has-[:checked]:border-sky-700 group-has-[:checked]:bg-sky-700" />
                 <span>
                   <span className="block text-sm font-semibold text-slate-900">深度 AI 规划</span>
-                  <span className="mt-1 block text-sm leading-6 text-slate-500">调用 AI 深度生成路线、资源和项目，通常需要 10-60 秒。</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">真实 AI 深度生成完整学习路线</span>
                 </span>
               </span>
             </label>
@@ -49,7 +74,7 @@ export function GoalForm() {
             生成学习方案
           </button>
         </div>
-        <p className="text-sm text-slate-500">支持回车提交，输入目标后会进入学习方案页。</p>
+        <p className="text-sm text-slate-500">支持回车提交；具体操作问题会自动进入 AI 问答。</p>
       </form>
 
       <div className="mt-5 flex flex-wrap gap-2">
