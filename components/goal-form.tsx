@@ -4,10 +4,35 @@ import { quickGoals } from "@/lib/examples";
 export function GoalForm() {
   return (
     <div className="rounded-2xl border border-sky-100 bg-white/95 p-4 shadow-sm shadow-sky-900/5 sm:p-5">
-      <form action="/plan" method="GET" className="space-y-3">
+      <form action="/plan" method="GET" className="space-y-4">
         <label htmlFor="learning-goal" className="block text-sm font-medium text-slate-700">
           你的学习目标
         </label>
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold text-slate-800">生成模式</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="group relative cursor-pointer rounded-2xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 transition hover:border-sky-200 hover:bg-sky-50/60 has-[:checked]:border-sky-500 has-[:checked]:bg-sky-50 has-[:checked]:ring-4 has-[:checked]:ring-sky-100">
+              <input type="radio" name="mode" value="lite" className="sr-only" />
+              <span className="flex items-start gap-3">
+                <span className="mt-1 h-4 w-4 rounded-full border border-sky-200 bg-white ring-4 ring-white transition group-has-[:checked]:border-sky-700 group-has-[:checked]:bg-sky-700" />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-900">快速规划</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">秒级生成基础路线，适合先快速了解学习方向。</span>
+                </span>
+              </span>
+            </label>
+            <label className="group relative cursor-pointer rounded-2xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 transition hover:border-sky-200 hover:bg-sky-50/60 has-[:checked]:border-sky-500 has-[:checked]:bg-sky-50 has-[:checked]:ring-4 has-[:checked]:ring-sky-100">
+              <input type="radio" name="mode" value="deep" defaultChecked className="sr-only" />
+              <span className="flex items-start gap-3">
+                <span className="mt-1 h-4 w-4 rounded-full border border-sky-200 bg-white ring-4 ring-white transition group-has-[:checked]:border-sky-700 group-has-[:checked]:bg-sky-700" />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-900">深度 AI 规划</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">调用 AI 深度生成路线、资源和项目，通常需要 10-60 秒。</span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             id="learning-goal"
@@ -31,7 +56,7 @@ export function GoalForm() {
         {quickGoals.map((example) => (
           <a
             key={example}
-            href={`/plan?goal=${encodeURIComponent(example)}`}
+            href={`/plan?goal=${encodeURIComponent(example)}&mode=deep`}
             className="rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
           >
             {example}
