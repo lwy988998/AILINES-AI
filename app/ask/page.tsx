@@ -62,7 +62,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
             当前问题：{question}
           </section>
         ) : null}
-        <QuestionExamples goal={goal} />
+        {question ? null : <QuestionExamples goal={goal} />}
         <ChatMessageList messages={messages} />
         <AskInput goal={goal} defaultQuestion={question} />
       </div>

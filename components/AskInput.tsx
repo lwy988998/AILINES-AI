@@ -19,7 +19,7 @@ export function AskInput({ goal, defaultQuestion = '' }: AskInputProps) {
           required
           defaultValue={defaultQuestion}
           rows={3}
-          placeholder="请输入你遇到的问题，例如：Python 怎么安装？"
+          placeholder="请输入你遇到的问题"
           className="min-h-24 flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100"
         />
         <button
