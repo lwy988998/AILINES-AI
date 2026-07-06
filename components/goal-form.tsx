@@ -44,7 +44,7 @@ export function GoalForm() {
             required
             value={goalValue}
             onChange={(event) => setGoalValue(event.target.value)}
-            placeholder="告诉我你想学什么，例如：GPT 如何开发使用"
+            placeholder="在这里输入需求"
             className="min-h-14 flex-1 rounded-2xl border border-slate-200/80 bg-white/90 px-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
           />
           <button

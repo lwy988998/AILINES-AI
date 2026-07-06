@@ -23,11 +23,6 @@ export default function HomePage() {
                 />
               </div>
 
-              <h1 className="mt-8 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">告诉我你想学什么</h1>
-              <p className="mx-auto mt-5 max-w-2xl text-base font-medium leading-8 text-slate-700 sm:text-lg">
-                把一个学习目标，转化为阶段路线、真实资料和可执行任务。
-              </p>
-
               <div className="mx-auto mt-8 max-w-4xl">
                 <GoalForm />
               </div>
