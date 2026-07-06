@@ -1,53 +1,36 @@
-'use client';
-
-import { KeyboardEvent } from 'react';
 import { Send } from 'lucide-react';
 
 type AskInputProps = {
-  value: string;
-  onChange: (value: string) => void;
-  onSend: () => void;
-  disabled?: boolean;
+  goal: string;
+  defaultQuestion?: string;
 };
 
-export function AskInput({ value, onChange, onSend, disabled = false }: AskInputProps) {
-  const canSend = value.trim().length > 0 && !disabled;
-
-  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (canSend) {
-        onSend();
-      }
-    }
-  }
-
+export function AskInput({ goal, defaultQuestion = '' }: AskInputProps) {
   return (
     <section className="sticky bottom-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-lg shadow-sky-900/10 sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <form action="/ask" method="GET" className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <input type="hidden" name="goal" value={goal} />
         <label htmlFor="ask-input" className="sr-only">
           输入你的问题
         </label>
         <textarea
           id="ask-input"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={handleKeyDown}
+          name="question"
+          required
+          defaultValue={defaultQuestion}
           rows={3}
           placeholder="请输入你遇到的问题，例如：Python 怎么安装？"
           className="min-h-24 flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base leading-7 text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-sky-300 focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100"
         />
         <button
-          type="button"
-          onClick={onSend}
-          disabled={!canSend}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+          type="submit"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
         >
           <Send className="h-4 w-4" />
-          {disabled ? '回答中...' : '发送'}
+          发送
         </button>
-      </div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">Enter 发送，Shift + Enter 换行。</p>
+      </form>
+      <p className="mt-3 text-xs leading-5 text-slate-500">通过原生表单提交，发送后会跳转并生成步骤化解答。</p>
     </section>
   );
 }
