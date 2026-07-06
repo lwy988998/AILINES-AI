@@ -83,7 +83,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             ) : null}
           </section>
         ) : null}
-        <RoadmapSection stages={plan.roadmap} />
+        <RoadmapSection goal={goal} stages={plan.roadmap} />
         <CourseStructureSection stages={plan.courseStructure} />
         <ResourcesSection resources={plan.resources} />
         <ProjectsSection projects={plan.projects} />
