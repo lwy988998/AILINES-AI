@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Target, Trophy } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
+import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
 import { getMockPhaseDetail, type PhaseResource } from '@/lib/mockPhaseDetail';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
@@ -164,34 +165,11 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-sky-700">学习安排</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">按任务推进，形成稳定产出</h2>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {detail.tasks.map((task, index) => (
-              <article key={task.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white">{index + 1}</div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-950">{task.title}</h3>
-                    <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-600">
-                      <Clock3 className="h-3.5 w-3.5 text-sky-700" />
-                      {task.duration}
-                    </p>
-                    <p className="mt-4 text-sm leading-6 text-slate-600">{task.description}</p>
-                    <p className="mt-3 rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">产出物：{task.output}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <InteractivePhaseTasks tasks={detail.tasks} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} />
 
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
-            <p className="text-sm font-semibold text-sky-700">推荐资源</p>
+            <p className="text-sm font-semibold text-sky-700">阶段相关资料</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">优先使用稳定免费资源</h2>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
@@ -213,7 +191,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
                   rel="noreferrer"
                   className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
                 >
-                  查看资源
+                  打开资源
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </article>
