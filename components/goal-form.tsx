@@ -52,7 +52,7 @@ export function GoalForm() {
                 <span className="mt-1 h-4 w-4 rounded-full border border-sky-200 bg-white ring-4 ring-white transition group-has-[:checked]:border-sky-700 group-has-[:checked]:bg-sky-700" />
                 <span>
                   <span className="block text-sm font-semibold text-slate-900">深度 AI 规划</span>
-                  <span className="mt-1 block text-sm leading-6 text-slate-500">真实 AI 深度生成完整学习路线</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">真实 AI 深度生成完整学习路线、资源和实战路径。</span>
                 </span>
               </span>
             </label>
