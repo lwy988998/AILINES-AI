@@ -5,9 +5,24 @@ import { ArrowRight } from 'lucide-react';
 import { detectUserIntent } from '@/lib/intent';
 
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
+const planningModes = [
+  {
+    value: 'lite',
+    title: '快速规划',
+    description: '快速生成基础学习方案',
+  },
+  {
+    value: 'deep',
+    title: '深度 AILINES AI 规划',
+    description: '完整生成路线、资料和实战路径',
+  },
+] as const;
+
+type PlanningMode = (typeof planningModes)[number]['value'];
 
 export function GoalForm() {
   const [goalValue, setGoalValue] = useState('');
+  const [modeValue, setModeValue] = useState<PlanningMode>('deep');
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -33,7 +48,6 @@ export function GoalForm() {
   return (
     <div className="rounded-[2rem] border border-white/70 bg-white/72 p-4 shadow-2xl shadow-sky-950/20 backdrop-blur-md sm:p-5">
       <form action="/plan" method="GET" className="space-y-4" onSubmit={handleSubmit}>
-        <input type="hidden" name="mode" value="deep" />
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
         </label>
@@ -55,6 +69,40 @@ export function GoalForm() {
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
+
+        <fieldset className="rounded-2xl border border-sky-100 bg-white/55 p-3">
+          <legend className="px-1 text-xs font-semibold text-slate-600">生成模式</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {planningModes.map((mode) => {
+              const selected = modeValue === mode.value;
+
+              return (
+                <label
+                  key={mode.value}
+                  className={`cursor-pointer rounded-2xl border p-3 text-left transition hover:border-sky-300 hover:bg-sky-50/80 ${
+                    selected ? 'border-sky-500 bg-sky-50 ring-4 ring-sky-100' : 'border-slate-200 bg-white/75'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="mode"
+                    value={mode.value}
+                    checked={selected}
+                    onChange={() => setModeValue(mode.value)}
+                    className="sr-only"
+                  />
+                  <span className="flex items-start gap-3">
+                    <span className={`mt-1 h-4 w-4 rounded-full border ring-4 ring-white ${selected ? 'border-sky-700 bg-sky-700' : 'border-sky-200 bg-white'}`} />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-950">{mode.title}</span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500">{mode.description}</span>
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
       </form>
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
