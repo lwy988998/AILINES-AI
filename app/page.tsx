@@ -1,59 +1,53 @@
 import Image from 'next/image';
-import { CapabilityGrid } from '@/components/capability-grid';
 import { GoalForm } from '@/components/goal-form';
 import { SiteHeader } from '@/components/site-header';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
-      <SiteHeader />
+    <main className="relative min-h-screen overflow-hidden bg-slate-950">
+      <Image
+        src="/ailines-wallpaper.jpg"
+        alt="AILINES AI 品牌视觉背景"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/68 to-sky-950/20" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.45),rgba(255,255,255,0.08)_44%,rgba(2,6,23,0.22))]" />
 
-      <section className="mx-auto grid w-full max-w-6xl gap-8 px-4 pb-10 pt-8 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:pb-14 lg:pt-12">
-        <div className="flex min-h-[560px] flex-col justify-center">
-          <p className="mb-4 text-sm font-semibold text-sky-700">AI 学习规划助手</p>
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-            输入学习目标，生成学习路线
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-            面向普通用户与学生，把“我想学 XXX”转化为阶段路线、课程结构、资源清单和项目实战路径。
-          </p>
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <SiteHeader />
 
-          <div className="mt-8 max-w-2xl">
-            <GoalForm />
-          </div>
-        </div>
-
-        <div className="flex items-center lg:justify-end">
-          <div className="w-full overflow-hidden rounded-3xl border border-sky-100 bg-white p-3 shadow-sm shadow-sky-900/10">
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-sky-50">
+        <section className="mx-auto flex w-full max-w-5xl flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+          <div className="w-full max-w-3xl text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-2 shadow-xl shadow-sky-950/10 backdrop-blur-xl sm:h-24 sm:w-24">
               <Image
                 src="/ailines-wallpaper.jpg"
-                alt="AILINES AI 品牌视觉图"
-                fill
+                alt="AILINES AI Logo"
+                width={96}
+                height={96}
                 priority
-                sizes="(min-width: 1024px) 520px, 100vw"
-                className="object-contain"
+                className="h-full w-full rounded-2xl object-cover"
               />
             </div>
-            <div className="grid gap-3 border-t border-slate-100 px-2 py-4 sm:grid-cols-3">
-              <div>
-                <p className="text-xs font-medium text-slate-500">入口</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">目标输入</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">输出</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">学习方案</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">状态</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">MVP 骨架</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <CapabilityGrid />
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-800">AILINES AI</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">告诉我你想学什么</h1>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
+              把一个学习目标，转化为阶段路线、真实资料和可执行任务。
+            </p>
+
+            <div className="mt-8">
+              <GoalForm />
+            </div>
+
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-slate-600">
+              支持课程拆解、阶段任务、真实资料推荐和进度推进。
+            </p>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
