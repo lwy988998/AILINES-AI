@@ -8,3 +8,4 @@ dist
 .env*.local
 .vercel
 data/ai-plan-cache/
+data/resource-search-cache/
