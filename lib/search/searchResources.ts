@@ -14,8 +14,8 @@ export class ResourceSearchError extends Error {
   }
 }
 
-function normalizeProvider(provider?: string) {
-  return provider?.trim().toLowerCase() || 'tavily';
+function normalizeProvider() {
+  return 'tavily';
 }
 
 function buildQueries(goal: string, domain: ReturnType<typeof detectLearningDomain>) {
@@ -99,11 +99,7 @@ export async function searchResources(goal: string): Promise<SearchResourcesResu
     throw new ResourceSearchError('请提供学习目标', 400);
   }
 
-  const provider = normalizeProvider(process.env.SEARCH_PROVIDER);
-
-  if (provider !== 'tavily') {
-    throw new ResourceSearchError('当前仅支持 Tavily 资源搜索', 500);
-  }
+  const provider = normalizeProvider();
 
   const domain = detectLearningDomain(safeGoal);
   const cached = await readCachedResourceSearch(provider, domain, safeGoal);
