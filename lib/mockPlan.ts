@@ -12,7 +12,20 @@ export type CourseStage = {
 
 export type ResourceItem = {
   name: string;
-  type: 'GitHub' | '官方文档' | '视频' | '文章';
+  type:
+    | 'GitHub'
+    | '官方文档'
+    | '视频'
+    | '文章'
+    | '在线课程'
+    | '视频教程'
+    | '图文教程'
+    | '开源项目'
+    | '工具环境'
+    | '项目实战'
+    | '练习题库'
+    | '社区资源'
+    | '其他';
   difficulty: '入门' | '中级' | '进阶';
   free: boolean;
   description: string;

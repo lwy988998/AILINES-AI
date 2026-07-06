@@ -10,9 +10,12 @@ import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPla
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { detectUserIntent } from '@/lib/intent';
-import { getMockPlanByGoal } from '@/lib/mockPlan';
+import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
+import { searchResources } from '@/lib/search/searchResources';
 
 export const dynamic = 'force-dynamic';
+
+const RESOURCE_SEARCH_TIMEOUT_MS = 8_000;
 
 type PlanPageProps = {
   searchParams: Promise<{
@@ -88,6 +91,33 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
       isAIPlan = true;
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : 'AI 生成暂时失败';
+    }
+
+    try {
+      const resourceSearch = await Promise.race([
+        searchResources(rawGoal),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('resource search timeout')), RESOURCE_SEARCH_TIMEOUT_MS);
+        }),
+      ]);
+
+      if (resourceSearch.resources.length > 0) {
+        const searchedResources: MockPlan['resources'] = resourceSearch.resources.slice(0, 8).map((resource) => ({
+          name: resource.title,
+          type: resource.type,
+          difficulty: resource.difficulty,
+          free: resource.free,
+          description: resource.description || resource.reason,
+          href: resource.url,
+        }));
+
+        plan = {
+          ...plan,
+          resources: searchedResources,
+        };
+      }
+    } catch (error) {
+      console.warn('Resource search fallback', error instanceof Error ? error.message : 'unknown error');
     }
   }
 
