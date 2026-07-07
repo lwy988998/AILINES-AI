@@ -12,7 +12,7 @@ export default function HomePage() {
 
           <div className="mx-auto flex w-full max-w-6xl flex-1 items-start justify-center px-4 pb-10 pt-8 sm:px-6 sm:pt-12 lg:px-8 lg:pt-14">
             <div className="w-full max-w-4xl text-center">
-              <div className="mx-auto w-[78vw] max-w-[420px]">
+              <div className="mx-auto w-[72vw] max-w-[380px]">
                 <Image
                   src="/ailines-logo-transparent.png"
                   alt="AILINES AI Logo"
