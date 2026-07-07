@@ -12,14 +12,14 @@ export default function HomePage() {
 
           <div className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-4 pb-12 pt-8 sm:px-6 lg:px-8">
             <div className="w-full max-w-4xl text-center">
-              <div className="mx-auto w-[78vw] max-w-[500px] overflow-hidden rounded-[2rem] border border-white/80 bg-white/70 p-3 shadow-2xl shadow-sky-900/10 backdrop-blur-sm sm:p-4">
+              <div className="mx-auto w-[85vw] max-w-[540px]">
                 <Image
-                  src="/ailines-logo-main.png"
+                  src="/ailines-logo-transparent.png"
                   alt="AILINES AI Logo"
-                  width={1200}
-                  height={800}
+                  width={1024}
+                  height={776}
                   priority
-                  className="h-auto w-full rounded-[1.4rem] object-contain"
+                  className="h-auto w-full object-contain drop-shadow-sm"
                 />
               </div>
 
