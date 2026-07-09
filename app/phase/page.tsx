@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Target, Trophy } from 'lucide-react';
+import { CourseMindMap } from '@/components/course/CourseMindMap';
+import { CourseSlides } from '@/components/course/CourseSlides';
 import { SiteHeader } from '@/components/site-header';
 import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
 import { getMockPhaseDetail, type PhaseResource, type PhaseStep } from '@/lib/mockPhaseDetail';
@@ -131,6 +133,22 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const planStage = await getPlanStage(goal, mode, phaseIndex, phaseName);
   const teachingSteps = stepsFromStage(planStage, detail.steps);
   const stageOutput = planStage?.output || detail.output;
+  const phaseSlides = teachingSteps.map((step, index) => ({
+    title: step.title || `第 ${index + 1} 步`,
+    subtitle: detail.phaseName,
+    content: step.explanation,
+    bullets: [step.example ? `例子：${step.example}` : '', `现在你要做：${step.action}`, `完成检查：${step.check}`].filter(Boolean),
+    speakerNote: '先读懂讲解，再完成行动建议，最后用完成检查判断是否掌握。',
+    relatedPhase: detail.phaseName,
+  }));
+  const phaseMindMap = {
+    title: '当前阶段知识结构',
+    nodes: [{
+      id: 'root',
+      label: detail.phaseName,
+      children: teachingSteps.map((step, index) => ({ id: `step-${index + 1}`, label: (step.title || `第 ${index + 1} 步`).replace(/^第\s*\d+\s*步[:：]?\s*/, '') })),
+    }],
+  };
   const stageWhy = planStage?.why || detail.why;
   const commonMistakes = Array.isArray(planStage?.commonMistakes) && planStage.commonMistakes.length > 0 ? planStage.commonMistakes : detail.commonMistakes;
   const encodedGoal = encodeURIComponent(goal);
@@ -229,8 +247,8 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
-            <p className="text-sm font-semibold text-sky-700">阶段分步讲解</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">每一步都是 AILINES AI 解答</h2>
+            <p className="text-sm font-semibold text-sky-700">阶段分步学习</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">AILINES AI 分步讲解</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">先读讲解，再完成行动建议，最后用完成检查判断是否掌握。</p>
           </div>
           <div className="space-y-4">
@@ -244,7 +262,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
                     {step.example ? <p className="mt-4 rounded-xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">例子：</span>{step.example}</p> : null}
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
-                        <p className="font-semibold text-sky-800">行动建议</p>
+                        <p className="font-semibold text-sky-800">现在你要做</p>
                         <p className="mt-2">{step.action}</p>
                       </div>
                       <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
@@ -268,6 +286,10 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
         </section>
 
         <InteractivePhaseTasks tasks={detail.tasks} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} />
+
+        <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" />
+
+        <CourseMindMap mindMap={phaseMindMap} phases={planStage ? [planStage] : []} title="当前阶段知识结构" description="从步骤层级理解当前阶段的学习顺序。" />
 
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">

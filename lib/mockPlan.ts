@@ -6,6 +6,26 @@ export type CourseStep = {
   check: string;
 };
 
+export type CourseSlide = {
+  title: string;
+  subtitle?: string;
+  content: string;
+  bullets?: string[];
+  speakerNote?: string;
+  relatedPhase?: string;
+};
+
+export type MindMapNode = {
+  id: string;
+  label: string;
+  children?: MindMapNode[];
+};
+
+export type CourseMindMap = {
+  title: string;
+  nodes: MindMapNode[];
+};
+
 export type RoadmapStage = {
   name: string;
   duration: string;
@@ -58,10 +78,14 @@ export type MockPlan = {
   title: string;
   duration: string;
   summary: string;
+  courseIntro?: string;
   overview?: string;
   audience?: string;
   prerequisites?: string[];
   outcome?: string;
+  learningOutcomes?: string[];
+  slides?: CourseSlide[];
+  mindMap?: CourseMindMap;
   roadmap: RoadmapStage[];
   courseStructure: CourseStage[];
   resources: ResourceItem[];
@@ -217,6 +241,76 @@ const genericPlan = createPlan({
   ],
 });
 
+
+function createSlug(value: string, fallback: string) {
+  const ascii = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (ascii) return ascii.slice(0, 48);
+  return fallback;
+}
+
+function buildSlidesFromPlan(plan: MockPlan, goal: string): CourseSlide[] {
+  const safeGoal = goal.trim() || plan.title || '课程';
+  const roadmap = Array.isArray(plan.roadmap) ? plan.roadmap : [];
+  const slides: CourseSlide[] = [
+    {
+      title: '课程导入',
+      subtitle: `为什么要学 ${safeGoal}`,
+      content: plan.courseIntro || plan.overview || plan.summary || `这门课程会把「${safeGoal}」拆成可学习、可练习、可检查的阶段。`,
+      bullets: ['理解学习目标', '把路线变成课程', '通过练习和检查点确认掌握'],
+      speakerNote: `AILINES AI 会先帮你建立整体认知，再带你逐阶段学习。不要只看路线，要跟着每一阶段的行动建议做出成果。`,
+    },
+  ];
+
+  roadmap.forEach((stage, index) => {
+    slides.push({
+      title: stage.name || `阶段 ${index + 1}`,
+      subtitle: stage.goal || '阶段目标',
+      content: stage.description || stage.why || '理解本阶段关键知识，并通过练习形成可检查的能力。',
+      bullets: [stage.duration, stage.output || stage.goal, stage.checkpoint || '完成阶段检查点'].filter(Boolean),
+      speakerNote: stage.why || `这一阶段的重点是把「${safeGoal}」中的关键能力落到具体练习和产出。`,
+      relatedPhase: stage.name,
+    });
+
+    const steps = Array.isArray(stage.steps) ? stage.steps : [];
+    steps.slice(0, 2).forEach((step, stepIndex) => {
+      slides.push({
+        title: step.title || `第 ${stepIndex + 1} 步`,
+        subtitle: stage.name,
+        content: step.explanation || stage.description || '先理解，再练习，最后检查掌握程度。',
+        bullets: [step.example ? `例子：${step.example}` : '', `现在你要做：${step.action || '完成一个小练习'}`, `完成检查：${step.check || '能独立复现并解释'}`].filter(Boolean),
+        speakerNote: `讲解这一页时，先说明概念和用途，再让用户完成行动建议，最后按检查标准判断是否掌握。`,
+        relatedPhase: stage.name,
+      });
+    });
+  });
+
+  return slides.slice(0, 12);
+}
+
+function buildMindMapFromPlan(plan: MockPlan, goal: string): CourseMindMap {
+  const roadmap = Array.isArray(plan.roadmap) ? plan.roadmap : [];
+  return {
+    title: '课程知识结构',
+    nodes: [
+      {
+        id: 'root',
+        label: goal.trim() || plan.title || 'AILINES AI 课程',
+        children: roadmap.slice(0, 6).map((stage, index) => ({
+          id: createSlug(stage.name || '', `phase-${index + 1}`),
+          label: stage.name || `阶段 ${index + 1}`,
+          children: (Array.isArray(stage.steps) && stage.steps.length > 0
+            ? stage.steps.map((step) => step.title.replace(/^第\s*\d+\s*步[:：]?\s*/, ''))
+            : [stage.goal, stage.output, stage.checkpoint]
+          )
+            .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+            .slice(0, 5)
+            .map((label, childIndex) => ({ id: `${createSlug(stage.name || '', `phase-${index + 1}`)}-${childIndex + 1}`, label })),
+        })),
+      },
+    ],
+  };
+}
+
 function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python' | 'math' | 'gpt' | 'tool' | 'general'): CourseStep[] {
   const safeGoal = goal.trim() || '当前目标';
   const stageName = stage.name || '当前阶段';
@@ -325,12 +419,14 @@ function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python'
 }
 
 function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | 'gpt' | 'tool' | 'general'): MockPlan {
-  return {
+  const enhanced: MockPlan = {
     ...plan,
+    courseIntro: plan.courseIntro || plan.overview || plan.summary,
     overview: plan.overview || plan.summary,
     audience: plan.audience || '适合希望获得分步讲解、练习路径和阶段产出的学习者。',
     prerequisites: plan.prerequisites || ['能保持稳定练习时间', '愿意记录问题和复盘过程'],
     outcome: plan.outcome || '完成后能形成阶段作品、练习记录或可复用学习笔记。',
+    learningOutcomes: plan.learningOutcomes || ['理解核心概念', '完成阶段练习', '产出可复盘的学习成果'],
     roadmap: Array.isArray(plan.roadmap)
       ? plan.roadmap.map((stage) => ({
           ...stage,
@@ -342,6 +438,12 @@ function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | '
           steps: Array.isArray(stage.steps) && stage.steps.length > 0 ? stage.steps : createFallbackSteps(goal, stage, domain),
         }))
       : [],
+  };
+
+  return {
+    ...enhanced,
+    slides: Array.isArray(enhanced.slides) && enhanced.slides.length > 0 ? enhanced.slides : buildSlidesFromPlan(enhanced, goal),
+    mindMap: enhanced.mindMap || buildMindMapFromPlan(enhanced, goal),
   };
 }
 

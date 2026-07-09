@@ -8,6 +8,26 @@ export type GeneratedPlanStep = {
   check: string;
 };
 
+export type GeneratedCourseSlide = {
+  title: string;
+  subtitle?: string;
+  content: string;
+  bullets?: string[];
+  speakerNote?: string;
+  relatedPhase?: string;
+};
+
+export type GeneratedMindMapNode = {
+  id: string;
+  label: string;
+  children?: GeneratedMindMapNode[];
+};
+
+export type GeneratedMindMap = {
+  title: string;
+  nodes: GeneratedMindMapNode[];
+};
+
 export type GeneratedPlanPhase = {
   name: string;
   durationWeeks: number;
@@ -48,11 +68,15 @@ export type GeneratedPlan = {
   goal: string;
   durationWeeks: number;
   summary: string;
+  courseIntro?: string;
   overview?: string;
   audience?: string;
   prerequisites?: string[];
   outcome?: string;
+  learningOutcomes?: string[];
   phases: GeneratedPlanPhase[];
+  slides?: GeneratedCourseSlide[];
+  mindMap?: GeneratedMindMap;
   resources: GeneratedPlanResource[];
   projects: GeneratedPlanProject[];
 };

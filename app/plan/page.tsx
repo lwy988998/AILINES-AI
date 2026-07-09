@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { CourseStructureSection } from '@/components/CourseStructureSection';
+import { CourseMindMap } from '@/components/course/CourseMindMap';
+import { CourseSlides } from '@/components/course/CourseSlides';
 import { PlanActions } from '@/components/PlanActions';
 import { PlanHeader } from '@/components/PlanHeader';
 import { ProjectsSection } from '@/components/ProjectsSection';
@@ -159,6 +161,8 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             ) : null}
           </section>
         ) : null}
+        <CourseSlides slides={plan.slides} phases={plan.roadmap} />
+        <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} />
         <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} />
         <CourseStructureSection stages={plan.courseStructure} />
         <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
