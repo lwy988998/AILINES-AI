@@ -159,7 +159,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             ) : null}
           </section>
         ) : null}
-        <RoadmapSection goal={goal} stages={plan.roadmap} />
+        <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} />
         <CourseStructureSection stages={plan.courseStructure} />
         <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
           {resourceSourceMessage}

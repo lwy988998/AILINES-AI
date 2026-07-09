@@ -5,9 +5,10 @@ import type { RoadmapStage } from '@/lib/mockPlan';
 type RoadmapSectionProps = {
   goal: string;
   stages: RoadmapStage[];
+  mode?: 'lite' | 'deep';
 };
 
-export function RoadmapSection({ goal, stages }: RoadmapSectionProps) {
+export function RoadmapSection({ goal, stages, mode = 'deep' }: RoadmapSectionProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
@@ -16,7 +17,7 @@ export function RoadmapSection({ goal, stages }: RoadmapSectionProps) {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {stages.map((stage, index) => {
-          const phaseHref = `/phase?goal=${encodeURIComponent(goal)}&phaseIndex=${index + 1}&phaseName=${encodeURIComponent(stage.name)}`;
+          const phaseHref = `/phase?goal=${encodeURIComponent(goal)}&mode=${mode}&phaseIndex=${index + 1}&phaseName=${encodeURIComponent(stage.name)}`;
 
           return (
             <Link
@@ -42,7 +43,9 @@ export function RoadmapSection({ goal, stages }: RoadmapSectionProps) {
                       </span>
                     </div>
                     <p className="mt-4 font-medium leading-7 text-slate-800">{stage.goal}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{stage.description}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{stage.description || '暂无说明'}</p>
+                    {stage.output ? <p className="mt-3 rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">阶段产出：{stage.output}</p> : null}
+                    {stage.checkpoint ? <p className="mt-2 text-sm leading-6 text-slate-600">检查点：{stage.checkpoint}</p> : null}
                     <p className="mt-4 text-sm font-semibold text-sky-700 transition group-hover:text-sky-900">查看阶段详情 →</p>
                   </div>
                 </div>

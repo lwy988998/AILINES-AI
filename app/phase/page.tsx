@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Target, Trophy } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
-import { getMockPhaseDetail, type PhaseResource } from '@/lib/mockPhaseDetail';
+import { getMockPhaseDetail, type PhaseResource, type PhaseStep } from '@/lib/mockPhaseDetail';
+import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
+import { readCachedPlan } from '@/lib/ai/planCache';
+import type { PlanMode } from '@/lib/ai/types';
+import { getMockPlanByGoal, type RoadmapStage } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
@@ -15,6 +19,7 @@ type PhasePageProps = {
     goal?: string;
     phaseIndex?: string;
     phaseName?: string;
+    mode?: string;
   }>;
 };
 
@@ -51,6 +56,55 @@ function adaptMockResource(resource: PhaseResource): DisplayResource {
   };
 }
 
+
+function normalizeMode(value?: string): PlanMode {
+  return value === 'lite' ? 'lite' : 'deep';
+}
+
+function normalizeStep(step: unknown, index: number, fallbackTitle: string): PhaseStep {
+  const candidate = step && typeof step === 'object' ? (step as Partial<PhaseStep>) : {};
+  return {
+    title: typeof candidate.title === 'string' && candidate.title.trim() ? candidate.title : `第 ${index + 1} 步：${fallbackTitle}`,
+    explanation:
+      typeof candidate.explanation === 'string' && candidate.explanation.trim()
+        ? candidate.explanation
+        : '先理解本步骤的核心概念和使用场景，再通过一个小练习把它转化为可检查的能力。学习时要记录输入、过程、输出和卡点，避免只看摘要。',
+    example: typeof candidate.example === 'string' ? candidate.example : '',
+    action: typeof candidate.action === 'string' && candidate.action.trim() ? candidate.action : '完成一个小练习，并记录关键过程。',
+    check: typeof candidate.check === 'string' && candidate.check.trim() ? candidate.check : '能用自己的话解释本步骤，并独立完成同类任务。',
+  };
+}
+
+function stepsFromStage(stage: RoadmapStage | undefined, detailSteps: PhaseStep[]): PhaseStep[] {
+  if (stage && Array.isArray(stage.steps) && stage.steps.length > 0) {
+    return stage.steps.map((step, index) => normalizeStep(step, index, stage.name || '学习本阶段重点'));
+  }
+
+  if (Array.isArray(detailSteps) && detailSteps.length > 0) {
+    return detailSteps.map((step, index) => normalizeStep(step, index, '学习本阶段重点'));
+  }
+
+  return [];
+}
+
+async function getPlanStage(goal: string, mode: PlanMode, phaseIndex: number, phaseName: string): Promise<RoadmapStage | undefined> {
+  const fallbackPlan = getMockPlanByGoal(goal);
+  let plan = fallbackPlan;
+
+  try {
+    const cachedPlan = await readCachedPlan(goal, mode);
+    if (cachedPlan) {
+      plan = adaptGeneratedPlan(cachedPlan);
+    }
+  } catch (error) {
+    console.warn('Phase cached plan fallback', error instanceof Error ? error.message : 'unknown error');
+  }
+
+  const stages = Array.isArray(plan.roadmap) ? plan.roadmap : [];
+  const normalizedPhaseName = phaseName.trim();
+  return stages.find((stage) => stage.name === normalizedPhaseName) || stages[phaseIndex - 1] || stages[0];
+}
+
 function adaptSearchResource(resource: SearchResource): DisplayResource {
   return {
     title: resource.title,
@@ -69,10 +123,16 @@ function adaptSearchResource(resource: SearchResource): DisplayResource {
 export default async function PhasePage({ searchParams }: PhasePageProps) {
   const params = await searchParams;
   const goal = params.goal?.trim() || '你的目标';
+  const mode = normalizeMode(params.mode);
   const phaseIndex = parsePhaseIndex(params.phaseIndex);
   const rawPhaseName = params.phaseName?.trim() || '';
   const phaseName = rawPhaseName || `阶段${phaseIndex}`;
   const detail = getMockPhaseDetail(goal, phaseName, phaseIndex);
+  const planStage = await getPlanStage(goal, mode, phaseIndex, phaseName);
+  const teachingSteps = stepsFromStage(planStage, detail.steps);
+  const stageOutput = planStage?.output || detail.output;
+  const stageWhy = planStage?.why || detail.why;
+  const commonMistakes = Array.isArray(planStage?.commonMistakes) && planStage.commonMistakes.length > 0 ? planStage.commonMistakes : detail.commonMistakes;
   const encodedGoal = encodeURIComponent(goal);
   const resourceSearchQuery = rawPhaseName ? `${goal} ${rawPhaseName} 学习资料 教程 课程 练习` : goal;
   let resources = detail.resources.map(adaptMockResource);
@@ -101,7 +161,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <Link
-            href={`/plan?goal=${encodedGoal}`}
+            href={`/plan?goal=${encodedGoal}&mode=${mode}`}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -161,8 +221,50 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">阶段概览</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">阶段目标</h2>
-            <p className="mt-3 leading-7 text-slate-600">{detail.objective}</p>
+            <p className="mt-3 leading-7 text-slate-600">{detail.objective || '暂无说明'}</p>
+            <p className="mt-4 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">为什么先学：{stageWhy || '这个阶段用于建立后续学习所需的基础。'}</p>
+            <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">阶段产出：{stageOutput || '一份可检查的阶段成果。'}</p>
           </div>
+        </section>
+
+        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+          <div className="mb-6">
+            <p className="text-sm font-semibold text-sky-700">阶段分步讲解</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">每一步都是 AILINES AI 解答</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">先读讲解，再完成行动建议，最后用完成检查判断是否掌握。</p>
+          </div>
+          <div className="space-y-4">
+            {teachingSteps.map((step, index) => (
+              <article key={`${step.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white">{index + 1}</div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-semibold text-slate-950">{step.title}</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">{step.explanation}</p>
+                    {step.example ? <p className="mt-4 rounded-xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">例子：</span>{step.example}</p> : null}
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
+                        <p className="font-semibold text-sky-800">行动建议</p>
+                        <p className="mt-2">{step.action}</p>
+                      </div>
+                      <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
+                        <p className="font-semibold text-sky-800">完成检查</p>
+                        <p className="mt-2">{step.check}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {commonMistakes.length > 0 ? (
+            <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-800">常见错误</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-900">
+                {commonMistakes.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          ) : null}
         </section>
 
         <InteractivePhaseTasks tasks={detail.tasks} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} />

@@ -63,7 +63,7 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
     model,
     messages: createGeneratePlanMessages(safeGoal, safeMode),
     temperature: safeMode === 'lite' ? 0.25 : 0.3,
-    max_tokens: safeMode === 'lite' ? 1400 : 2200,
+    max_tokens: safeMode === 'lite' ? 3200 : 6500,
     response_format: { type: 'json_object' },
   };
 

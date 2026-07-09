@@ -45,6 +45,22 @@ function isStringArray(value: unknown) {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
+function isValidStepArray(value: unknown) {
+  return (
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.every(
+        (step) =>
+          step &&
+          typeof step === 'object' &&
+          typeof (step as { title?: unknown }).title === 'string' &&
+          typeof (step as { explanation?: unknown }).explanation === 'string' &&
+          typeof (step as { action?: unknown }).action === 'string' &&
+          typeof (step as { check?: unknown }).check === 'string',
+      ))
+  );
+}
+
 export function isValidGeneratedPlan(plan: unknown): plan is GeneratedPlan {
   if (!plan || typeof plan !== 'object') {
     return false;
@@ -65,7 +81,8 @@ export function isValidGeneratedPlan(plan: unknown): plan is GeneratedPlan {
         typeof phase.durationWeeks === 'number' &&
         typeof phase.objective === 'string' &&
         typeof phase.description === 'string' &&
-        isStringArray(phase.topics),
+        isStringArray(phase.topics) &&
+        isValidStepArray(phase.steps),
     ) &&
     Array.isArray(candidate.resources) &&
     candidate.resources.length > 0 &&

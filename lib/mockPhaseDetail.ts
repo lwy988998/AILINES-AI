@@ -24,12 +24,24 @@ export type PhasePractice = {
   acceptance: string;
 };
 
+export type PhaseStep = {
+  title: string;
+  explanation: string;
+  example?: string;
+  action: string;
+  check: string;
+};
+
 export type MockPhaseDetail = {
   phaseName: string;
   goal: string;
   duration: string;
   objective: string;
   audience: string;
+  why: string;
+  output: string;
+  commonMistakes: string[];
+  steps: PhaseStep[];
   tasks: PhaseTask[];
   resources: PhaseResource[];
   practices: PhasePractice[];
@@ -243,6 +255,68 @@ function getTheme(goal: string, phaseName: string, phaseIndex: number, domain: L
   }
 }
 
+
+function createTeachingSteps(goal: string, phaseName: string, domain: LearningDomain, tasks: PhaseTask[]): PhaseStep[] {
+  const safeGoal = goal || '当前学习目标';
+  const safePhase = phaseName || '当前阶段';
+  const baseTasks = Array.isArray(tasks) && tasks.length > 0 ? tasks.slice(0, 4) : [
+    { title: '理解阶段目标', duration: '1 小时', description: `明确「${safePhase}」要解决的问题。`, output: '目标拆解清单' },
+    { title: '学习核心方法', duration: '2 小时', description: '掌握本阶段最高频的方法。', output: '方法笔记' },
+    { title: '完成练习复盘', duration: '2 小时', description: '用练习检查理解程度。', output: '练习记录' },
+  ];
+
+  return baseTasks.slice(0, 4).map((task, index) => {
+    const order = index + 1;
+    if (domain === 'math') {
+      return {
+        title: `第 ${order} 步：${task.title}`,
+        explanation: `这一阶段学习「${safeGoal}」不能只背结论，要先把题目背后的概念、条件和变化关系讲清楚。你现在要围绕「${task.title}」建立一个可复述的理解：它解决什么问题，和前后知识有什么联系，什么时候使用，容易和哪个概念混淆。学的时候先看定义，再画图或列公式，最后用简单题验证。这样后面遇到综合题时，你不是机械套公式，而是能判断从哪个条件入手。`,
+        example: `例题：给出一个基础条件，先标出已知量和要求量，再写出可用公式，最后逐步代入计算；如果是三角函数，可用单位圆或函数图像解释正负、周期和特殊值。`,
+        action: `完成「${task.description}」，把每一步推理写出来，不要只写答案。`,
+        check: `能用自己的话解释本步骤，并独立完成 3 道同类题且写出清晰过程。`,
+      };
+    }
+
+    if (domain === 'programming') {
+      return {
+        title: `第 ${order} 步：${task.title}`,
+        explanation: `学习「${safeGoal}」时，这一步不是只看一遍教程，而是要把概念、代码和调试连接起来。你需要先理解「${task.title}」在真实开发中解决什么问题，再写一个最小可运行示例，观察输入、处理和输出分别是什么。遇到报错时，不要急着复制答案，先读错误信息、定位行号、缩小问题范围，再修改验证。这样你会形成“理解—编码—运行—调试—复盘”的闭环，而不是停留在看懂。`,
+        example: `示例：为当前知识点写一个 10-20 行的小程序，例如输入数据、处理逻辑、打印结果；如果报错，记录错误原文、原因判断和最终修复方法。`,
+        action: `完成「${task.description}」，并把代码、运行截图或关键输出保存到笔记里。`,
+        check: `能独立复现示例，改一个参数后仍能解释结果；出现基础报错时能说出排查顺序。`,
+      };
+    }
+
+    if (domain === 'office' || domain === 'design') {
+      return {
+        title: `第 ${order} 步：${task.title}`,
+        explanation: `这一阶段的关键是把「${safeGoal}」放进真实使用场景里理解。你需要先明确使用者是谁、要完成什么结果、质量标准是什么，再学习对应功能或方法。不要只记按钮位置，而要知道为什么这样操作、错误操作会带来什么后果、成果如何检查。完成后把流程整理成模板，下次遇到类似任务就可以复用。`,
+        example: `场景：围绕一个真实任务制作表格、文档、设计稿或模板，先做基础版本，再检查格式、数据、层级或可读性。`,
+        action: `按「${task.description}」完成一个可查看成果，并记录操作流程。`,
+        check: `成果能被他人打开和理解，关键步骤可复现，并至少发现 1 个可优化点。`,
+      };
+    }
+
+    if (domain === 'language') {
+      return {
+        title: `第 ${order} 步：${task.title}`,
+        explanation: `语言学习不能只背材料，要把输入、模仿、输出和复盘连成循环。你在「${task.title}」这一步要先接触真实表达，标出高频词句，再用自己的话复述或改写。输出时不要追求一次完美，重点是让表达能被理解，然后根据错误记录修正发音、语法、用词或语序。持续这样练，才能从“看得懂”变成“说得出、写得出”。`,
+        example: `例子：选一段短材料，先跟读 3 遍，再整理 10 个表达，最后用这些表达写一段 80-120 字短文或做 1 分钟口头复述。`,
+        action: `完成「${task.description}」，保留原始输出和修改后的版本。`,
+        check: `能复述材料主旨，并把至少 5 个新表达用在自己的句子里。`,
+      };
+    }
+
+    return {
+      title: `第 ${order} 步：${task.title}`,
+      explanation: `学习「${safeGoal}」要避免只看清单式建议。你在「${safePhase}」中需要先理解这一步解决的核心问题，再把它拆成可执行动作：学什么、练什么、产出什么、如何检查。每完成一个动作都要留下证据，例如笔记、练习记录、截图、代码、错题或成果说明。这样学习过程才可追踪，也方便后续让 AILINES AI 根据你的卡点继续讲解。`,
+      example: `例子：围绕「${task.title}」做一次小练习，先写目标，再执行 30-60 分钟，最后用 5 句话复盘学到了什么、哪里卡住、下一步怎么改。`,
+      action: `完成「${task.description}」，并整理一个阶段小产出。`,
+      check: `能清楚说明本步骤的目的、方法和产出，并知道下一步该练什么。`,
+    };
+  });
+}
+
 function getResources(goal: string, phaseName: string, domain: LearningDomain): PhaseResource[] {
   if (domain === 'math') {
     return [
@@ -315,15 +389,21 @@ export function getMockPhaseDetail(goal: string, phaseName: string, phaseIndex: 
   const domain = detectLearningDomain(`${safeGoal} ${safePhaseName}`);
   const theme = getTheme(safeGoal, safePhaseName, safePhaseIndex, domain);
 
+  const tasks = Array.isArray(theme.tasks) ? theme.tasks.map(([title, duration, description, output]) => ({ title, duration, description, output })) : [];
+
   return {
     phaseName: safePhaseName,
     goal: safeGoal,
-    duration: theme.duration,
-    objective: theme.objective,
-    audience: theme.audience,
-    tasks: theme.tasks.map(([title, duration, description, output]) => ({ title, duration, description, output })),
+    duration: theme.duration || '1-2 周',
+    objective: theme.objective || '掌握本阶段核心能力。',
+    why: `先学「${safePhaseName}」是为了给「${safeGoal}」建立稳定基础，避免直接跳到复杂任务时只会照抄步骤。`,
+    output: tasks[tasks.length - 1]?.output || '一份可检查的阶段学习成果。',
+    commonMistakes: ['只看教程不动手练习', '没有记录错误原因和修复过程', '跳过阶段检查点直接进入下一阶段'],
+    audience: theme.audience || '希望稳步推进当前目标的学习者。',
+    steps: createTeachingSteps(safeGoal, safePhaseName, domain, tasks),
+    tasks,
     resources: getResources(safeGoal, safePhaseName, domain),
-    practices: theme.practices,
-    checklist: theme.checklist,
+    practices: Array.isArray(theme.practices) ? theme.practices : [],
+    checklist: Array.isArray(theme.checklist) ? theme.checklist : [],
   };
 }
