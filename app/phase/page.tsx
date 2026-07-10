@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Trophy } from 'lucide-react';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
 import { CourseSlides } from '@/components/course/CourseSlides';
 import { SiteHeader } from '@/components/site-header';
+import { InteractiveLearningSteps } from '@/components/phase/InteractiveLearningSteps';
 import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
 import { getMockPhaseDetail, type PhaseResource, type PhaseStep } from '@/lib/mockPhaseDetail';
 import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
@@ -245,45 +246,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-sky-700">阶段分步学习</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">AILINES AI 分步讲解</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">先读讲解，再完成行动建议，最后用完成检查判断是否掌握。</p>
-          </div>
-          <div className="space-y-4">
-            {teachingSteps.map((step, index) => (
-              <article key={`${step.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white">{index + 1}</div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-slate-950">{step.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-700">{step.explanation}</p>
-                    {step.example ? <p className="mt-4 rounded-xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">例子：</span>{step.example}</p> : null}
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
-                        <p className="font-semibold text-sky-800">现在你要做</p>
-                        <p className="mt-2">{step.action}</p>
-                      </div>
-                      <div className="rounded-xl bg-white p-4 text-sm leading-6 text-slate-700">
-                        <p className="font-semibold text-sky-800">完成检查</p>
-                        <p className="mt-2">{step.check}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-          {commonMistakes.length > 0 ? (
-            <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-800">常见错误</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-900">
-                {commonMistakes.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </div>
-          ) : null}
-        </section>
+        <InteractiveLearningSteps steps={teachingSteps} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} commonMistakes={commonMistakes} />
 
         <InteractivePhaseTasks tasks={detail.tasks} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} />
 
