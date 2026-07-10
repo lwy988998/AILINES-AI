@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 type PlanHeaderProps = {
   goal: string;
@@ -11,14 +10,7 @@ type PlanHeaderProps = {
 export function PlanHeader({ goal, title, duration, summary }: PlanHeaderProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        返回首页
-      </Link>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_280px] lg:items-end">
+      <div className="grid gap-6 lg:grid-cols-[1fr_280px] lg:items-end">
         <div>
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800">
             <Sparkles className="h-4 w-4" />
