@@ -3,13 +3,15 @@ import { Send } from 'lucide-react';
 type AskInputProps = {
   goal: string;
   defaultQuestion?: string;
+  mode?: 'lite' | 'deep';
 };
 
-export function AskInput({ goal, defaultQuestion = '' }: AskInputProps) {
+export function AskInput({ goal, defaultQuestion = '', mode = 'deep' }: AskInputProps) {
   return (
     <section className="sticky bottom-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-lg shadow-sky-900/10 sm:p-5">
       <form action="/ask" method="GET" className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <input type="hidden" name="goal" value={goal} />
+        <input type="hidden" name="mode" value={mode} />
         <label htmlFor="ask-input" className="sr-only">
           输入你的问题
         </label>

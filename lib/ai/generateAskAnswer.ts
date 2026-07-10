@@ -1,5 +1,6 @@
 import { createAskPromptMessages } from '@/lib/ai/askPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
+import type { PlanMode } from '@/lib/ai/types';
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
@@ -54,7 +55,7 @@ function isValidAskAnswer(value: unknown): value is GeneratedAskAnswer {
   );
 }
 
-export async function generateAskAnswerWithAI(goal: string, question: string): Promise<GeneratedAskAnswer> {
+export async function generateAskAnswerWithAI(goal: string, question: string, mode: PlanMode = 'deep'): Promise<GeneratedAskAnswer> {
   const safeGoal = goal.trim() || '学习';
   const safeQuestion = question.trim();
 
@@ -74,9 +75,9 @@ export async function generateAskAnswerWithAI(goal: string, question: string): P
   const timeoutId = setTimeout(() => controller.abort(), getRequestTimeoutMs());
   const requestBody = {
     model,
-    messages: createAskPromptMessages(safeGoal, safeQuestion),
-    temperature: 0.3,
-    max_tokens: 900,
+    messages: createAskPromptMessages(safeGoal, safeQuestion, mode),
+    temperature: mode === 'lite' ? 0.25 : 0.3,
+    max_tokens: mode === 'lite' ? 700 : 1100,
     response_format: { type: 'json_object' },
   };
 

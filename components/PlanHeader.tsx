@@ -5,9 +5,11 @@ type PlanHeaderProps = {
   title: string;
   duration: string;
   summary: string;
+  modeLabel: string;
+  modeDescription: string;
 };
 
-export function PlanHeader({ goal, title, duration, summary }: PlanHeaderProps) {
+export function PlanHeader({ goal, title, duration, summary, modeLabel, modeDescription }: PlanHeaderProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_280px] lg:items-end">
@@ -27,6 +29,10 @@ export function PlanHeader({ goal, title, duration, summary }: PlanHeaderProps) 
           <p className="text-sm font-medium text-sky-800">当前学习目标</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{goal}</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">建议周期：{duration} · 适合从入门到完成作品集</p>
+          <div className="mt-4 rounded-xl border border-sky-100 bg-white px-3 py-2">
+            <p className="text-xs font-semibold text-sky-700">当前模式：{modeLabel}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">{modeDescription}</p>
+          </div>
         </div>
       </div>
     </section>

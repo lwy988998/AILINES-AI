@@ -39,11 +39,12 @@ function fallbackGoal(prompt: string) {
   return prompt.trim();
 }
 
-function createFallbackResponse(prompt: string, message = '图片识别暂不可用，请补充文字描述') {
+function createFallbackResponse(prompt: string, mode: PlanMode, message = '图片识别暂不可用，请补充文字描述') {
   return NextResponse.json({
     success: false,
     message,
     goal: fallbackGoal(prompt),
+    mode,
   });
 }
 
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.AI_API_KEY;
 
   if (!apiKey) {
-    return createFallbackResponse(prompt);
+    return createFallbackResponse(prompt, mode);
   }
 
   const baseUrl = process.env.AI_BASE_URL || DEFAULT_AI_BASE_URL;
@@ -108,14 +109,14 @@ export async function POST(request: NextRequest) {
       {
         role: 'system',
         content:
-          '你是 AILINES AI 的图片学习需求识别器。用户会上传学习相关图片，可能是题目、代码、报错、公式、界面截图或资料截图。请识别图片中的核心问题，并结合用户文字提示，输出适合生成学习路线的目标。不要编造图片中不存在的信息。请只返回 JSON，包含 goal、summary、keywords、suggestedSearchQuery。',
+          '你是 AILINES AI 的图片学习需求识别器。用户会上传学习相关图片，可能是题目、代码、报错、公式、界面截图或资料截图。请识别图片中的核心问题，并结合用户文字提示，输出适合生成学习路线的目标。不要编造图片中不存在的信息。不要输出 mode，不要推荐或改变生成模式；用户选择的模式由前端继续保留。请只返回 JSON，包含 goal、summary、keywords、suggestedSearchQuery。',
       },
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `用户文字提示：${prompt || '未提供'}\n当前生成模式：${mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划'}\n请根据图片和文字生成一个清晰、可用于学习路线生成和真实资料搜索的学习目标。`,
+            text: `用户文字提示：${prompt || '未提供'}\n用户已经选择的生成模式：${mode === 'lite' ? '快速规划 mode=lite' : '深度 AILINES AI 规划 mode=deep'}\n必须保留用户选择的模式，不要根据图片复杂度建议或输出新的 mode。请根据图片和文字生成一个清晰、可用于学习路线生成和真实资料搜索的学习目标。`,
           },
           {
             type: 'image_url',
@@ -159,14 +160,14 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.warn('Image goal analysis unavailable', error instanceof Error ? error.name : 'unknown');
-    return createFallbackResponse(prompt);
+    return createFallbackResponse(prompt, mode);
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!completionResponse.ok) {
     console.warn('Image goal analysis provider rejected request', completionResponse.status);
-    return createFallbackResponse(prompt);
+    return createFallbackResponse(prompt, mode);
   }
 
   try {
@@ -174,13 +175,13 @@ export async function POST(request: NextRequest) {
     const content = completion.choices?.[0]?.message?.content;
 
     if (!content) {
-      return createFallbackResponse(prompt);
+      return createFallbackResponse(prompt, mode);
     }
 
     const analysis = parseAIJson<ImageGoalAnalysis>(content);
 
     if (!isValidAnalysis(analysis)) {
-      return createFallbackResponse(prompt);
+      return createFallbackResponse(prompt, mode);
     }
 
     return NextResponse.json({
@@ -189,10 +190,11 @@ export async function POST(request: NextRequest) {
       summary: analysis.summary.trim(),
       keywords: analysis.keywords.map((keyword) => keyword.trim()).filter(Boolean).slice(0, 8),
       suggestedSearchQuery: analysis.suggestedSearchQuery.trim(),
+      mode,
     });
   } catch (error) {
     console.warn('Image goal analysis parse failed', error instanceof Error ? error.name : 'unknown');
-    return createFallbackResponse(prompt);
+    return createFallbackResponse(prompt, mode);
   }
 }
 

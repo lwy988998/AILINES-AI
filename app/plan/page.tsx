@@ -11,7 +11,6 @@ import { SiteHeader } from '@/components/site-header';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
-import { detectUserIntent } from '@/lib/intent';
 import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 
@@ -30,55 +29,17 @@ type PlanPageProps = {
 export default async function PlanPage({ searchParams }: PlanPageProps) {
   const params = await searchParams;
   const rawGoal = params.goal?.trim() || '';
-  const mode: PlanMode = params.mode === 'lite' ? 'lite' : 'deep';
+  const mode: PlanMode = params.mode === 'lite' || params.mode === 'deep' ? params.mode : 'deep';
   const forcePlan = params.forcePlan === '1';
   const goal = rawGoal || '你的目标';
-  const intent = detectUserIntent(rawGoal);
-  const askHref = `/ask?goal=${encodeURIComponent(goal)}&question=${encodeURIComponent(goal)}`;
-  const forcePlanHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep&forcePlan=1`;
+  const modeLabel = mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
+  const modeDescription = mode === 'lite' ? '轻量学习课程：保留讲解与练习，但阶段和资源更精简。' : '系统学习课程：更完整的阶段、分步讲解、课件、知识结构和练习。';
 
-  if (rawGoal && intent.intent === 'ask' && !forcePlan) {
-    return (
-      <main className="min-h-screen bg-[#f5f9ff]">
-        <SiteHeader />
-        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-            <p className="text-sm font-semibold text-sky-700">输入识别：具体问答</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              这更像一个具体问题
-            </h1>
-            <p className="mt-4 text-base leading-8 text-slate-600 sm:text-lg">
-              你输入的内容更适合通过轻量问答获得步骤化解答，而不是生成长期学习路线。
-            </p>
-            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-              当前输入：{goal}
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={askHref}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-              >
-                去问 AILINES AI
-              </Link>
-              <Link
-                href={forcePlanHref}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
-              >
-                仍然生成学习路线
-              </Link>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
-  }
-
-  const fallbackPlan = getMockPlanByGoal(goal);
+  const fallbackPlan = getMockPlanByGoal(goal, mode);
   let plan = fallbackPlan;
   let isAIPlan = false;
   let errorMessage = '';
   let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
-  const deepModeHref = `/plan?goal=${encodeURIComponent(goal)}&mode=deep${forcePlan ? '&forcePlan=1' : ''}`;
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
   if (rawGoal) {
@@ -129,7 +90,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     <main className="min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} />
+        <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
         {rawGoal ? (
           <section
             className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm font-medium shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
@@ -143,14 +104,6 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                   : '已生成深度 AILINES AI 学习方案'
                 : `AILINES AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
             </span>
-            {mode === 'lite' ? (
-              <Link
-                href={deepModeHref}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-              >
-                切换为深度 AILINES AI 规划
-              </Link>
-            ) : null}
             {!isAIPlan ? (
               <Link
                 href={retryHref}
@@ -170,7 +123,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         </section>
         <ResourcesSection resources={plan.resources} />
         <ProjectsSection projects={plan.projects} />
-        <PlanActions goal={goal} title={plan.title} />
+        <PlanActions goal={goal} title={plan.title} mode={mode} />
       </div>
     </main>
   );

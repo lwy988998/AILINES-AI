@@ -2,7 +2,6 @@
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Plus, X } from 'lucide-react';
-import { detectUserIntent } from '@/lib/intent';
 
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -94,14 +93,7 @@ export function GoalForm() {
   }
 
   function routeToGoal(goal: string, mode: PlanningMode) {
-    const intent = detectUserIntent(goal);
-
-    if (intent.intent === 'ask') {
-      window.location.href = `/ask?goal=${encodeURIComponent(intent.suggestedGoal)}&question=${encodeURIComponent(intent.suggestedQuestion)}`;
-      return;
-    }
-
-    window.location.href = `/plan?goal=${encodeURIComponent(intent.suggestedGoal)}&mode=${mode}`;
+    window.location.href = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}`;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

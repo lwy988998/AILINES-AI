@@ -14,10 +14,10 @@ mindMap 必须包含：title 和 nodes；nodes 至少有 root，并按 root -> p
 
 function getModeRules(mode: PlanMode) {
   if (mode === 'lite') {
-    return `快速规划 mode=lite：定义为轻量学习课程，不是极简摘要。durationWeeks 建议 3-6；phases 3-4 个；每个阶段 steps 2-3 步；每个 explanation 至少 80-120 中文字；每个 step 至少有 explanation/action/check，尽量给 example；slides 约 4-6 张；mindMap 可以简洁但必须有 root + 至少 3 个一级节点；resources 3 个，projects 2 个。`;
+    return `当前用户选择的生成模式是：快速规划 / 轻量学习课程 mode=lite。你必须严格遵守这个模式，不允许根据主题难度、目标长度、图片内容或自己的判断升级为 deep。轻量学习课程不是极简摘要，仍要有讲解、行动和检查；durationWeeks 建议 3-6；phases 3-4 个；每个阶段 steps 2-3 步；每个 explanation 至少 80-120 中文字；每个 step 至少有 explanation/action/check，尽量给 example；slides 约 4-6 张；mindMap 可以简洁但必须有 root + 至少 3 个一级节点；resources 3 个，projects 2 个。`;
   }
 
-  return `深度 AILINES AI 规划 mode=deep：定义为系统学习课程。durationWeeks 建议 8-12；phases 4-6 个；每个阶段 steps 3-5 步；每个 step 必须有 explanation/example/action/check；explanation 至少 150-250 中文字；slides 约 8-12 张；mindMap 更完整；必须包含 practice、checkpoint、commonMistakes、output；resources 4-6 个，projects 3 个。`;
+  return `当前用户选择的生成模式是：深度 AILINES AI 规划 / 系统学习课程 mode=deep。你必须严格遵守这个模式，不允许根据主题看似简单、目标长度、图片内容或自己的判断降级为 lite。系统学习课程要更完整；durationWeeks 建议 8-12；phases 4-6 个；每个阶段 steps 3-5 步；每个 step 必须有 explanation/example/action/check；explanation 至少 150-250 中文字；slides 约 8-12 张；mindMap 更完整；必须包含 practice、checkpoint、commonMistakes、output；resources 4-6 个，projects 3 个。`;
 }
 
 export function createGeneratePlanMessages(goal: string, mode: PlanMode = 'deep') {
@@ -28,7 +28,7 @@ export function createGeneratePlanMessages(goal: string, mode: PlanMode = 'deep'
     },
     {
       role: 'user',
-      content: `学习目标：${goal}\n规划模式：${mode === 'lite' ? '快速规划 mode=lite' : '深度 AILINES AI 规划 mode=deep'}\n请生成课程系统 JSON。它应该帮助用户真正学习，而不是只给学习路线表。必须包含分步教学内容、课程课件 slides 和知识结构 mindMap。`,
+      content: `学习目标：${goal}\n用户已经选择的规划模式：${mode === 'lite' ? '快速规划 / 轻量学习课程 mode=lite' : '深度 AILINES AI 规划 / 系统学习课程 mode=deep'}\n必须严格按照用户选择的模式生成，不允许自行改变模式，不允许输出或暗示另一种模式。请生成课程系统 JSON。它应该帮助用户真正学习，而不是只给学习路线表。必须包含分步教学内容、课程课件 slides 和知识结构 mindMap。`,
     },
   ] as const;
 }

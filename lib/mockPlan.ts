@@ -1,3 +1,5 @@
+import type { PlanMode } from '@/lib/ai/types';
+
 export type CourseStep = {
   title: string;
   explanation: string;
@@ -418,7 +420,32 @@ function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python'
   ];
 }
 
-function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | 'gpt' | 'tool' | 'general'): MockPlan {
+function applyModeToFallbackPlan(plan: MockPlan, mode: PlanMode): MockPlan {
+  if (mode === 'deep') {
+    return plan;
+  }
+
+  return {
+    ...plan,
+    duration: plan.duration.replace(/\d+/, (value) => String(Math.max(3, Math.min(6, Number(value) || 4)))),
+    summary: `${plan.summary} 当前为快速规划 / 轻量学习课程版本，优先保留最关键阶段、练习和资料。`,
+    roadmap: plan.roadmap.slice(0, 3).map((stage) => ({
+      ...stage,
+      steps: Array.isArray(stage.steps) ? stage.steps.slice(0, 2) : stage.steps,
+      commonMistakes: Array.isArray(stage.commonMistakes) ? stage.commonMistakes.slice(0, 2) : stage.commonMistakes,
+    })),
+    courseStructure: plan.courseStructure.slice(0, 3).map((stage) => ({
+      ...stage,
+      topics: stage.topics.slice(0, 4),
+    })),
+    resources: plan.resources.slice(0, 3),
+    projects: plan.projects.slice(0, 2),
+    slides: Array.isArray(plan.slides) ? plan.slides.slice(0, 6) : plan.slides,
+    mindMap: plan.mindMap,
+  };
+}
+
+function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | 'gpt' | 'tool' | 'general', mode: PlanMode): MockPlan {
   const enhanced: MockPlan = {
     ...plan,
     courseIntro: plan.courseIntro || plan.overview || plan.summary,
@@ -440,41 +467,41 @@ function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | '
       : [],
   };
 
-  return {
+  return applyModeToFallbackPlan({
     ...enhanced,
     slides: Array.isArray(enhanced.slides) && enhanced.slides.length > 0 ? enhanced.slides : buildSlidesFromPlan(enhanced, goal),
     mindMap: enhanced.mindMap || buildMindMapFromPlan(enhanced, goal),
-  };
+  }, mode);
 }
 
-export function getMockPlanByGoal(goal: string): MockPlan {
+export function getMockPlanByGoal(goal: string, mode: PlanMode = 'deep'): MockPlan {
   const normalizedGoal = goal.trim().toLowerCase();
 
   if (/(python|数据分析|pandas|sql)/i.test(goal) || normalizedGoal.includes('python')) {
-    return enhancePlan(pythonPlan, goal, 'python');
+    return enhancePlan(pythonPlan, goal, 'python', mode);
   }
 
   if (/(三角函数|数学|代数|几何|微积分|函数|公式|方程)/i.test(goal)) {
-    return enhancePlan(genericPlan, goal, 'math');
+    return enhancePlan(genericPlan, goal, 'math', mode);
   }
 
   if (/(gpt|chatgpt|提示词|大模型|人工智能|ai)/i.test(goal)) {
-    return enhancePlan(mlPlan, goal, 'gpt');
+    return enhancePlan(mlPlan, goal, 'gpt', mode);
   }
 
   if (/(react|前端|javascript|typescript)/i.test(goal)) {
-    return enhancePlan(reactPlan, goal, 'python');
+    return enhancePlan(reactPlan, goal, 'python', mode);
   }
 
   if (/(机器学习|machine learning|\bml\b|深度学习|\bai\b)/i.test(goal)) {
-    return enhancePlan(mlPlan, goal, 'gpt');
+    return enhancePlan(mlPlan, goal, 'gpt', mode);
   }
 
   if (/(excel|表格|数据透视表|办公)/i.test(goal)) {
-    return enhancePlan(excelPlan, goal, 'tool');
+    return enhancePlan(excelPlan, goal, 'tool', mode);
   }
 
-  return enhancePlan(genericPlan, goal, 'general');
+  return enhancePlan(genericPlan, goal, 'general', mode);
 }
 
 export const getMockPlan = getMockPlanByGoal;

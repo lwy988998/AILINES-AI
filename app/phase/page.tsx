@@ -91,7 +91,7 @@ function stepsFromStage(stage: RoadmapStage | undefined, detailSteps: PhaseStep[
 }
 
 async function getPlanStage(goal: string, mode: PlanMode, phaseIndex: number, phaseName: string): Promise<RoadmapStage | undefined> {
-  const fallbackPlan = getMockPlanByGoal(goal);
+  const fallbackPlan = getMockPlanByGoal(goal, mode);
   let plan = fallbackPlan;
 
   try {
@@ -127,6 +127,8 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const params = await searchParams;
   const goal = params.goal?.trim() || '你的目标';
   const mode = normalizeMode(params.mode);
+  const modeLabel = mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
+  const modeDescription = mode === 'lite' ? '轻量学习课程：阶段内容更聚焦，保留关键讲解和练习。' : '系统学习课程：阶段讲解、任务、课件和资料更完整。';
   const phaseIndex = parsePhaseIndex(params.phaseIndex);
   const rawPhaseName = params.phaseName?.trim() || '';
   const phaseName = rawPhaseName || `阶段${phaseIndex}`;
@@ -153,6 +155,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const stageWhy = planStage?.why || detail.why;
   const commonMistakes = Array.isArray(planStage?.commonMistakes) && planStage.commonMistakes.length > 0 ? planStage.commonMistakes : detail.commonMistakes;
   const encodedGoal = encodeURIComponent(goal);
+  const encodedMode = encodeURIComponent(mode);
   const resourceSearchQuery = rawPhaseName ? `${goal} ${rawPhaseName} 学习资料 教程 课程 练习` : goal;
   let resources = detail.resources.map(adaptMockResource);
 
@@ -180,7 +183,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <Link
-            href={`/plan?goal=${encodedGoal}&mode=${mode}`}
+            href={`/plan?goal=${encodedGoal}&mode=${encodedMode}`}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -194,17 +197,21 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
               </div>
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{detail.phaseName}</h1>
               <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">针对「{goal}」的阶段学习计划</p>
+              <div className="mt-5 w-fit rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm shadow-sm">
+                <p className="font-semibold text-sky-800">当前模式：{modeLabel}</p>
+                <p className="mt-1 leading-6 text-slate-600">{modeDescription}</p>
+              </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
-                href={`/progress?goal=${encodedGoal}`}
+                href={`/progress?goal=${encodedGoal}&mode=${encodedMode}`}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
                 <ListChecks className="h-4 w-4" />
                 进入进度追踪
               </Link>
               <Link
-                href={`/ask?goal=${encodedGoal}`}
+                href={`/ask?goal=${encodedGoal}&mode=${encodedMode}`}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
               >
                 <Bot className="h-4 w-4" />
@@ -330,11 +337,11 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             <p className="mt-2 text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AILINES AI 追问本阶段卡点。</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href={`/progress?goal=${encodedGoal}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+            <Link href={`/progress?goal=${encodedGoal}&mode=${encodedMode}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
               <ClipboardCheck className="h-4 w-4" />
               开始执行
             </Link>
-            <Link href={`/ask?goal=${encodedGoal}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+            <Link href={`/ask?goal=${encodedGoal}&mode=${encodedMode}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
               <Bot className="h-4 w-4" />
               问 AILINES AI
             </Link>
