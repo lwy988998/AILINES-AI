@@ -1,10 +1,9 @@
+import { AIClientError, createChatCompletion, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 import { createAskPromptMessages } from '@/lib/ai/askPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import type { PlanMode } from '@/lib/ai/types';
 
-const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
-const DEFAULT_AI_MODEL = 'deepseek-chat';
-const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_ASK_TIMEOUT_MS = 25_000;
 
 export type GeneratedAskAnswer = {
   title: string;
@@ -13,27 +12,21 @@ export type GeneratedAskAnswer = {
   tips: string[];
 };
 
-type ChatCompletionResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-  }>;
-};
-
 export class GenerateAskAnswerError extends Error {
   status: number;
+  type: string;
 
-  constructor(message: string, status = 502) {
+  constructor(message: string, status = 502, type = 'unknown') {
     super(message);
     this.name = 'GenerateAskAnswerError';
     this.status = status;
+    this.type = type;
   }
 }
 
-function getRequestTimeoutMs() {
-  const configuredTimeout = Number(process.env.AI_ASK_TIMEOUT_MS || process.env.AI_TIMEOUT_MS);
-  return Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : DEFAULT_REQUEST_TIMEOUT_MS;
+function getAskTimeoutMs() {
+  const configuredTimeout = Number(process.env.AI_ASK_TIMEOUT_MS);
+  return Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : getAIRequestTimeoutMs(DEFAULT_ASK_TIMEOUT_MS);
 }
 
 function isStringArray(value: unknown) {
@@ -55,84 +48,46 @@ function isValidAskAnswer(value: unknown): value is GeneratedAskAnswer {
   );
 }
 
+function toAskError(error: unknown) {
+  const safeError = toSafeAIError(error);
+  const status = safeError.type === 'missing_config' || safeError.type === 'auth_error' ? 503 : 502;
+  return new GenerateAskAnswerError('AILINES AI 问答暂时不可用，已展示基础示例回答。', status, safeError.type);
+}
+
 export async function generateAskAnswerWithAI(goal: string, question: string, mode: PlanMode = 'deep'): Promise<GeneratedAskAnswer> {
   const safeGoal = goal.trim() || '学习';
   const safeQuestion = question.trim();
+  const safeMode: PlanMode = mode === 'lite' ? 'lite' : 'deep';
 
   if (!safeQuestion) {
-    throw new GenerateAskAnswerError('请提供问题', 400);
+    throw new GenerateAskAnswerError('请提供问题', 400, 'invalid_request');
   }
-
-  const apiKey = process.env.AI_API_KEY;
-
-  if (!apiKey) {
-    throw new GenerateAskAnswerError('AI_API_KEY 未配置', 500);
-  }
-
-  const baseUrl = process.env.AI_BASE_URL || DEFAULT_AI_BASE_URL;
-  const model = process.env.AI_MODEL || DEFAULT_AI_MODEL;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), getRequestTimeoutMs());
-  const requestBody = {
-    model,
-    messages: createAskPromptMessages(safeGoal, safeQuestion, mode),
-    temperature: mode === 'lite' ? 0.25 : 0.3,
-    max_tokens: mode === 'lite' ? 700 : 1100,
-    response_format: { type: 'json_object' },
-  };
-
-  let completionResponse: Response;
 
   try {
-    completionResponse = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-      cache: 'no-store',
+    const content = await createChatCompletion({
+      purpose: 'ask',
+      messages: createAskPromptMessages(safeGoal, safeQuestion, safeMode),
+      temperature: safeMode === 'lite' ? 0.25 : 0.3,
+      maxTokens: safeMode === 'lite' ? 700 : 1100,
+      responseFormat: 'json_object',
+      timeoutMs: getAskTimeoutMs(),
     });
 
-    if (completionResponse.status === 400) {
-      completionResponse = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...requestBody, response_format: undefined }),
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-    }
-  } catch {
-    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!completionResponse.ok) {
-    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
-  }
-
-  const completion = (await completionResponse.json()) as ChatCompletionResponse;
-  const content = completion.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
-  }
-
-  try {
     const answer = parseAIJson<GeneratedAskAnswer>(content);
 
     if (!isValidAskAnswer(answer)) {
-      throw new Error('invalid answer');
+      throw new AIClientError('invalid_response', 'AI answer schema invalid');
     }
 
     return answer;
-  } catch {
-    throw new GenerateAskAnswerError('AILINES AI 问答暂时失败，请稍后重试', 502);
+  } catch (error) {
+    const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
+    console.warn('AI ask fallback', {
+      errorType: safeError.type,
+      status: safeError.status,
+      mode: safeMode,
+      questionLength: safeQuestion.length,
+    });
+    throw toAskError(safeError);
   }
 }
