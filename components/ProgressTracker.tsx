@@ -9,10 +9,11 @@ import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/
 
 type ProgressTrackerProps = {
   goal: string;
+  mode: 'lite' | 'deep';
   title: string;
 };
 
-export function ProgressTracker({ goal, title }: ProgressTrackerProps) {
+export function ProgressTracker({ goal, mode, title }: ProgressTrackerProps) {
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -54,7 +55,7 @@ export function ProgressTracker({ goal, title }: ProgressTrackerProps) {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <ProgressHeader goal={goal} title={title} />
+      <ProgressHeader goal={goal} mode={mode} title={title} />
       <ProgressOverview
         completedCount={completedCount}
         totalCount={totalCount}
@@ -62,10 +63,13 @@ export function ProgressTracker({ goal, title }: ProgressTrackerProps) {
         onReset={resetProgress}
       />
       <section className="grid gap-6 lg:grid-cols-2">
-        {progressStages.map((stage) => (
+        {progressStages.map((stage, phaseIndex) => (
           <ProgressStageCard
             key={stage.id}
             stage={stage}
+            goal={goal}
+            mode={mode}
+            phaseIndex={phaseIndex}
             completedTaskIds={completedTaskIds}
             onToggleTask={toggleTask}
           />
