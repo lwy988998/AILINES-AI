@@ -41,8 +41,8 @@ type ClientConfig = {
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
-const DEFAULT_TIMEOUT_MS = 30_000;
-const RETRY_DELAYS_MS = [500, 1200];
+const DEFAULT_TIMEOUT_MS = 35_000;
+const RETRY_DELAYS_MS = [800];
 
 export class AIClientError extends Error {
   type: AIErrorType;
@@ -188,7 +188,6 @@ async function postChatCompletion(
 export async function createChatCompletion(options: ChatCompletionOptions) {
   const config = getAIConfig(options.model);
   const timeoutMs = getAIRequestTimeoutMs(options.timeoutMs);
-  const deadline = Date.now() + timeoutMs;
   const promptBytes = JSON.stringify(options.messages).length;
   const baseBody = {
     model: config.model,
@@ -201,16 +200,10 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
   let lastError: AIClientError | null = null;
 
   for (let attempt = 1; attempt <= RETRY_DELAYS_MS.length + 1; attempt += 1) {
-    const remainingMs = deadline - Date.now();
-
-    if (remainingMs <= 0) {
-      throw lastError || new AIClientError('timeout', 'AI provider request timed out');
-    }
-
     const body = lastError?.status === 400 ? { ...baseBody, response_format: undefined } : baseBody;
 
     try {
-      return await postChatCompletion(config, body, remainingMs, attempt, promptBytes);
+      return await postChatCompletion(config, body, timeoutMs, attempt, promptBytes);
     } catch (error) {
       const classified = sanitizeError(error);
       lastError = classified;
@@ -224,11 +217,6 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
       }
 
       const retryDelayMs = RETRY_DELAYS_MS[attempt - 1];
-
-      if (Date.now() + retryDelayMs >= deadline) {
-        throw classified;
-      }
-
       await delay(retryDelayMs);
     }
   }

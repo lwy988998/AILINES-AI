@@ -156,6 +156,39 @@ const reactPlan = createPlan({
   ],
 });
 
+const aiToolPlan = createPlan({
+  title: '从零开发自己的 AI 工具课程',
+  duration: '10 周',
+  summary: '这门课程会带你从需求定义开始，理解 AI 工具的基本组成：用户输入、Prompt 设计、模型 API 调用、结果展示、资料搜索整合和部署发布。你会逐步完成一个可用的 AI 工具原型，而不是只学习抽象的机器学习理论。',
+  roadmap: [
+    { name: '阶段一：明确 AI 工具的使用场景和核心功能', duration: '1 周', goal: '把想做的 AI 工具拆成清晰需求', description: '确定目标用户、输入内容、输出结果、使用频率和最小可用功能，避免一开始就做成泛泛的聊天机器人。' },
+    { name: '阶段二：理解大模型 API 与 Prompt 设计', duration: '2 周', goal: '掌握模型调用和提示词迭代方法', description: '学习 API 请求、系统提示词、用户提示词、结构化输出、质量评估和安全边界。' },
+    { name: '阶段三：搭建前端输入界面和交互流程', duration: '2 周', goal: '做出用户可操作的输入与结果页面', description: '设计表单、模式切换、加载状态、重新生成、错误提示和结果展示，让工具能被真实使用。' },
+    { name: '阶段四：接入后端模型调用与错误处理', duration: '2 周', goal: '通过后端稳定调用模型 API', description: '实现服务端接口、环境变量配置、超时、重试、JSON 解析、fallback 和日志记录，避免把密钥暴露到前端。' },
+    { name: '阶段五：增加搜索资料整合或知识库能力', duration: '2 周', goal: '让工具能结合外部资料或私有知识回答', description: '按需求接入搜索 API、文档解析、向量检索或轻量 RAG，并设计引用、去重和可信度检查。' },
+    { name: '阶段六：部署、测试和持续优化', duration: '1 周', goal: '把 AI 工具发布为可维护产品', description: '完成部署、监控、缓存、用户反馈收集、成本控制和版本迭代，让原型变成稳定工具。' },
+  ],
+  courseStructure: [
+    { stage: '阶段一：明确 AI 工具的使用场景和核心功能', topics: ['目标用户', '核心任务', '输入输出', 'MVP 范围', '验收标准'] },
+    { stage: '阶段二：理解大模型 API 与 Prompt 设计', topics: ['模型选择', 'API 请求结构', 'Prompt 模板', '结构化 JSON 输出', '效果评估'] },
+    { stage: '阶段三：搭建前端输入界面和交互流程', topics: ['输入表单', '模式切换', '加载状态', '结果卡片', '重新生成交互'] },
+    { stage: '阶段四：接入后端模型调用与错误处理', topics: ['服务端接口', '密钥隔离', 'timeout/retry', 'JSON 修复', 'fallback 文案'] },
+    { stage: '阶段五：增加搜索资料整合或知识库能力', topics: ['搜索 API', '资料筛选', '知识库/RAG', '引用展示', '可信度检查'] },
+    { stage: '阶段六：部署、测试和持续优化', topics: ['部署上线', '端到端测试', '日志监控', '成本控制', '用户反馈'] },
+  ],
+  resources: [
+    { name: 'OpenAI API 文档', type: '官方文档', difficulty: '入门', free: true, description: '理解 Chat Completions、结构化输出和模型调用方式。', href: 'https://platform.openai.com/docs' },
+    { name: 'Vercel AI SDK 文档', type: '官方文档', difficulty: '中级', free: true, description: '学习在前后端应用中接入模型、流式输出和工具调用。', href: 'https://sdk.vercel.ai/docs' },
+    { name: 'Next.js 官方文档', type: '官方文档', difficulty: '入门', free: true, description: '搭建前端页面、服务端接口和部署 AI 工具的基础资料。', href: 'https://nextjs.org/docs' },
+    { name: 'LangChain RAG 教程', type: '官方文档', difficulty: '中级', free: true, description: '需要知识库能力时，可参考检索增强生成的基本流程。', href: 'https://js.langchain.com/docs/tutorials/rag/' },
+  ],
+  projects: [
+    { name: 'Prompt 生成助手', difficulty: '入门', duration: '3 天', output: '一个输入目标并生成结构化 Prompt 的小工具。', acceptance: '包含输入表单、模型调用、结果展示和重新生成按钮。' },
+    { name: '资料总结 AI 工具', difficulty: '中级', duration: '1 周', output: '一个能整合搜索结果并输出学习摘要的工具。', acceptance: '能展示资料来源、摘要、关键步骤和失败 fallback。' },
+    { name: '个人知识库问答原型', difficulty: '进阶', duration: '2 周', output: '一个支持上传资料或检索资料的 RAG 原型。', acceptance: '包含文档处理、检索、模型回答、引用展示和测试记录。' },
+  ],
+});
+
 const mlPlan = createPlan({
   title: '机器学习入门到实战方案',
   duration: '12 周',
@@ -372,25 +405,25 @@ function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python'
   if (domain === 'gpt') {
     return [
       {
-        title: `第 1 步：明确 GPT 任务输入和输出`,
-        explanation: `学习 GPT 或 AI 工具时，不要只问“帮我做这个”。高质量使用的第一步是把任务说清楚：目标是什么、已有材料是什么、限制条件是什么、希望输出成什么格式。GPT 的回答质量很大程度取决于你的输入是否具体。如果输入模糊，它只能给通用建议；如果输入包含背景、例子和评价标准，它就更容易生成可执行内容。`,
-        example: '低质量提示：帮我写方案。高质量提示：我是零基础，想 2 周学会 Excel 数据透视表，请按每天任务、练习和检查点输出。',
-        action: '把当前目标改写成 3 个不同详细程度的提示词。',
-        check: '能判断哪一个提示词更清晰，并说明原因。',
+        title: `第 1 步：把「${stageName}」拆成输入、处理和输出`,
+        explanation: `开发自己的 AI 工具时，不要一开始就追求复杂功能。先把本阶段要解决的问题拆成三个部分：用户会输入什么，后端要怎样组织 Prompt 和上下文，最终要展示什么结果。这个拆解能帮助你判断需要表单、文件上传、搜索资料、知识库还是普通模型调用，也能避免把所有需求都塞进一个聊天框。`,
+        example: '如果做学习规划工具，输入可以是目标和模式，处理过程是 Prompt + 模型 API + JSON 解析，输出是阶段路线、课件和资源。',
+        action: '写出本阶段功能的输入字段、处理流程、输出格式和失败时的 fallback。',
+        check: '能用一张流程图说明用户操作到 AI 返回结果的完整链路。',
       },
       {
-        title: `第 2 步：学会追问和迭代`,
-        explanation: `GPT 第一次回答通常只是草稿。你需要根据结果继续追问：哪里太笼统、哪里缺例子、哪里需要更适合你的水平。追问时不要只说“不够好”，而要指出具体修改方向，例如“每一步补充例子”“改成初中生能懂的解释”“给出代码和调试步骤”。这种迭代能力比记提示词模板更重要。`,
-        example: '追问示例：把第 2 步展开成老师讲课式说明，包含概念、例子、行动建议和检查标准。',
-        action: '选择一个回答，连续追问 2 次并记录质量变化。',
-        check: '最终回答比初稿更具体、更可执行，并符合你的使用场景。',
+        title: `第 2 步：设计 Prompt、API 调用和结果格式`,
+        explanation: `AI 工具的稳定性很大程度取决于 Prompt 和接口约束。你需要明确系统角色、用户任务、输出字段、长度要求和禁止事项，并让模型尽量返回结构化结果。后端调用时要把 API Key 放在服务端，设置 timeout、retry 和错误分类；前端只接收已经整理好的结果，不直接接触密钥或 provider 细节。`,
+        example: '例如要求模型返回 JSON：title、summary、steps、resources，并在服务端做 JSON parse repair，失败时使用基础课程版本。',
+        action: '为本阶段写一个 Prompt 模板，并设计一个服务端 API 返回结构。',
+        check: '能说明哪些参数会影响输出质量，以及失败时如何降级展示。',
       },
       {
-        title: `第 3 步：检查输出可靠性`,
-        explanation: `AI 工具的输出不能直接全信，尤其涉及事实、资源、代码、公式和决策建议时。你要检查它有没有编造来源、遗漏条件、逻辑跳步或给出过时信息。可以让它列出假设、给出验证方法，再结合官方文档、搜索资源或自己的测试结果确认。这样使用 GPT 才是辅助思考，而不是替代判断。`,
-        example: '如果 GPT 给出代码，先本地运行；如果给出学习资源，优先打开官方文档或真实搜索结果验证。',
-        action: '为一次 GPT 输出做可靠性检查，标出可信、需验证和需要修改的部分。',
-        check: '能说出至少 3 个检查维度，并修正一个不够可靠的输出。',
+        title: `第 3 步：做出可测试的最小原型`,
+        explanation: `AI 工具必须能被实际点击和测试。完成本阶段后，你应该有一个最小原型：前端可以输入目标，后端能调用模型，页面能展示结果，并在超时、限流或 JSON 异常时给出友好 fallback。原型阶段先保证链路稳定，再逐步加入搜索、RAG、图片上传或复杂工作流。`,
+        example: '最小原型可以是一个“AI 学习计划生成器”：输入目标，点击生成，展示课程标题、阶段、资源和重新生成按钮。',
+        action: '实现一个从页面输入到后端模型调用再到结果展示的闭环。',
+        check: '至少测试成功、超时 fallback、空输入和重新生成 4 种情况。',
       },
     ];
   }
@@ -476,25 +509,27 @@ function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | '
 
 export function getMockPlanByGoal(goal: string, mode: PlanMode = 'deep'): MockPlan {
   const normalizedGoal = goal.trim().toLowerCase();
+  const aiToolKeywords = /(ai\s*工具|ailines\s*ai\s*工具|gpt|chatgpt|llm|大模型|智能体|agent|prompt|提示词|\bapi\b|rag|工作流|自动化|应用开发|ai\s*应用|人工智能应用|开发.*ai|ai.*开发)/i;
+  const machineLearningKeywords = /(机器学习|machine learning|\bml\b|深度学习|模型训练|算法|分类|回归|sklearn|scikit-learn)/i;
+
+  if (aiToolKeywords.test(goal) || aiToolKeywords.test(normalizedGoal)) {
+    return enhancePlan(aiToolPlan, goal, 'gpt', mode);
+  }
+
+  if (machineLearningKeywords.test(goal) || machineLearningKeywords.test(normalizedGoal)) {
+    return enhancePlan(mlPlan, goal, 'gpt', mode);
+  }
 
   if (/(python|数据分析|pandas|sql)/i.test(goal) || normalizedGoal.includes('python')) {
     return enhancePlan(pythonPlan, goal, 'python', mode);
-  }
-
-  if (/(三角函数|数学|代数|几何|微积分|函数|公式|方程)/i.test(goal)) {
-    return enhancePlan(genericPlan, goal, 'math', mode);
-  }
-
-  if (/(gpt|chatgpt|提示词|大模型|人工智能|ai)/i.test(goal)) {
-    return enhancePlan(mlPlan, goal, 'gpt', mode);
   }
 
   if (/(react|前端|javascript|typescript)/i.test(goal)) {
     return enhancePlan(reactPlan, goal, 'python', mode);
   }
 
-  if (/(机器学习|machine learning|\bml\b|深度学习|\bai\b)/i.test(goal)) {
-    return enhancePlan(mlPlan, goal, 'gpt', mode);
+  if (/(三角函数|数学|代数|几何|微积分|函数|公式|方程)/i.test(goal)) {
+    return enhancePlan(genericPlan, goal, 'math', mode);
   }
 
   if (/(excel|表格|数据透视表|办公)/i.test(goal)) {

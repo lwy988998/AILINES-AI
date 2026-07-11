@@ -4,7 +4,7 @@ import { parseAIJson } from '@/lib/ai/parseAIJson';
 import { readCachedPlan, writeCachedPlan } from '@/lib/ai/planCache';
 import type { GeneratedPlan, PlanMode } from '@/lib/ai/types';
 
-const DEFAULT_PLAN_TIMEOUT_MS = 30_000;
+const DEFAULT_PLAN_TIMEOUT_MS = 35_000;
 
 export class GeneratePlanError extends Error {
   status: number;

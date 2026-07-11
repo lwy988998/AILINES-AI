@@ -38,7 +38,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   const fallbackPlan = getMockPlanByGoal(goal, mode);
   let plan = fallbackPlan;
   let isAIPlan = false;
-  let errorMessage = '';
+  let fallbackNotice = false;
   let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
@@ -53,8 +53,8 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 
       plan = adaptedPlan;
       isAIPlan = true;
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : 'AILINES AI 生成暂时失败';
+    } catch {
+      fallbackNotice = true;
     }
 
     try {
@@ -93,21 +93,20 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
         {rawGoal ? (
           <section
-            className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm font-medium shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
-              isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'
+            className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
+              isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-100 bg-white text-slate-700'
             }`}
           >
-            <span>
-              {isAIPlan
-                ? mode === 'lite'
-                  ? '已生成快速 AILINES AI 学习方案'
-                  : '已生成深度 AILINES AI 学习方案'
-                : `AILINES AI 生成暂时失败，已为你展示基础学习方案。${errorMessage ? `原因：${errorMessage}` : ''}`}
-            </span>
+            <div className="space-y-1">
+              <p className="font-semibold text-slate-900">
+                {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
+              </p>
+              {fallbackNotice ? <p className="font-medium text-slate-600">当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。</p> : null}
+            </div>
             {!isAIPlan ? (
               <Link
                 href={retryHref}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-200"
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
                 重新生成
               </Link>

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       plan: getMockPlanByGoal(goal, mode),
       source: 'fallback',
-      message: 'AILINES AI 生成暂时不可用，已为你展示基础课程版本。',
+      message: '已为你生成基础课程版本。当前深度生成暂时未完成，你可以稍后重新生成获取更完整版本。',
     });
   }
 }
