@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BackHomeButton } from './back-home-button';
+import { CourseHistoryButton } from './course/CourseHistoryButton';
 
 const navItems = [
   { label: '我的路线', href: '/routes' },
@@ -16,6 +17,7 @@ export function SiteHeader() {
           <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight text-sky-900">
             AILINES AI
           </Link>
+          <CourseHistoryButton />
         </div>
         <nav className="flex shrink-0 items-center gap-1 text-sm font-medium text-slate-600 sm:gap-4">
           {navItems.map((item) => (

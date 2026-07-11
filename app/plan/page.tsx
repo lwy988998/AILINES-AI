@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CourseStructureSection } from '@/components/CourseStructureSection';
+import { CourseHistoryRecorder } from '@/components/course/CourseHistoryRecorder';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
 import { CourseSlides } from '@/components/course/CourseSlides';
 import { PlanActions } from '@/components/PlanActions';
@@ -88,6 +89,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
+      <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} />
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
