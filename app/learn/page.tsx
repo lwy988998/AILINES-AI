@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, CheckCircle2, ExternalLink, Home, ListChecks, Sparkles } from 'lucide-react';
+import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { LearnCompletionButton } from '@/components/LearnCompletionButton';
 import { SiteHeader } from '@/components/site-header';
 import { generateLearningAnswer } from '@/lib/ai/generateLearningAnswer';
@@ -105,6 +106,11 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
   const notice = searchNotice || answer.notice;
   const taskId = findTaskId(goal, phaseName, topic, params.phaseIndex, params.topicIndex);
+  const learningContextSummary = [
+    `课程摘要：${answer.summary}`,
+    `关键概念：${answer.keyConcepts.slice(0, 6).join('、')}`,
+    ...answer.lessonSteps.slice(0, 3).map((step, index) => `步骤 ${index + 1}：${step.title}。${step.explanation}`),
+  ].filter(Boolean).join('\n').slice(0, 1000);
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
@@ -269,6 +275,15 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
           )}
         </section>
       </div>
+      <FloatingAilinesChat
+        pageType="learn"
+        goal={goal}
+        mode={mode}
+        phaseName={phaseName}
+        topic={topic}
+        contextTitle={topic}
+        contextSummary={learningContextSummary}
+      />
     </main>
   );
 }

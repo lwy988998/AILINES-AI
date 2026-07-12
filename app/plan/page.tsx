@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { CourseStructureSection } from '@/components/CourseStructureSection';
 import { CourseHistoryRecorder } from '@/components/course/CourseHistoryRecorder';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
@@ -126,6 +127,13 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         <ProjectsSection projects={plan.projects} />
         <PlanActions goal={goal} title={plan.title} mode={mode} />
       </div>
+      <FloatingAilinesChat
+        pageType="plan"
+        goal={goal}
+        mode={mode}
+        contextTitle={plan.title}
+        contextSummary={[plan.summary, ...plan.roadmap.slice(0, 4).map((stage) => `${stage.name}：${stage.goal || stage.description || ''}`)].filter(Boolean).join('\n').slice(0, 1000)}
+      />
     </main>
   );
 }

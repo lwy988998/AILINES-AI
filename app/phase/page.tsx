@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Trophy } from 'lucide-react';
+import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
 import { CourseSlides } from '@/components/course/CourseSlides';
 import { SiteHeader } from '@/components/site-header';
@@ -153,6 +154,12 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
     }],
   };
   const stageWhy = planStage?.why || detail.why;
+  const phaseContextSummary = [
+    `阶段目标：${detail.objective || planStage?.goal || ''}`,
+    `为什么学：${stageWhy || ''}`,
+    `阶段产出：${stageOutput || ''}`,
+    ...teachingSteps.slice(0, 4).map((step, index) => `步骤 ${index + 1}：${step.title}。${step.explanation}`),
+  ].filter(Boolean).join('\n').slice(0, 1000);
   const commonMistakes = Array.isArray(planStage?.commonMistakes) && planStage.commonMistakes.length > 0 ? planStage.commonMistakes : detail.commonMistakes;
   const encodedGoal = encodeURIComponent(goal);
   const encodedMode = encodeURIComponent(mode);
@@ -348,6 +355,14 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
       </div>
+      <FloatingAilinesChat
+        pageType="phase"
+        goal={goal}
+        mode={mode}
+        phaseName={phaseName}
+        contextTitle={detail.phaseName}
+        contextSummary={phaseContextSummary}
+      />
     </main>
   );
 }
