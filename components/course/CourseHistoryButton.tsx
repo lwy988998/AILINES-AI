@@ -149,6 +149,7 @@ export function CourseHistoryButton() {
                     <p className="mt-1 truncate text-xs text-slate-500">{item.goal}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <span className="rounded-full bg-sky-100 px-2 py-1 font-medium text-sky-800">{getModeLabel(item.mode)}</span>
+                      {item.legacy ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-800">旧记录</span> : null}
                       <span className="text-slate-400">{formatHistoryTime(item.updatedAt)}</span>
                     </div>
                   </Link>
@@ -158,7 +159,7 @@ export function CourseHistoryButton() {
                       onClick={() => setIsOpen(false)}
                       className="rounded-full bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
                     >
-                      继续学习
+                      {item.legacy ? '重新生成' : '继续学习'}
                     </Link>
                     <button
                       type="button"

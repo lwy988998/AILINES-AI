@@ -1,18 +1,20 @@
 'use client';
 
 import { useEffect } from 'react';
-import { saveCourseHistoryItem } from '@/lib/courseHistory';
+import { saveCourseSnapshot } from '@/lib/courseHistory';
+import type { MockPlan } from '@/lib/mockPlan';
 
 type CourseHistoryRecorderProps = {
   goal: string;
   mode: string;
   title?: string;
+  plan: MockPlan;
 };
 
-export function CourseHistoryRecorder({ goal, mode, title }: CourseHistoryRecorderProps) {
+export function CourseHistoryRecorder({ goal, mode, title, plan }: CourseHistoryRecorderProps) {
   useEffect(() => {
-    saveCourseHistoryItem({ goal, mode, title });
-  }, [goal, mode, title]);
+    saveCourseSnapshot({ goal, mode, title, plan });
+  }, [goal, mode, title, plan]);
 
   return null;
 }

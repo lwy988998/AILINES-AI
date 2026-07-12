@@ -6,9 +6,10 @@ type RoadmapSectionProps = {
   goal: string;
   stages: RoadmapStage[];
   mode?: 'lite' | 'deep';
+  courseId?: string;
 };
 
-export function RoadmapSection({ goal, stages, mode = 'deep' }: RoadmapSectionProps) {
+export function RoadmapSection({ goal, stages, mode = 'deep', courseId }: RoadmapSectionProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
@@ -17,7 +18,11 @@ export function RoadmapSection({ goal, stages, mode = 'deep' }: RoadmapSectionPr
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {stages.map((stage, index) => {
-          const phaseHref = `/phase?goal=${encodeURIComponent(goal)}&mode=${mode}&phaseIndex=${index + 1}&phaseName=${encodeURIComponent(stage.name)}`;
+          const phaseParams = new URLSearchParams({ goal, mode, phaseIndex: `${index + 1}`, phaseName: stage.name });
+          if (courseId) {
+            phaseParams.set('courseId', courseId);
+          }
+          const phaseHref = `/phase?${phaseParams.toString()}`;
 
           return (
             <Link

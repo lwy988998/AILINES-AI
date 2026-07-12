@@ -8,9 +8,10 @@ type PlanActionsProps = {
   goal: string;
   title?: string;
   mode?: 'lite' | 'deep';
+  courseId?: string;
 };
 
-export function PlanActions({ goal, title, mode = 'deep' }: PlanActionsProps) {
+export function PlanActions({ goal, title, mode = 'deep', courseId }: PlanActionsProps) {
   const encodedGoal = encodeURIComponent(goal);
   const encodedMode = encodeURIComponent(mode);
 
@@ -35,7 +36,7 @@ export function PlanActions({ goal, title, mode = 'deep' }: PlanActionsProps) {
         问 AILINES AI
       </Link>
       <Link
-        href={`/progress?goal=${encodedGoal}&mode=${encodedMode}`}
+        href={`/progress?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}`}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
       >
         <PlayCircle className="h-4 w-4" />

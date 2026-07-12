@@ -1,14 +1,7 @@
 import Link from 'next/link';
-import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
-import { CourseStructureSection } from '@/components/CourseStructureSection';
 import { CourseHistoryRecorder } from '@/components/course/CourseHistoryRecorder';
-import { CourseMindMap } from '@/components/course/CourseMindMap';
-import { CourseSlides } from '@/components/course/CourseSlides';
-import { PlanActions } from '@/components/PlanActions';
-import { PlanHeader } from '@/components/PlanHeader';
-import { ProjectsSection } from '@/components/ProjectsSection';
-import { ResourcesSection } from '@/components/ResourcesSection';
-import { RoadmapSection } from '@/components/RoadmapSection';
+import { CoursePlanView } from '@/components/course/CoursePlanView';
+import { StoredCoursePlan } from '@/components/course/StoredCoursePlan';
 import { SiteHeader } from '@/components/site-header';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
@@ -25,11 +18,23 @@ type PlanPageProps = {
     goal?: string;
     mode?: string;
     forcePlan?: string;
+    courseId?: string;
   }>;
 };
 
 export default async function PlanPage({ searchParams }: PlanPageProps) {
   const params = await searchParams;
+  const courseId = params.courseId?.trim() || '';
+
+  if (courseId) {
+    return (
+      <main className="min-h-screen bg-[#f5f9ff]">
+        <SiteHeader />
+        <StoredCoursePlan courseId={courseId} />
+      </main>
+    );
+  }
+
   const rawGoal = params.goal?.trim() || '';
   const mode: PlanMode = params.mode === 'lite' || params.mode === 'deep' ? params.mode : 'deep';
   const forcePlan = params.forcePlan === '1';
@@ -88,51 +93,41 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     }
   }
 
+  const notice = rawGoal ? (
+    <section
+      className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
+        isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-100 bg-white text-slate-700'
+      }`}
+    >
+      <div className="space-y-1">
+        <p className="font-semibold text-slate-900">
+          {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
+        </p>
+        {fallbackNotice ? <p className="font-medium text-slate-600">当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。</p> : null}
+      </div>
+      {!isAIPlan ? (
+        <Link
+          href={retryHref}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200"
+        >
+          重新生成
+        </Link>
+      ) : null}
+    </section>
+  ) : null;
+
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
-      <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} />
+      {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} plan={plan} /> : null}
       <SiteHeader />
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
-        {rawGoal ? (
-          <section
-            className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
-              isAIPlan ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-sky-100 bg-white text-slate-700'
-            }`}
-          >
-            <div className="space-y-1">
-              <p className="font-semibold text-slate-900">
-                {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
-              </p>
-              {fallbackNotice ? <p className="font-medium text-slate-600">当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。</p> : null}
-            </div>
-            {!isAIPlan ? (
-              <Link
-                href={retryHref}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200"
-              >
-                重新生成
-              </Link>
-            ) : null}
-          </section>
-        ) : null}
-        <CourseSlides slides={plan.slides} phases={plan.roadmap} />
-        <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} />
-        <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} />
-        <CourseStructureSection stages={plan.courseStructure} />
-        <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
-          {resourceSourceMessage}
-        </section>
-        <ResourcesSection resources={plan.resources} />
-        <ProjectsSection projects={plan.projects} />
-        <PlanActions goal={goal} title={plan.title} mode={mode} />
-      </div>
-      <FloatingAilinesChat
-        pageType="plan"
+      <CoursePlanView
         goal={goal}
         mode={mode}
-        contextTitle={plan.title}
-        contextSummary={[plan.summary, ...plan.roadmap.slice(0, 4).map((stage) => `${stage.name}：${stage.goal || stage.description || ''}`)].filter(Boolean).join('\n').slice(0, 1000)}
+        plan={plan}
+        modeLabel={modeLabel}
+        modeDescription={modeDescription}
+        resourceSourceMessage={resourceSourceMessage}
+        notice={notice}
       />
     </main>
   );
