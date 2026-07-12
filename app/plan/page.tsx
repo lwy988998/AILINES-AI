@@ -118,7 +118,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
-      {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} plan={plan} /> : null}
+      {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} summary={plan.summary} source={isAIPlan ? 'ai' : 'fallback'} plan={plan} /> : null}
       <SiteHeader />
       <CoursePlanView
         goal={goal}

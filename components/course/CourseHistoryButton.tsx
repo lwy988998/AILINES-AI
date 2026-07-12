@@ -3,13 +3,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Trash2, X } from 'lucide-react';
+import { ChevronDown, Loader2, Trash2, X } from 'lucide-react';
+import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import {
-  clearCourseHistory,
+  buildHistoryHref,
   getCourseHistory,
   removeCourseHistoryItem,
   type CourseHistoryItem,
 } from '@/lib/courseHistory';
+
+type ApiCourseItem = {
+  id: string;
+  goal: string;
+  mode: 'lite' | 'deep';
+  title: string;
+  summary?: string | null;
+  updatedAt: string;
+  href: string;
+};
 
 function getModeLabel(mode: CourseHistoryItem['mode']) {
   return mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
@@ -39,14 +50,52 @@ function formatHistoryTime(value: string) {
   return isToday ? `今天 ${hour}:${minute}` : `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
+function apiCourseToHistoryItem(item: ApiCourseItem): CourseHistoryItem {
+  return {
+    id: item.id,
+    goal: item.goal,
+    mode: item.mode,
+    title: item.title,
+    href: item.href || buildHistoryHref(item.id),
+    createdAt: item.updatedAt,
+    updatedAt: item.updatedAt,
+  };
+}
+
 export function CourseHistoryButton() {
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [history, setHistory] = useState<CourseHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [usingLocalFallback, setUsingLocalFallback] = useState(false);
 
-  function refreshHistory() {
-    setHistory(getCourseHistory());
+  function loadLocalFallback() {
+    setHistory(getCourseHistory().slice(0, 5));
+    setUsingLocalFallback(true);
+  }
+
+  async function refreshHistory() {
+    const anonymousId = getOrCreateAnonymousId();
+    if (!anonymousId) {
+      loadLocalFallback();
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/courses?anonymousId=${encodeURIComponent(anonymousId)}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('history api failed');
+      const data = await response.json() as { courses?: ApiCourseItem[] };
+      const courses = Array.isArray(data.courses) ? data.courses : [];
+      setHistory(courses.slice(0, 5).map(apiCourseToHistoryItem));
+      setUsingLocalFallback(false);
+    } catch (error) {
+      console.warn('Course history API failed; using local history fallback.', error instanceof Error ? error.message : 'unknown');
+      loadLocalFallback();
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -82,24 +131,41 @@ export function CourseHistoryButton() {
   }, [isOpen]);
 
   useEffect(() => {
-    function handleStorage() {
+    function handleHistoryChange() {
       refreshHistory();
     }
 
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener('storage', handleHistoryChange);
+    window.addEventListener('ailines-course-history-updated', handleHistoryChange);
+    return () => {
+      window.removeEventListener('storage', handleHistoryChange);
+      window.removeEventListener('ailines-course-history-updated', handleHistoryChange);
+    };
   }, []);
 
   if (pathname !== '/') {
     return null;
   }
 
-  function handleRemove(id: string) {
-    setHistory(removeCourseHistoryItem(id));
-  }
+  async function handleRemove(id: string) {
+    const anonymousId = getOrCreateAnonymousId();
+    const localAfterDelete = removeCourseHistoryItem(id);
 
-  function handleClear() {
-    setHistory(clearCourseHistory());
+    if (usingLocalFallback || id.startsWith('legacy:')) {
+      setHistory(localAfterDelete);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(id)}${anonymousId ? `?anonymousId=${encodeURIComponent(anonymousId)}` : ''}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok && response.status !== 404) throw new Error('delete failed');
+      await refreshHistory();
+    } catch (error) {
+      console.warn('Course delete failed', error instanceof Error ? error.message : 'unknown');
+      setHistory((current) => current.filter((item) => item.id !== id));
+    }
   }
 
   return (
@@ -119,7 +185,7 @@ export function CourseHistoryButton() {
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-1 pb-3">
             <div>
               <p className="text-sm font-semibold text-slate-950">历史课堂</p>
-              <p className="mt-0.5 text-xs text-slate-500">最多保存最近 5 条课程</p>
+              <p className="mt-0.5 text-xs text-slate-500">最多显示最近 5 条课程{usingLocalFallback ? ' · 本地缓存' : ''}</p>
             </div>
             <button
               type="button"
@@ -131,7 +197,12 @@ export function CourseHistoryButton() {
             </button>
           </div>
 
-          {history.length === 0 ? (
+          {isLoading ? (
+            <div className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm font-medium text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              正在加载历史课堂
+            </div>
+          ) : history.length === 0 ? (
             <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm font-medium text-slate-500">暂无历史课堂</div>
           ) : (
             <div className="mt-3 space-y-2">
@@ -172,14 +243,6 @@ export function CourseHistoryButton() {
                   </div>
                 </div>
               ))}
-
-              <button
-                type="button"
-                onClick={handleClear}
-                className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200"
-              >
-                清空历史
-              </button>
             </div>
           )}
         </div>
