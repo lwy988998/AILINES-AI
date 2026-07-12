@@ -131,9 +131,29 @@ function logImageFailure(config: ImageProviderConfig, error: AIClientError, prom
   });
 }
 
+function sanitizeProviderSnippet(text: string) {
+  return text
+    .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [REDACTED]')
+    .replace(/("?(?:api[_-]?key|authorization|token|secret)"?\s*[:=]\s*)"?[^",}\s]+"?/gi, '$1[REDACTED]')
+    .slice(0, 300);
+}
+
 function getImageEndpointBaseUrl(baseUrl: string) {
   const normalized = baseUrl.replace(/\/$/, '');
   return normalized.endsWith('/v1') ? normalized : `${normalized}/v1`;
+}
+
+function getImageEndpoint(baseUrl: string) {
+  return `${getImageEndpointBaseUrl(baseUrl)}/images/generations`;
+}
+
+function getEndpointSummary(endpoint: string) {
+  try {
+    const url = new URL(endpoint);
+    return { host: url.hostname, path: url.pathname };
+  } catch {
+    return { host: 'invalid-url', path: 'invalid-url' };
+  }
 }
 
 async function postImageGeneration(
@@ -144,9 +164,17 @@ async function postImageGeneration(
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const endpoint = getImageEndpoint(baseUrl);
+  const endpointSummary = getEndpointSummary(endpoint);
 
   try {
-    const response = await fetch(`${getImageEndpointBaseUrl(baseUrl)}/images/generations`, {
+    console.info('image provider request', {
+      endpointHost: endpointSummary.host,
+      endpointPath: endpointSummary.path,
+      timeoutMs,
+    });
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -160,6 +188,12 @@ async function postImageGeneration(
     const rawText = await response.text();
 
     if (!response.ok) {
+      console.warn('image provider response rejected', {
+        endpointHost: endpointSummary.host,
+        endpointPath: endpointSummary.path,
+        status: response.status,
+        responseSnippet: sanitizeProviderSnippet(rawText),
+      });
       throw new AIClientError(classifyStatus(response.status), 'AI image provider rejected request', response.status);
     }
 
@@ -196,6 +230,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     model: config.model,
     prompt: style && style !== 'default' ? `${safePrompt}\n风格：${style}` : safePrompt,
     size,
+    n: 1,
   };
 
   let lastError: AIClientError | null = null;
