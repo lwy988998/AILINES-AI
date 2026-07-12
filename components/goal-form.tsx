@@ -6,7 +6,7 @@ import { ArrowRight, Plus, X } from 'lucide-react';
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
-type PlanningMode = 'lite' | 'deep';
+type PlanningMode = 'lite' | 'deep' | 'image';
 
 const planningModes: Array<{
   value: PlanningMode;
@@ -23,7 +23,14 @@ const planningModes: Array<{
     title: '深度 AILINES AI 规划',
     description: '完整生成路线、资料和实战路径',
   },
+  {
+    value: 'image',
+    title: '生图模式',
+    description: '根据需求生成对应图片',
+  },
 ];
+
+const imageExamples = ['AI 学习助手海报', '赛博朋克风格机器人老师', '高中数学知识图谱插画', '极简蓝色科技 Logo 背景'];
 
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
@@ -41,6 +48,7 @@ export function GoalForm() {
   const [selectedImagePreviewUrl, setSelectedImagePreviewUrl] = useState('');
   const [imageError, setImageError] = useState('');
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -92,7 +100,13 @@ export function GoalForm() {
     setSelectedImagePreviewUrl(URL.createObjectURL(file));
   }
 
-  function routeToGoal(goal: string, mode: PlanningMode) {
+  function routeToTarget(goal: string, mode: PlanningMode) {
+    if (mode === 'image') {
+      const params = new URLSearchParams({ prompt: goal, mode: 'image' });
+      window.location.href = `/image?${params.toString()}`;
+      return;
+    }
+
     window.location.href = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}`;
   }
 
@@ -103,13 +117,22 @@ export function GoalForm() {
     const goal = goalValue.trim();
     const mode = modeValue;
 
-    if (!selectedImageFile) {
-      if (!goal) {
-        setImageError('请输入学习需求，或上传一张相关图片');
-        return;
-      }
+    if (!goal) {
+      setImageError(mode === 'image' ? '请输入想生成的图片需求' : '请输入学习需求，或上传一张相关图片');
+      return;
+    }
 
-      routeToGoal(goal, mode);
+    if (mode === 'image') {
+      if (selectedImageFile) {
+        setImageError('当前生图模式暂只支持文字描述，参考图能力后续开放。');
+      }
+      setIsGeneratingImage(true);
+      routeToTarget(goal, mode);
+      return;
+    }
+
+    if (!selectedImageFile) {
+      routeToTarget(goal, mode);
       return;
     }
 
@@ -138,7 +161,7 @@ export function GoalForm() {
 
       if (goal) {
         setImageError(result.message || '图片识别暂不可用，已按文字描述生成学习路线');
-        routeToGoal(goal, mode);
+        routeToTarget(goal, mode);
         return;
       }
 
@@ -146,13 +169,14 @@ export function GoalForm() {
     } catch {
       if (goal) {
         setImageError('图片识别暂不可用，已按文字描述生成学习路线');
-        routeToGoal(goal, mode);
+        routeToTarget(goal, mode);
         return;
       }
 
       setImageError('图片识别暂不可用，请补充文字描述');
     } finally {
       setIsAnalyzingImage(false);
+      setIsGeneratingImage(false);
     }
   }
 
@@ -178,16 +202,16 @@ export function GoalForm() {
               name="goal"
               value={goalValue}
               onChange={(event) => setGoalValue(event.target.value)}
-              placeholder="在这里输入需求"
+              placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '在这里输入需求'}
               className="min-h-12 flex-1 border-0 bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-400"
             />
           </div>
           <button
             type="submit"
-            disabled={isAnalyzingImage}
+            disabled={isAnalyzingImage || isGeneratingImage}
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
           >
-            {isAnalyzingImage ? '识别中...' : '生成学习路线'}
+            {isAnalyzingImage ? '识别中...' : isGeneratingImage ? '准备生成...' : modeValue === 'image' ? '生成图片' : '生成学习路线'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -201,7 +225,7 @@ export function GoalForm() {
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">{selectedImageFile.name}</p>
-              <p className="mt-1 text-xs text-slate-500">{formatFileSize(selectedImageFile.size)} · 将结合图片内容生成学习目标</p>
+              <p className="mt-1 text-xs text-slate-500">{formatFileSize(selectedImageFile.size)} · {modeValue === 'image' ? '当前生图模式暂只支持文字描述' : '将结合图片内容生成学习目标'}</p>
             </div>
             <button
               type="button"
@@ -219,7 +243,7 @@ export function GoalForm() {
         <fieldset className="rounded-2xl border border-sky-100 bg-white/55 p-3">
           <legend className="px-1 text-xs font-semibold text-slate-600">生成模式</legend>
           <input type="hidden" name="mode" value={modeValue} />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {planningModes.map((mode) => {
               const selected = modeValue === mode.value;
 
@@ -258,13 +282,13 @@ export function GoalForm() {
             })}
           </div>
           <p className="mt-2 text-center text-xs text-slate-500" data-selected-mode={modeValue}>
-            已选择：{modeValue === 'lite' ? '快速规划' : '深度 AILINES AI 规划'}
+            已选择：{planningModes.find((mode) => mode.value === modeValue)?.title || '深度 AILINES AI 规划'}
           </p>
         </fieldset>
       </form>
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {homepageExamples.map((example) => (
+        {(modeValue === 'image' ? imageExamples : homepageExamples).map((example) => (
           <button
             key={example}
             type="button"
