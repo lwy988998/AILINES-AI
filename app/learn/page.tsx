@@ -6,6 +6,8 @@ import { LearnCompletionButton } from '@/components/LearnCompletionButton';
 import { SiteHeader } from '@/components/site-header';
 import { generateLearningAnswer } from '@/lib/ai/generateLearningAnswer';
 import type { PlanMode } from '@/lib/ai/types';
+import { getLearningSession, upsertLearningSession } from '@/lib/course/learningSessionRepository';
+import type { LearningAnswer } from '@/lib/learning/mockLearningAnswer';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import { ResourceSearchError, searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
@@ -23,6 +25,7 @@ type LearnPageProps = {
     phaseIndex?: string;
     topicIndex?: string;
     courseId?: string;
+    regenerate?: string;
   }>;
 };
 
@@ -45,6 +48,28 @@ function createProgressHref(goal: string, mode: PlanMode, courseId?: string) {
   const params = new URLSearchParams({ goal, mode });
   if (courseId) params.set('courseId', courseId);
   return `/progress?${params.toString()}`;
+}
+
+function createRegenerateHref(params: {
+  goal: string;
+  mode: PlanMode;
+  courseId?: string;
+  phaseName: string;
+  topic: string;
+  phaseIndex: number;
+  topicIndex: number;
+}) {
+  const searchParams = new URLSearchParams({
+    goal: params.goal,
+    mode: params.mode,
+    phaseName: params.phaseName,
+    topic: params.topic,
+    phaseIndex: String(params.phaseIndex),
+    topicIndex: String(params.topicIndex),
+    regenerate: '1',
+  });
+  if (params.courseId) searchParams.set('courseId', params.courseId);
+  return `/learn?${searchParams.toString()}`;
 }
 
 function parsePositiveIndex(value: string | undefined, fallback: number) {
@@ -112,10 +137,59 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const modeText = getModeText(mode);
   const progressHref = createProgressHref(goal, mode, courseId);
   const planHref = courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : `/plan?${new URLSearchParams({ goal, mode }).toString()}`;
+  const regenerateHref = createRegenerateHref({ goal, mode, courseId, phaseName, topic, phaseIndex, topicIndex });
+  const shouldRegenerate = params.regenerate === '1';
   const searchQuery = `${goal} ${phaseName} ${topic} 学习资料 教程 例题 练习`;
-  const { resources, searchNotice } = await searchLearningResources(searchQuery);
-  const answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
-  const notice = searchNotice || answer.notice;
+  let restoredFromSession = false;
+  let sessionFallbackUsed = false;
+  let answer: LearningAnswer;
+  let notice = '';
+
+  const savedSession = courseId && !shouldRegenerate
+    ? await getLearningSession({ courseId, goal, mode, phaseIndex, phaseName, topicIndex, topicTitle: topic }).catch((error) => {
+        console.warn('Learning session restore failed; generating fresh content.', error instanceof Error ? error.message : 'unknown');
+        return null;
+      })
+    : null;
+
+  if (savedSession?.content && typeof savedSession.content === 'object') {
+    answer = savedSession.content as unknown as LearningAnswer;
+    if ((!answer.references || answer.references.length === 0) && Array.isArray(savedSession.references)) {
+      answer = { ...answer, references: savedSession.references as LearningAnswer['references'] };
+    }
+    restoredFromSession = true;
+    sessionFallbackUsed = savedSession.fallbackUsed;
+    notice = savedSession.fallbackUsed
+      ? '已恢复上次生成的学习内容（上次使用基础 fallback 课程）。你可以点击“重新生成本课”再次尝试 AILINES AI 整合。'
+      : '已恢复上次生成的学习内容';
+  } else {
+    const { resources, searchNotice } = await searchLearningResources(searchQuery);
+    answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
+    const fallbackUsed = Boolean(answer.notice);
+    notice = searchNotice || answer.notice || (shouldRegenerate ? '已按你的要求重新生成本课内容。' : '');
+
+    if (courseId) {
+      await upsertLearningSession({
+        courseId,
+        goal,
+        mode,
+        phaseIndex,
+        phaseName,
+        topicIndex,
+        topicTitle: topic,
+        title: answer.title,
+        summary: answer.summary,
+        searchQuery,
+        content: answer,
+        references: answer.references,
+        fallbackUsed,
+        source: fallbackUsed ? 'fallback' : 'ai',
+      }).catch((error) => {
+        console.warn('Learning session save failed; page content still rendered.', error instanceof Error ? error.message : 'unknown');
+      });
+    }
+  }
+
   const taskId = findTaskId(goal, phaseName, topic, params.phaseIndex, params.topicIndex);
   const learningContextSummary = [
     `课程摘要：${answer.summary}`,
@@ -142,6 +216,10 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               <ListChecks className="h-4 w-4" />
               返回方案页
             </Link>
+            <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100">
+              <Sparkles className="h-4 w-4" />
+              重新生成本课
+            </Link>
           </div>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_280px] lg:items-end">
@@ -154,6 +232,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{answer.title}</h1>
               <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">{answer.summary}</p>
               {notice ? <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-medium leading-6 text-amber-800">{notice}</p> : null}
+              {restoredFromSession ? <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800">已恢复上次生成的学习内容，本次没有重新搜索或调用 AI。</p> : null}
             </div>
             <div className="rounded-3xl border border-sky-100 bg-sky-50 p-5">
               <p className="text-sm font-semibold text-sky-800">当前模式：{modeText.label}</p>
@@ -260,13 +339,13 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-          <SectionTitle eyebrow="参考资料" title="继续深入阅读" />
-          <p className="mt-4 text-sm leading-6 text-slate-600">
-            以下资料已被 AILINES AI 用于整理本课内容，你可以继续深入阅读。
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{answer.resourceSummary}</p>
-          {answer.references.length ? (
+        {answer.references.length ? (
+          <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+            <SectionTitle eyebrow="参考资料" title="继续深入阅读" />
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              以下资料已被 AILINES AI 用于整理本课内容，你可以继续深入阅读。
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{answer.resourceSummary}</p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {answer.references.map((resource) => (
                 <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
@@ -280,12 +359,8 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
                 </a>
               ))}
             </div>
-          ) : (
-            <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
-              暂未获取到可用资料，已先提供基础课程。
-            </div>
-          )}
-        </section>
+          </section>
+        ) : null}
       </div>
       <FloatingAilinesChat
         pageType="learn"

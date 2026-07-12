@@ -24,6 +24,7 @@ model Course {
   taskProgress         TaskProgress[]
   learningStepProgress LearningStepProgress[]
   learningCardProgress LearningCardProgress[]
+  learningSessions     LearningSession[]
   courseProgress       CourseProgress?
 
   @@index([anonymousId])
@@ -136,4 +137,34 @@ model LearningCardProgress {
   @@index([goal])
   @@index([courseId])
   @@index([phaseIndex])
+}
+
+model LearningSession {
+  id           String   @id @default(cuid())
+  courseId     String?
+  anonymousId  String?
+  goal         String
+  mode         String?
+  phaseIndex   Int
+  phaseName    String
+  topicIndex   Int
+  topicTitle   String
+  title        String
+  summary      String?
+  searchQuery  String?
+  content      Json
+  references   Json?
+  fallbackUsed Boolean  @default(false)
+  source       String   @default("ai")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, phaseIndex, topicIndex])
+  @@index([anonymousId])
+  @@index([goal])
+  @@index([courseId])
+  @@index([phaseIndex])
+  @@index([updatedAt])
 }
