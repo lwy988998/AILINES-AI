@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, ChevronDown, Clock3 } from 'lucide-react';
+import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import type { PhaseTask } from '@/lib/mockPhaseDetail';
 
 type TaskStatus = 'not_started' | 'in_progress' | 'completed';
@@ -9,8 +10,16 @@ type TaskStatus = 'not_started' | 'in_progress' | 'completed';
 type InteractivePhaseTasksProps = {
   tasks: PhaseTask[];
   goal: string;
+  mode?: 'lite' | 'deep';
+  courseId?: string;
   phaseIndex: number;
   phaseName: string;
+};
+
+type TaskProgressApiItem = {
+  taskIndex: number;
+  taskTitle: string;
+  status: TaskStatus;
 };
 
 const statusLabels: Record<TaskStatus, string> = {
@@ -25,8 +34,8 @@ function buildStorageKey(goal: string, phaseIndex: number, phaseName: string) {
   return `ailines-phase-tasks:${encodeURIComponent(goal)}:${phaseIndex}:${encodeURIComponent(phaseName)}`;
 }
 
-function createInitialStatuses(tasks: PhaseTask[]) {
-  return tasks.reduce<Record<number, TaskStatus>>((acc, _task, index) => {
+function createInitialStatuses(taskCount: number) {
+  return Array.from({ length: taskCount }).reduce<Record<number, TaskStatus>>((acc, _task, index) => {
     acc[index] = 'not_started';
     return acc;
   }, {});
@@ -37,7 +46,7 @@ function isTaskStatus(value: unknown): value is TaskStatus {
 }
 
 function parseStoredStatuses(value: string | null, taskCount: number) {
-  const fallback = createInitialStatuses(Array.from({ length: taskCount }, () => ({ title: '', duration: '', description: '', output: '' })));
+  const fallback = createInitialStatuses(taskCount);
 
   if (!value) {
     return fallback;
@@ -56,17 +65,77 @@ function parseStoredStatuses(value: string | null, taskCount: number) {
   }
 }
 
-export function InteractivePhaseTasks({ tasks, goal, phaseIndex, phaseName }: InteractivePhaseTasksProps) {
+function apiItemsToStatuses(items: TaskProgressApiItem[], taskCount: number) {
+  const next = createInitialStatuses(taskCount);
+  for (const item of items) {
+    if (Number.isInteger(item.taskIndex) && item.taskIndex >= 0 && item.taskIndex < taskCount && isTaskStatus(item.status)) {
+      next[item.taskIndex] = item.status;
+    }
+  }
+  return next;
+}
+
+function hasAnySavedStatus(statuses: Record<number, TaskStatus>) {
+  return Object.values(statuses).some((status) => status !== 'not_started');
+}
+
+export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, phaseIndex, phaseName }: InteractivePhaseTasksProps) {
   const storageKey = useMemo(() => buildStorageKey(goal, phaseIndex, phaseName), [goal, phaseIndex, phaseName]);
-  const [statuses, setStatuses] = useState<Record<number, TaskStatus>>(() => createInitialStatuses(tasks));
+  const [statuses, setStatuses] = useState<Record<number, TaskStatus>>(() => createInitialStatuses(tasks.length));
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [hydrated, setHydrated] = useState(false);
+  const [syncLabel, setSyncLabel] = useState('状态会自动保存');
+  const latestSaveRef = useRef<Record<number, number>>({});
 
   useEffect(() => {
-    setStatuses(parseStoredStatuses(window.localStorage.getItem(storageKey), tasks.length));
+    const localStatuses = parseStoredStatuses(window.localStorage.getItem(storageKey), tasks.length);
+    setStatuses(localStatuses);
     setExpanded({});
     setHydrated(true);
-  }, [storageKey, tasks.length]);
+    setSyncLabel('正在同步数据库状态...');
+
+    let cancelled = false;
+
+    async function loadDatabaseStatuses() {
+      const anonymousId = getOrCreateAnonymousId();
+      const params = new URLSearchParams({
+        anonymousId,
+        goal,
+        mode,
+        phaseIndex: String(phaseIndex),
+        phaseName,
+      });
+      if (courseId) params.set('courseId', courseId);
+
+      try {
+        const response = await fetch(`/api/task-progress?${params.toString()}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error('task progress api failed');
+        const data = await response.json() as { items?: TaskProgressApiItem[] };
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (cancelled) return;
+
+        if (items.length > 0) {
+          const databaseStatuses = apiItemsToStatuses(items, tasks.length);
+          setStatuses(databaseStatuses);
+          window.localStorage.setItem(storageKey, JSON.stringify(databaseStatuses));
+          setSyncLabel('已从数据库恢复任务状态');
+        } else {
+          setSyncLabel(hasAnySavedStatus(localStatuses) ? '数据库暂无记录，已使用本地缓存' : '状态会自动保存到数据库');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn('Task progress database load failed; using localStorage fallback.', error instanceof Error ? error.message : 'unknown');
+          setSyncLabel('数据库暂不可用，已使用本地缓存');
+        }
+      }
+    }
+
+    loadDatabaseStatuses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [storageKey, tasks.length, goal, mode, courseId, phaseIndex, phaseName]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -80,11 +149,49 @@ export function InteractivePhaseTasks({ tasks, goal, phaseIndex, phaseName }: In
   const totalCount = tasks.length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
+  function saveStatusToDatabase(index: number, status: TaskStatus) {
+    const version = Date.now();
+    latestSaveRef.current[index] = version;
+    const anonymousId = getOrCreateAnonymousId();
+
+    fetch('/api/task-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        courseId: courseId || undefined,
+        anonymousId,
+        goal,
+        mode,
+        phaseIndex,
+        phaseName,
+        taskIndex: index,
+        taskTitle: tasks[index]?.title || `任务 ${index + 1}`,
+        status,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('task progress save failed');
+        if (latestSaveRef.current[index] === version) setSyncLabel('已保存到数据库');
+      })
+      .catch((error) => {
+        if (latestSaveRef.current[index] === version) {
+          console.warn('Task progress database save failed; localStorage fallback kept.', error instanceof Error ? error.message : 'unknown');
+          setSyncLabel('数据库保存失败，已保留本地缓存');
+        }
+      });
+  }
+
   function updateStatus(index: number, status: TaskStatus) {
-    setStatuses((current) => ({
-      ...current,
-      [index]: status,
-    }));
+    setStatuses((current) => {
+      const next = {
+        ...current,
+        [index]: status,
+      };
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+      return next;
+    });
+    setSyncLabel('正在保存到数据库...');
+    saveStatusToDatabase(index, status);
   }
 
   function toggleExpanded(index: number) {
@@ -106,7 +213,7 @@ export function InteractivePhaseTasks({ tasks, goal, phaseIndex, phaseName }: In
           <p className="text-sm font-semibold text-sky-900">
             阶段任务进度：{completedCount}/{totalCount} 已完成 · {progressPercent}%
           </p>
-          <p className="text-xs font-medium text-sky-700">状态会自动保存在当前浏览器</p>
+          <p className="text-xs font-medium text-sky-700">{syncLabel}</p>
         </div>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
           <div className="h-full rounded-full bg-sky-700 transition-all duration-300" style={{ width: `${progressPercent}%` }} />

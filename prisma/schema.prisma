@@ -20,7 +20,8 @@ model Course {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  snapshots CourseSnapshot[]
+  snapshots    CourseSnapshot[]
+  taskProgress TaskProgress[]
 
   @@index([anonymousId])
   @@index([userId])
@@ -37,4 +38,27 @@ model CourseSnapshot {
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+}
+
+model TaskProgress {
+  id          String   @id @default(cuid())
+  courseId    String?
+  anonymousId String?
+  goal        String
+  mode        String?
+  phaseIndex  Int
+  phaseName   String
+  taskIndex   Int
+  taskTitle   String
+  status      String   @default("not_started")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, phaseIndex, taskIndex])
+  @@index([anonymousId])
+  @@index([goal])
+  @@index([courseId])
+  @@index([phaseIndex])
 }
