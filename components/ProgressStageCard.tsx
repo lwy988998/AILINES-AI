@@ -1,22 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Circle, PlayCircle } from 'lucide-react';
 import type { ProgressStage } from '@/lib/mockProgress';
+import type { LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
 
-const topicProgressPrefix = 'ailines-progress-topic:';
+export const topicProgressPrefix = 'ailines-progress-topic:';
+
+export type LearningCardStatusByKey = Record<string, LearningCardStatus>;
 
 type ProgressStageCardProps = {
   stage: ProgressStage;
   goal: string;
   mode: 'lite' | 'deep';
+  courseId?: string;
   phaseIndex: number;
-  completedTaskIds: string[];
-  onToggleTask: (taskId: string) => void;
+  statuses: LearningCardStatusByKey;
+  onSetTopicStatus: (phaseIndex: number, topicIndex: number, status: LearningCardStatus) => void;
 };
 
-function createLearnHref(goal: string, mode: 'lite' | 'deep', stage: ProgressStage, phaseIndex: number, topic: string, topicIndex: number) {
+export function getLearningCardKey(phaseIndex: number, topicIndex: number) {
+  return `${phaseIndex}:${topicIndex}`;
+}
+
+function createLearnHref(goal: string, mode: 'lite' | 'deep', courseId: string | undefined, stage: ProgressStage, phaseIndex: number, topic: string, topicIndex: number) {
   const params = new URLSearchParams({
     goal,
     mode,
@@ -25,28 +32,29 @@ function createLearnHref(goal: string, mode: 'lite' | 'deep', stage: ProgressSta
     phaseIndex: String(phaseIndex + 1),
     topicIndex: String(topicIndex + 1),
   });
+  if (courseId) params.set('courseId', courseId);
 
   return `/learn?${params.toString()}`;
 }
 
-function createTopicStorageKey(goal: string, phaseName: string, topic: string) {
+export function createTopicStorageKey(goal: string, phaseName: string, topic: string) {
   return `${topicProgressPrefix}${goal}:${phaseName}:${topic}`;
 }
 
-export function ProgressStageCard({ stage, goal, mode, phaseIndex, completedTaskIds, onToggleTask }: ProgressStageCardProps) {
-  const [learningTopicKeys, setLearningTopicKeys] = useState<string[]>([]);
-  const completedInStage = stage.tasks.filter((task) => completedTaskIds.includes(task.id)).length;
+const statusLabel: Record<LearningCardStatus, string> = {
+  not_started: '未学习',
+  in_progress: '学习中',
+  completed: '已完成',
+};
 
-  useEffect(() => {
-    try {
-      const activeKeys = stage.tasks
-        .map((task) => createTopicStorageKey(goal, stage.title, task.title))
-        .filter((key) => window.localStorage.getItem(key) === 'in_progress');
-      setLearningTopicKeys(activeKeys);
-    } catch {
-      setLearningTopicKeys([]);
-    }
-  }, [goal, stage]);
+function getActionLabel(status: LearningCardStatus) {
+  if (status === 'completed') return '已学完';
+  if (status === 'in_progress') return '继续学习';
+  return '开始学习';
+}
+
+export function ProgressStageCard({ stage, goal, mode, courseId, phaseIndex, statuses, onSetTopicStatus }: ProgressStageCardProps) {
+  const completedInStage = stage.tasks.filter((_task, topicIndex) => statuses[getLearningCardKey(phaseIndex, topicIndex)] === 'completed').length;
 
   return (
     <article className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-7">
@@ -61,29 +69,35 @@ export function ProgressStageCard({ stage, goal, mode, phaseIndex, completedTask
       </div>
       <ul className="mt-5 space-y-3">
         {stage.tasks.map((task, topicIndex) => {
-          const checked = completedTaskIds.includes(task.id);
-          const learnHref = createLearnHref(goal, mode, stage, phaseIndex, task.title, topicIndex);
+          const status = statuses[getLearningCardKey(phaseIndex, topicIndex)] || 'not_started';
+          const checked = status === 'completed';
+          const isLearning = status === 'in_progress';
+          const learnHref = createLearnHref(goal, mode, courseId, stage, phaseIndex, task.title, topicIndex);
           const topicStorageKey = createTopicStorageKey(goal, stage.title, task.title);
-          const isLearning = !checked && learningTopicKeys.includes(topicStorageKey);
-          const statusLabel = checked ? '已完成' : isLearning ? '学习中' : '未学习';
-          const actionLabel = checked || isLearning ? '继续学习' : '开始学习';
+          const actionLabel = getActionLabel(status);
 
           return (
             <li key={task.id}>
               <div
-                className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50/80 hover:shadow-sm"
+                className={`group rounded-2xl border p-4 transition hover:border-sky-200 hover:bg-sky-50/80 hover:shadow-sm ${checked ? 'border-emerald-200 bg-emerald-50/60' : isLearning ? 'border-sky-200 bg-sky-50/60' : 'border-slate-200 bg-slate-50'}`}
                 data-topic-storage-key={topicStorageKey}
               >
-                <Link href={learnHref} className="block focus:outline-none focus:ring-4 focus:ring-sky-100">
+                <Link
+                  href={learnHref}
+                  className="block rounded-2xl focus:outline-none focus:ring-4 focus:ring-sky-100"
+                  onClick={() => {
+                    if (!checked) onSetTopicStatus(phaseIndex, topicIndex, 'in_progress');
+                  }}
+                >
                   <div className="flex items-start gap-3">
-                    <span className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${checked ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-sky-700'}`}>
+                    <span className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${checked ? 'bg-emerald-100 text-emerald-700' : isLearning ? 'bg-sky-100 text-sky-700' : 'bg-white text-sky-700'}`}>
                       {checked ? <CheckCircle2 className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={`text-base font-semibold leading-6 ${checked ? 'text-slate-500' : 'text-slate-950'}`}>{task.title}</h3>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${checked ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-slate-600'}`}>
-                          {statusLabel}
+                        <h3 className={`text-base font-semibold leading-6 ${checked ? 'text-slate-600' : 'text-slate-950'}`}>{task.title}</h3>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${checked ? 'bg-emerald-100 text-emerald-700' : isLearning ? 'bg-sky-100 text-sky-800' : 'bg-white text-slate-600'}`}>
+                          {statusLabel[status]}
                         </span>
                       </div>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -100,7 +114,7 @@ export function ProgressStageCard({ stage, goal, mode, phaseIndex, completedTask
                   <p className="text-xs font-medium text-slate-500">所属阶段：{stage.title}</p>
                   <button
                     type="button"
-                    onClick={() => onToggleTask(task.id)}
+                    onClick={() => onSetTopicStatus(phaseIndex, topicIndex, checked ? 'not_started' : 'completed')}
                     className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-4 ${
                       checked
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700 focus:ring-emerald-100'

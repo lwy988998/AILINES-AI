@@ -7,6 +7,7 @@ type ProgressPageProps = {
   searchParams: Promise<{
     goal?: string;
     mode?: string;
+    courseId?: string;
   }>;
 };
 
@@ -18,6 +19,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
   const params = await searchParams;
   const goal = params.goal?.trim() || '我的';
   const mode = normalizeMode(params.mode);
+  const courseId = params.courseId?.trim() || '';
   const title = params.goal?.trim() ? `${goal} 学习进度` : '我的学习进度';
   const progressStages = getProgressStagesByGoal(goal);
   const contextSummary = progressStages
@@ -29,7 +31,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
-      <ProgressTracker goal={goal} mode={mode} title={title} />
+      <ProgressTracker goal={goal} mode={mode} courseId={courseId} title={title} />
       <FloatingAilinesChat
         pageType="progress"
         goal={goal}

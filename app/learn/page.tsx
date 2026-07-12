@@ -21,6 +21,7 @@ type LearnPageProps = {
     topic?: string;
     phaseIndex?: string;
     topicIndex?: string;
+    courseId?: string;
   }>;
 };
 
@@ -39,9 +40,15 @@ function getModeText(mode: PlanMode) {
     : { label: '深度学习', description: '更完整的讲解、例题、练习、误区和检查点。' };
 }
 
-function createProgressHref(goal: string, mode: PlanMode) {
+function createProgressHref(goal: string, mode: PlanMode, courseId?: string) {
   const params = new URLSearchParams({ goal, mode });
+  if (courseId) params.set('courseId', courseId);
   return `/progress?${params.toString()}`;
+}
+
+function parsePositiveIndex(value: string | undefined, fallback: number) {
+  const parsed = Number.parseInt(value || '', 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function findTaskId(goal: string, phaseName: string, topic: string, phaseIndex?: string, topicIndex?: string) {
@@ -98,9 +105,12 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const mode = normalizeMode(params.mode);
   const phaseName = decodeValue(params.phaseName, '当前阶段');
   const topic = decodeValue(params.topic, goal);
+  const courseId = params.courseId?.trim() || '';
+  const phaseIndex = parsePositiveIndex(params.phaseIndex, 1);
+  const topicIndex = parsePositiveIndex(params.topicIndex, 1);
   const modeText = getModeText(mode);
-  const progressHref = createProgressHref(goal, mode);
-  const planHref = `/plan?${new URLSearchParams({ goal, mode }).toString()}`;
+  const progressHref = createProgressHref(goal, mode, courseId);
+  const planHref = courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : `/plan?${new URLSearchParams({ goal, mode }).toString()}`;
   const searchQuery = `${goal} ${phaseName} ${topic} 学习资料 教程 例题 练习`;
   const { resources, searchNotice } = await searchLearningResources(searchQuery);
   const answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
@@ -147,7 +157,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               <p className="text-sm font-semibold text-sky-800">当前模式：{modeText.label}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{modeText.description}</p>
               <div className="mt-4">
-                <LearnCompletionButton goal={goal} taskId={taskId} phaseName={phaseName} topic={topic} />
+                <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} />
               </div>
             </div>
           </div>
@@ -243,7 +253,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               ))}
             </ul>
             <div className="mt-5">
-              <LearnCompletionButton goal={goal} taskId={taskId} phaseName={phaseName} topic={topic} />
+              <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} />
             </div>
           </div>
         </section>

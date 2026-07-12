@@ -3,6 +3,7 @@ type ProgressOverviewProps = {
   totalCount: number;
   percent: number;
   onReset: () => void;
+  syncLabel?: string;
 };
 
 function getStatusText(percent: number) {
@@ -12,7 +13,7 @@ function getStatusText(percent: number) {
   return '已完成';
 }
 
-export function ProgressOverview({ completedCount, totalCount, percent, onReset }: ProgressOverviewProps) {
+export function ProgressOverview({ completedCount, totalCount, percent, onReset, syncLabel }: ProgressOverviewProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -25,6 +26,7 @@ export function ProgressOverview({ completedCount, totalCount, percent, onReset 
             </p>
           </div>
           <p className="mt-3 text-lg font-semibold text-sky-800">{getStatusText(percent)}</p>
+          {syncLabel ? <p className="mt-2 text-sm font-medium text-sky-700">{syncLabel}</p> : null}
         </div>
         <button
           type="button"
