@@ -266,7 +266,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <InteractiveLearningSteps steps={teachingSteps} goal={goal} phaseIndex={phaseIndex} phaseName={phaseName} commonMistakes={commonMistakes} />
+        <InteractiveLearningSteps steps={teachingSteps} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} commonMistakes={commonMistakes} />
 
         <InteractivePhaseTasks tasks={detail.tasks} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} />
 
