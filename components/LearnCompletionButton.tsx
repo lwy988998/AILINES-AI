@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ListChecks } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { getProgressStorageKey } from '@/lib/progressStorage';
 import type { LearningCardProgressItem, LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
@@ -15,6 +16,7 @@ type LearnCompletionButtonProps = {
   phaseName: string;
   topicIndex: number;
   topic: string;
+  progressHref?: string;
 };
 
 function getTopicStorageKey(goal: string, phaseName: string, topic: string) {
@@ -40,7 +42,7 @@ function writeCompletedId(goal: string, taskId?: string) {
   window.localStorage.setItem(storageKey, JSON.stringify(nextIds));
 }
 
-export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex, phaseName, topicIndex, topic }: LearnCompletionButtonProps) {
+export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex, phaseName, topicIndex, topic, progressHref }: LearnCompletionButtonProps) {
   const [status, setStatus] = useState<LearningCardStatus>('not_started');
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
   const latestSaveRef = useRef(0);
@@ -121,7 +123,7 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
     })
       .then((response) => {
         if (!response.ok) throw new Error('learning card progress save failed');
-        if (latestSaveRef.current === version) setSyncLabel('已保存到数据库');
+        if (latestSaveRef.current === version) setSyncLabel(courseId ? '已同步到课程进度' : '已保存到数据库');
       })
       .catch((error) => {
         if (latestSaveRef.current === version) {
@@ -157,6 +159,12 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
         {completed ? '已学完这一项' : '我已学完这一项'}
       </button>
       <p className="text-xs font-medium text-sky-700">{syncLabel}</p>
+      {progressHref ? (
+        <Link href={progressHref} className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 transition hover:text-sky-900">
+          <ListChecks className="h-3.5 w-3.5" />
+          返回进度页
+        </Link>
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import { listLearningCardProgress, normalizeLearningCardStatus, upsertLearningCardProgress } from '@/lib/course/learningCardProgressRepository';
 
 function parsePositiveInt(value: string | null) {
@@ -53,9 +54,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const courseId = optionalString(data.courseId);
+    const anonymousId = optionalString(data.anonymousId);
     const item = await upsertLearningCardProgress({
-      courseId: optionalString(data.courseId),
-      anonymousId: optionalString(data.anonymousId),
+      courseId,
+      anonymousId,
       goal,
       mode: optionalString(data.mode),
       phaseIndex,
@@ -64,6 +67,11 @@ export async function POST(request: NextRequest) {
       topicTitle,
       status: normalizeLearningCardStatus(data.status),
     });
+    if (courseId) {
+      recomputeCourseProgress({ courseId, anonymousId }).catch((error) => {
+        console.warn('course progress recompute after learning card failed', error instanceof Error ? error.message : 'unknown');
+      });
+    }
     return NextResponse.json({ ok: true, item });
   } catch {
     return NextResponse.json({ error: '学习卡片进度保存失败，请稍后重试' }, { status: 500 });

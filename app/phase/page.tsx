@@ -3,6 +3,7 @@ import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, Lis
 import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
 import { CourseSlides } from '@/components/course/CourseSlides';
+import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { SiteHeader } from '@/components/site-header';
 import { InteractiveLearningSteps } from '@/components/phase/InteractiveLearningSteps';
 import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
@@ -192,6 +193,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
+      {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="phase" lastPhaseIndex={phaseIndex} lastPhaseName={phaseName} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">

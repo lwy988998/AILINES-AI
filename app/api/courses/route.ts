@@ -20,6 +20,17 @@ export async function GET(request: NextRequest) {
         summary: course.summary,
         updatedAt: course.updatedAt.toISOString(),
         href: `/plan?courseId=${encodeURIComponent(course.id)}`,
+        progress: course.progress ? {
+          overallPercent: course.progress.overallPercent,
+          completedCount: course.progress.completedCount,
+          totalCount: course.progress.totalCount,
+          lastVisitedUrl: course.progress.lastVisitedUrl,
+        } : {
+          overallPercent: 0,
+          completedCount: 0,
+          totalCount: 0,
+          lastVisitedUrl: null,
+        },
       })),
     });
   } catch {

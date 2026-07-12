@@ -5,6 +5,7 @@ import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { ProgressHeader } from '@/components/ProgressHeader';
 import { ProgressOverview } from '@/components/ProgressOverview';
 import { getLearningCardKey, ProgressStageCard, type LearningCardStatusByKey } from '@/components/ProgressStageCard';
+import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
 import type { LearningCardProgressItem, LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/progressStorage';
@@ -14,6 +15,7 @@ type ProgressTrackerProps = {
   mode: 'lite' | 'deep';
   courseId?: string;
   title: string;
+  courseProgress?: CourseProgressSummary | null;
 };
 
 function topicStorageKey(goal: string, phaseName: string, topic: string) {
@@ -27,7 +29,7 @@ function itemsToStatuses(items: LearningCardProgressItem[]) {
   }, {});
 }
 
-export function ProgressTracker({ goal, mode, courseId, title }: ProgressTrackerProps) {
+export function ProgressTracker({ goal, mode, courseId, title, courseProgress }: ProgressTrackerProps) {
   const [statuses, setStatuses] = useState<LearningCardStatusByKey>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
@@ -152,6 +154,25 @@ export function ProgressTracker({ goal, mode, courseId, title }: ProgressTracker
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <ProgressHeader goal={goal} mode={mode} courseId={courseId} title={title} />
+      {courseProgress ? (
+        <section className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-700">课程总进度</p>
+              <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
+                <p className="text-5xl font-semibold tracking-tight text-slate-950">{courseProgress.overallPercent}%</p>
+                <p className="pb-1 text-base font-medium text-slate-600">已完成 {courseProgress.completedCount} / {courseProgress.totalCount} 项</p>
+              </div>
+              <p className="mt-3 text-sm font-medium text-slate-600">
+                {courseProgress.lastTopicTitle ? `最近学习：${courseProgress.lastTopicTitle}` : courseProgress.lastPhaseName ? `最近学习：${courseProgress.lastPhaseName}` : '最近学习位置会在访问课程页面时自动记录'}
+              </p>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-slate-100 lg:w-64">
+              <div className="h-full rounded-full bg-emerald-600" style={{ width: `${courseProgress.overallPercent}%` }} />
+            </div>
+          </div>
+        </section>
+      ) : null}
       <ProgressOverview completedCount={completedCount} totalCount={totalCount} percent={percent} onReset={resetProgress} syncLabel={syncLabel} />
       <section className="grid gap-6 lg:grid-cols-2">
         {progressStages.map((stage, phaseIndex) => (

@@ -11,6 +11,12 @@ export type CourseHistoryItem = {
   createdAt: string;
   updatedAt: string;
   legacy?: boolean;
+  progress?: {
+    overallPercent: number;
+    completedCount: number;
+    totalCount: number;
+    lastVisitedUrl?: string | null;
+  };
 };
 
 export type CourseSnapshot = {

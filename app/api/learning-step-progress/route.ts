@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import { listLearningStepProgress, normalizeLearningStepStatus, upsertLearningStepProgress } from '@/lib/course/learningStepProgressRepository';
 
 function parsePositiveInt(value: string | null) {
@@ -60,9 +61,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const courseId = optionalString(data.courseId);
+    const anonymousId = optionalString(data.anonymousId);
     const item = await upsertLearningStepProgress({
-      courseId: optionalString(data.courseId),
-      anonymousId: optionalString(data.anonymousId),
+      courseId,
+      anonymousId,
       goal,
       mode: optionalString(data.mode),
       phaseIndex,
@@ -71,6 +74,12 @@ export async function POST(request: NextRequest) {
       stepTitle,
       status,
     });
+
+    if (courseId) {
+      recomputeCourseProgress({ courseId, anonymousId }).catch((error) => {
+        console.warn('course progress recompute after learning step failed', error instanceof Error ? error.message : 'unknown');
+      });
+    }
 
     return NextResponse.json({ ok: true, item });
   } catch {

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, Home, RefreshCw } from 'lucide-react';
 import { CoursePlanView } from '@/components/course/CoursePlanView';
 import { getCourseWithLatestSnapshot } from '@/lib/course/courseRepository';
+import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import type { PlanMode } from '@/lib/ai/types';
 import type { MockPlan } from '@/lib/mockPlan';
 
@@ -53,6 +54,10 @@ export async function StoredCoursePlan({ courseId }: { courseId: string }) {
   const modeText = getModeText(result.course.mode);
   const plan = result.snapshot.payload;
   const goal = result.course.goal || plan.title;
+  let courseProgress = await getCourseProgress(result.course.id);
+  if (!courseProgress) {
+    courseProgress = await recomputeCourseProgress({ courseId: result.course.id, anonymousId: result.course.anonymousId || undefined });
+  }
 
   return (
     <CoursePlanView
@@ -63,6 +68,7 @@ export async function StoredCoursePlan({ courseId }: { courseId: string }) {
       modeDescription={modeText.description}
       resourceSourceMessage="已从数据库历史课堂快照恢复资料，不会重新搜索或重新生成。"
       courseId={result.course.id}
+      courseProgress={courseProgress}
       notice={(
         <section className="flex flex-col gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between">
           <div>

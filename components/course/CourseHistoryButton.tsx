@@ -20,6 +20,12 @@ type ApiCourseItem = {
   summary?: string | null;
   updatedAt: string;
   href: string;
+  progress?: {
+    overallPercent?: number;
+    completedCount?: number;
+    totalCount?: number;
+    lastVisitedUrl?: string | null;
+  };
 };
 
 function getModeLabel(mode: CourseHistoryItem['mode']) {
@@ -59,6 +65,12 @@ function apiCourseToHistoryItem(item: ApiCourseItem): CourseHistoryItem {
     href: item.href || buildHistoryHref(item.id),
     createdAt: item.updatedAt,
     updatedAt: item.updatedAt,
+    progress: item.progress ? {
+      overallPercent: typeof item.progress.overallPercent === 'number' ? item.progress.overallPercent : 0,
+      completedCount: typeof item.progress.completedCount === 'number' ? item.progress.completedCount : 0,
+      totalCount: typeof item.progress.totalCount === 'number' ? item.progress.totalCount : 0,
+      lastVisitedUrl: item.progress.lastVisitedUrl || null,
+    } : undefined,
   };
 }
 
@@ -221,17 +233,29 @@ export function CourseHistoryButton() {
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <span className="rounded-full bg-sky-100 px-2 py-1 font-medium text-sky-800">{getModeLabel(item.mode)}</span>
                       {item.legacy ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-800">旧记录</span> : null}
+                      {item.progress ? <span className="rounded-full bg-emerald-50 px-2 py-1 font-medium text-emerald-700">进度：{item.progress.overallPercent}%</span> : null}
                       <span className="text-slate-400">{formatHistoryTime(item.updatedAt)}</span>
                     </div>
                   </Link>
                   <div className="flex shrink-0 flex-col items-end justify-between gap-2 py-1 pr-1">
-                    <Link
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className="rounded-full bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
-                    >
-                      {item.legacy ? '重新生成' : '继续学习'}
-                    </Link>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <Link
+                        href={item.progress?.lastVisitedUrl || item.href}
+                        onClick={() => setIsOpen(false)}
+                        className="rounded-full bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      >
+                        {item.legacy ? '重新生成' : '继续学习'}
+                      </Link>
+                      {!item.legacy ? (
+                        <Link
+                          href={item.href}
+                          onClick={() => setIsOpen(false)}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-200 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                        >
+                          查看课程
+                        </Link>
+                      ) : null}
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleRemove(item.id)}

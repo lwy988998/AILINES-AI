@@ -1,13 +1,16 @@
 import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { CourseStructureSection } from '@/components/CourseStructureSection';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
+import { CourseProgressBanner } from '@/components/course/CourseProgressBanner';
 import { CourseSlides } from '@/components/course/CourseSlides';
+import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { PlanActions } from '@/components/PlanActions';
 import { PlanHeader } from '@/components/PlanHeader';
 import { ProjectsSection } from '@/components/ProjectsSection';
 import { ResourcesSection } from '@/components/ResourcesSection';
 import { RoadmapSection } from '@/components/RoadmapSection';
 import type { PlanMode } from '@/lib/ai/types';
+import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
 import type { MockPlan } from '@/lib/mockPlan';
 
 type CoursePlanViewProps = {
@@ -19,13 +22,16 @@ type CoursePlanViewProps = {
   resourceSourceMessage: string;
   notice?: React.ReactNode;
   courseId?: string;
+  courseProgress?: CourseProgressSummary | null;
 };
 
-export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, resourceSourceMessage, notice, courseId }: CoursePlanViewProps) {
+export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, resourceSourceMessage, notice, courseId, courseProgress }: CoursePlanViewProps) {
   return (
     <>
+      {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="plan" /> : null}
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
+        {courseProgress ? <CourseProgressBanner progress={courseProgress} /> : null}
         {notice}
         <CourseSlides slides={plan.slides} phases={plan.roadmap} />
         <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} />

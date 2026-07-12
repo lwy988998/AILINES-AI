@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, CheckCircle2, ExternalLink, Home, ListChecks, Sparkles } from 'lucide-react';
 import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
+import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { LearnCompletionButton } from '@/components/LearnCompletionButton';
 import { SiteHeader } from '@/components/site-header';
 import { generateLearningAnswer } from '@/lib/ai/generateLearningAnswer';
@@ -124,6 +125,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
+      {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="learn" lastPhaseIndex={phaseIndex} lastPhaseName={phaseName} lastTopicIndex={topicIndex} lastTopicTitle={topic} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
@@ -157,7 +159,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               <p className="text-sm font-semibold text-sky-800">当前模式：{modeText.label}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{modeText.description}</p>
               <div className="mt-4">
-                <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} />
+                <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} progressHref={progressHref} />
               </div>
             </div>
           </div>
@@ -253,7 +255,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               ))}
             </ul>
             <div className="mt-5">
-              <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} />
+              <LearnCompletionButton goal={goal} mode={mode} courseId={courseId} taskId={taskId} phaseIndex={phaseIndex} phaseName={phaseName} topicIndex={topicIndex - 1} topic={topic} progressHref={progressHref} />
             </div>
           </div>
         </section>

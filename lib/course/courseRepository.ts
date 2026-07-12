@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
+import { listCourseProgressByCourseIds } from '@/lib/course/courseProgressRepository';
 import type { CourseHistoryMode } from '@/lib/courseHistory';
 import type { MockPlan, ResourceItem } from '@/lib/mockPlan';
 
@@ -170,7 +171,7 @@ export async function listRecentCourses({ anonymousId, limit = 5 }: { anonymousI
   try {
     const safeAnonymousId = normalizeOptionalString(anonymousId);
     if (!safeAnonymousId) return [];
-    return prisma.course.findMany({
+    const courses = await prisma.course.findMany({
       where: { anonymousId: safeAnonymousId, status: 'active' },
       orderBy: { updatedAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 5),
@@ -183,6 +184,8 @@ export async function listRecentCourses({ anonymousId, limit = 5 }: { anonymousI
         updatedAt: true,
       },
     });
+    const progressByCourseId = await listCourseProgressByCourseIds(courses.map((course) => course.id));
+    return courses.map((course) => ({ ...course, progress: progressByCourseId.get(course.id) || null }));
   } catch (error) {
     console.warn('list courses failed', error instanceof Error ? error.message : 'unknown');
     throw new CourseRepositoryError();
