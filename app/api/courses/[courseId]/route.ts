@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteCourse, getCourseWithLatestSnapshot } from '@/lib/course/courseRepository';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +15,12 @@ export async function GET(
       return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
     }
 
-    if (anonymousId && result.course.anonymousId && result.course.anonymousId !== anonymousId) {
+    const user = await getCurrentUserFromRequest(request);
+    if (user && result.course.userId && result.course.userId !== user.id) {
+      return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
+    }
+
+    if (!user && anonymousId && result.course.anonymousId && result.course.anonymousId !== anonymousId) {
       return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
     }
 
@@ -50,7 +56,8 @@ export async function DELETE(
   const anonymousId = request.nextUrl.searchParams.get('anonymousId')?.trim() || undefined;
 
   try {
-    const deleted = await deleteCourse(courseId, anonymousId);
+    const user = await getCurrentUserFromRequest(request);
+    const deleted = await deleteCourse(courseId, anonymousId, user?.id);
     if (!deleted) {
       return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
     }

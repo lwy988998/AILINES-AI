@@ -167,12 +167,13 @@ export async function getCourseWithLatestSnapshot(courseId: string) {
   }
 }
 
-export async function listRecentCourses({ anonymousId, limit = 5 }: { anonymousId?: string; limit?: number }) {
+export async function listRecentCourses({ anonymousId, userId, limit = 5 }: { anonymousId?: string; userId?: string; limit?: number }) {
   try {
     const safeAnonymousId = normalizeOptionalString(anonymousId);
-    if (!safeAnonymousId) return [];
+    const safeUserId = normalizeOptionalString(userId);
+    if (!safeUserId && !safeAnonymousId) return [];
     const courses = await prisma.course.findMany({
-      where: { anonymousId: safeAnonymousId, status: 'active' },
+      where: safeUserId ? { userId: safeUserId, status: 'active' } : { anonymousId: safeAnonymousId, status: 'active' },
       orderBy: { updatedAt: 'desc' },
       take: Math.min(Math.max(limit, 1), 5),
       select: {
@@ -192,13 +193,14 @@ export async function listRecentCourses({ anonymousId, limit = 5 }: { anonymousI
   }
 }
 
-export async function deleteCourse(courseId: string, anonymousId?: string) {
+export async function deleteCourse(courseId: string, anonymousId?: string, userId?: string) {
   try {
     const safeAnonymousId = normalizeOptionalString(anonymousId);
+    const safeUserId = normalizeOptionalString(userId);
     const result = await prisma.course.deleteMany({
       where: {
         id: courseId,
-        ...(safeAnonymousId ? { anonymousId: safeAnonymousId } : {}),
+        ...(safeUserId ? { userId: safeUserId } : safeAnonymousId ? { anonymousId: safeAnonymousId } : {}),
       },
     });
     return result.count > 0;

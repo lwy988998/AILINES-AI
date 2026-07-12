@@ -27,9 +27,38 @@ model Course {
   learningSessions     LearningSession[]
   courseProgress       CourseProgress?
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([anonymousId])
   @@index([userId])
   @@index([updatedAt])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions UserSession[]
+  courses  Course[]
+
+  @@index([email])
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model CourseProgress {

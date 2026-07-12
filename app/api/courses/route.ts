@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrUpdateCourseSnapshot, listRecentCourses } from '@/lib/course/courseRepository';
 import type { CourseHistoryMode } from '@/lib/courseHistory';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 
 function normalizeMode(value: unknown): CourseHistoryMode {
   return value === 'lite' || value === 'deep' ? value : 'deep';
@@ -10,7 +11,8 @@ export async function GET(request: NextRequest) {
   const anonymousId = request.nextUrl.searchParams.get('anonymousId') || undefined;
 
   try {
-    const courses = await listRecentCourses({ anonymousId, limit: 5 });
+    const user = await getCurrentUserFromRequest(request);
+    const courses = await listRecentCourses({ anonymousId, userId: user?.id, limit: 5 });
     return NextResponse.json({
       courses: courses.map((course) => ({
         id: course.id,
@@ -61,9 +63,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const user = await getCurrentUserFromRequest(request);
     const { courseId } = await createOrUpdateCourseSnapshot({
       anonymousId,
-      userId,
+      userId: user?.id || userId,
       goal,
       mode: normalizeMode(data.mode),
       title,

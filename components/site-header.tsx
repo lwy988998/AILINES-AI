@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { BackHomeButton } from './back-home-button';
 import { CourseHistoryButton } from './course/CourseHistoryButton';
+import { AuthStatus } from './auth/AuthStatus';
+import { getCurrentUser } from '@/lib/auth/currentUser';
 
 const navItems = [
   { label: '我的路线', href: '/routes' },
   { label: '会员', href: '/membership' },
-  { label: '登录', href: '#login' },
 ];
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const user = await getCurrentUser();
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex min-h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -29,6 +32,7 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          <AuthStatus user={user} />
         </nav>
       </div>
     </header>
