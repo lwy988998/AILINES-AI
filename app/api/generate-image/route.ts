@@ -52,7 +52,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: false,
-      message: '当前生图服务暂时不可用，请稍后重试。',
+      message: safeError.type === 'missing_config'
+        ? safeError.message
+        : '当前生图服务暂时不可用，请稍后重试。',
     }, { status: 200 });
   }
 }

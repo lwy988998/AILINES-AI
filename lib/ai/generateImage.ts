@@ -1,8 +1,19 @@
-import { AIClientError, getAIConfig, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
+import { AIClientError, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 45_000;
 const RETRY_DELAYS_MS = [600];
 const MAX_PROMPT_LENGTH = 2_000;
+const IMAGE_CONFIG_MISSING_MESSAGE = '生图服务尚未配置，请在服务器环境变量中配置 AI_IMAGE_API_KEY、AI_IMAGE_BASE_URL 和 AI_IMAGE_MODEL。';
+const IMAGE_UNAVAILABLE_MESSAGE = '当前生图服务暂时不可用，请稍后重试。';
+
+type ImageProviderConfig = {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  provider: string;
+  source: 'image' | 'fallback';
+  modelConfigured: boolean;
+};
 
 export type GenerateImageInput = {
   prompt: string;
@@ -23,12 +34,63 @@ export class ImageGenerationError extends Error {
   type: string;
   status?: number;
 
-  constructor(message = '当前生图服务暂时不可用，请稍后重试。', type = 'unknown', status?: number) {
+  constructor(message = IMAGE_UNAVAILABLE_MESSAGE, type = 'unknown', status?: number) {
     super(message);
     this.name = 'ImageGenerationError';
     this.type = type;
     this.status = status;
   }
+}
+
+function safeProviderFromBaseUrl(baseUrl: string, fallback: string) {
+  try {
+    return new URL(baseUrl).hostname;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getImageGenerationConfig(): ImageProviderConfig {
+  const imageApiKey = (process.env.AI_IMAGE_API_KEY || process.env.IMAGE_API_KEY || '').trim();
+  const imageBaseUrl = (process.env.AI_IMAGE_BASE_URL || process.env.IMAGE_BASE_URL || '').trim();
+  const imageModel = (process.env.AI_IMAGE_MODEL || process.env.IMAGE_MODEL || process.env.OPENAI_IMAGE_MODEL || '').trim();
+
+  if (imageApiKey && imageBaseUrl && imageModel) {
+    return {
+      apiKey: imageApiKey,
+      baseUrl: imageBaseUrl.replace(/\/$/, ''),
+      model: imageModel,
+      provider: process.env.AI_IMAGE_PROVIDER || safeProviderFromBaseUrl(imageBaseUrl, 'image-provider'),
+      source: 'image',
+      modelConfigured: true,
+    };
+  }
+
+  const fallbackApiKey = (process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '').trim();
+  const fallbackBaseUrl = (process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || '').trim();
+  const fallbackModel = (process.env.AI_MODEL || process.env.OPENAI_MODEL || '').trim();
+
+  if (fallbackApiKey && fallbackBaseUrl && imageModel) {
+    return {
+      apiKey: fallbackApiKey,
+      baseUrl: fallbackBaseUrl.replace(/\/$/, ''),
+      model: imageModel,
+      provider: process.env.AI_PROVIDER || safeProviderFromBaseUrl(fallbackBaseUrl, 'fallback-ai-provider'),
+      source: 'fallback',
+      modelConfigured: true,
+    };
+  }
+
+  console.warn('image provider config missing', {
+    imageApiKey: imageApiKey ? 'set' : 'missing',
+    imageBaseUrl: imageBaseUrl ? 'set' : 'missing',
+    imageModel: imageModel ? 'set' : 'missing',
+    fallbackApiKey: fallbackApiKey ? 'set' : 'missing',
+    fallbackBaseUrl: fallbackBaseUrl ? 'set' : 'missing',
+    fallbackModel: fallbackModel ? 'set' : 'missing',
+  });
+
+  throw new ImageGenerationError(IMAGE_CONFIG_MISSING_MESSAGE, 'missing_config');
 }
 
 function getImageTimeoutMs() {
@@ -53,16 +115,16 @@ function normalizeStyle(style?: string) {
 
 function classifyStatus(status: number) {
   if (status === 401 || status === 403) return 'auth_error';
-  if (status === 404) return 'invalid_response';
   if (status === 429) return 'rate_limited';
   if (status >= 500 && status <= 599) return 'provider_5xx';
   return 'invalid_response';
 }
 
-function logImageFailure(provider: string, model: string, error: AIClientError, promptLength: number) {
-  console.warn('AI image generation failed', {
-    provider,
-    model,
+function logImageFailure(config: ImageProviderConfig, error: AIClientError, promptLength: number) {
+  console.warn('image provider request failed', {
+    provider: config.provider,
+    source: config.source,
+    modelConfigured: config.modelConfigured ? 'set' : 'missing',
     errorType: error.type,
     status: error.status,
     promptLength,
@@ -126,7 +188,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     throw new ImageGenerationError('请输入图片需求', 'invalid_input');
   }
 
-  const config = getAIConfig(process.env.AI_IMAGE_MODEL || process.env.IMAGE_MODEL || undefined);
+  const config = getImageGenerationConfig();
   const timeoutMs = getImageTimeoutMs();
   const size = normalizeSize(input.size);
   const style = normalizeStyle(input.style);
@@ -168,9 +230,9 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     } catch (error) {
       const classified = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
       lastError = classified;
-      logImageFailure(config.provider, config.model, classified, safePrompt.length);
+      logImageFailure(config, classified, safePrompt.length);
 
-      if (classified.status === 400 || classified.type === 'missing_config' || classified.type === 'auth_error' || classified.type === 'invalid_response') {
+      if (classified.status === 400 || classified.status === 404 || classified.status === 405 || classified.type === 'missing_config' || classified.type === 'auth_error' || classified.type === 'invalid_response') {
         break;
       }
 
@@ -183,5 +245,5 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     }
   }
 
-  throw new ImageGenerationError('当前生图服务暂时不可用，请稍后重试。', lastError?.type || 'unknown', lastError?.status);
+  throw new ImageGenerationError(IMAGE_UNAVAILABLE_MESSAGE, lastError?.type || 'unknown', lastError?.status);
 }
