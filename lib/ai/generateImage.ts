@@ -1,18 +1,14 @@
 import { AIClientError, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 45_000;
-const RETRY_DELAYS_MS = [600];
 const MAX_PROMPT_LENGTH = 2_000;
-const IMAGE_CONFIG_MISSING_MESSAGE = '生图服务尚未配置，请在服务器环境变量中配置 AI_IMAGE_API_KEY、AI_IMAGE_BASE_URL 和 AI_IMAGE_MODEL。';
-const IMAGE_UNAVAILABLE_MESSAGE = '当前生图服务暂时不可用，请稍后重试。';
+const IMAGE_UNAVAILABLE_MESSAGE = '生图暂不可用';
 
 type ImageProviderConfig = {
+  id: 'grok' | 'gpt';
   apiKey: string;
   baseUrl: string;
   model: string;
-  provider: string;
-  source: 'image' | 'fallback';
-  modelConfigured: boolean;
 };
 
 export type GenerateImageInput = {
@@ -42,55 +38,50 @@ export class ImageGenerationError extends Error {
   }
 }
 
-function safeProviderFromBaseUrl(baseUrl: string, fallback: string) {
-  try {
-    return new URL(baseUrl).hostname;
-  } catch {
-    return fallback;
-  }
+function envValue(name: string) {
+  return (process.env[name] || '').trim();
 }
 
-export function getImageGenerationConfig(): ImageProviderConfig {
-  const imageApiKey = (process.env.AI_IMAGE_API_KEY || process.env.IMAGE_API_KEY || '').trim();
-  const imageBaseUrl = (process.env.AI_IMAGE_BASE_URL || process.env.IMAGE_BASE_URL || '').trim();
-  const imageModel = (process.env.AI_IMAGE_MODEL || process.env.IMAGE_MODEL || process.env.OPENAI_IMAGE_MODEL || '').trim();
+export function getImageGenerationProviders(): ImageProviderConfig[] {
+  const candidates: Array<{
+    id: 'grok' | 'gpt';
+    apiKey?: string;
+    baseUrl?: string;
+    model?: string;
+  }> = [
+    {
+      id: 'grok',
+      apiKey: envValue('GROK_IMAGE_API_KEY'),
+      baseUrl: envValue('GROK_IMAGE_BASE_URL'),
+      model: envValue('GROK_IMAGE_MODEL'),
+    },
+    {
+      id: 'gpt',
+      apiKey: envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY'),
+      baseUrl: envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL'),
+      model: envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL'),
+    },
+  ];
 
-  if (imageApiKey && imageBaseUrl && imageModel) {
-    return {
-      apiKey: imageApiKey,
-      baseUrl: imageBaseUrl.replace(/\/$/, ''),
-      model: imageModel,
-      provider: process.env.AI_IMAGE_PROVIDER || safeProviderFromBaseUrl(imageBaseUrl, 'image-provider'),
-      source: 'image',
-      modelConfigured: true,
-    };
-  }
+  return candidates
+    .filter((provider) => provider.apiKey && provider.baseUrl && provider.model)
+    .map((provider) => ({
+      id: provider.id,
+      apiKey: provider.apiKey as string,
+      baseUrl: normalizeBaseUrl(provider.baseUrl as string),
+      model: provider.model as string,
+    }));
+}
 
-  const fallbackApiKey = (process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '').trim();
-  const fallbackBaseUrl = (process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || '').trim();
-  const fallbackModel = (process.env.AI_MODEL || process.env.OPENAI_MODEL || '').trim();
-
-  if (fallbackApiKey && fallbackBaseUrl && imageModel) {
-    return {
-      apiKey: fallbackApiKey,
-      baseUrl: fallbackBaseUrl.replace(/\/$/, ''),
-      model: imageModel,
-      provider: process.env.AI_PROVIDER || safeProviderFromBaseUrl(fallbackBaseUrl, 'fallback-ai-provider'),
-      source: 'fallback',
-      modelConfigured: true,
-    };
-  }
-
-  console.warn('image provider config missing', {
-    imageApiKey: imageApiKey ? 'set' : 'missing',
-    imageBaseUrl: imageBaseUrl ? 'set' : 'missing',
-    imageModel: imageModel ? 'set' : 'missing',
-    fallbackApiKey: fallbackApiKey ? 'set' : 'missing',
-    fallbackBaseUrl: fallbackBaseUrl ? 'set' : 'missing',
-    fallbackModel: fallbackModel ? 'set' : 'missing',
+function logMissingProviderConfig() {
+  console.warn('image provider config summary', {
+    grokApiKey: envValue('GROK_IMAGE_API_KEY') ? 'set' : 'missing',
+    grokBaseUrl: envValue('GROK_IMAGE_BASE_URL') ? 'set' : 'missing',
+    grokModel: envValue('GROK_IMAGE_MODEL') ? 'set' : 'missing',
+    gptApiKey: envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY') ? 'set' : 'missing',
+    gptBaseUrl: envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL') ? 'set' : 'missing',
+    gptModel: envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL') ? 'set' : 'missing',
   });
-
-  throw new ImageGenerationError(IMAGE_CONFIG_MISSING_MESSAGE, 'missing_config');
 }
 
 function getImageTimeoutMs() {
@@ -113,38 +104,21 @@ function normalizeStyle(style?: string) {
   return value || 'default';
 }
 
+function normalizeBaseUrl(baseUrl: string) {
+  return baseUrl.trim().replace(/\/+$/, '');
+}
+
+function buildImageEndpoints(baseUrl: string) {
+  const normalized = normalizeBaseUrl(baseUrl);
+  if (/\/v1$/i.test(normalized)) return [`${normalized}/images/generations`];
+  return [`${normalized}/v1/images/generations`, `${normalized}/images/generations`];
+}
+
 function classifyStatus(status: number) {
   if (status === 401 || status === 403) return 'auth_error';
   if (status === 429) return 'rate_limited';
   if (status >= 500 && status <= 599) return 'provider_5xx';
   return 'invalid_response';
-}
-
-function logImageFailure(config: ImageProviderConfig, error: AIClientError, promptLength: number) {
-  console.warn('image provider request failed', {
-    provider: config.provider,
-    source: config.source,
-    modelConfigured: config.modelConfigured ? 'set' : 'missing',
-    errorType: error.type,
-    status: error.status,
-    promptLength,
-  });
-}
-
-function sanitizeProviderSnippet(text: string) {
-  return text
-    .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+/gi, 'Bearer [REDACTED]')
-    .replace(/("?(?:api[_-]?key|authorization|token|secret)"?\s*[:=]\s*)"?[^",}\s]+"?/gi, '$1[REDACTED]')
-    .slice(0, 300);
-}
-
-function getImageEndpointBaseUrl(baseUrl: string) {
-  const normalized = baseUrl.replace(/\/$/, '');
-  return normalized.endsWith('/v1') ? normalized : `${normalized}/v1`;
-}
-
-function getImageEndpoint(baseUrl: string) {
-  return `${getImageEndpointBaseUrl(baseUrl)}/images/generations`;
 }
 
 function getEndpointSummary(endpoint: string) {
@@ -156,15 +130,30 @@ function getEndpointSummary(endpoint: string) {
   }
 }
 
+function logImageFailure(provider: ImageProviderConfig, error: AIClientError, promptLength: number, endpoint?: string) {
+  const endpointSummary = endpoint ? getEndpointSummary(endpoint) : undefined;
+  console.warn('image provider failed', {
+    provider: provider.id,
+    errorType: error.type,
+    status: error.status,
+    endpointHost: endpointSummary?.host,
+    endpointPath: endpointSummary?.path,
+    promptLength,
+  });
+}
+
+function logImageProviderSkipped(providerId: 'grok' | 'gpt') {
+  console.info('image provider skipped due to missing config', { provider: providerId });
+}
+
 async function postImageGeneration(
-  baseUrl: string,
+  endpoint: string,
   apiKey: string,
   body: Record<string, unknown>,
   timeoutMs: number,
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  const endpoint = getImageEndpoint(baseUrl);
   const endpointSummary = getEndpointSummary(endpoint);
 
   try {
@@ -188,32 +177,44 @@ async function postImageGeneration(
     const rawText = await response.text();
 
     if (!response.ok) {
-      console.warn('image provider response rejected', {
-        endpointHost: endpointSummary.host,
-        endpointPath: endpointSummary.path,
-        status: response.status,
-        responseSnippet: sanitizeProviderSnippet(rawText),
-      });
       throw new AIClientError(classifyStatus(response.status), 'AI image provider rejected request', response.status);
     }
 
-    let parsed: unknown;
     try {
-      parsed = rawText ? JSON.parse(rawText) : {};
+      return (rawText ? JSON.parse(rawText) : {}) as Record<string, unknown>;
     } catch {
       throw new AIClientError('invalid_response', 'AI image provider returned non-JSON response');
     }
-
-    return parsed as Record<string, unknown>;
   } catch (error) {
     if (error instanceof AIClientError) throw error;
-    const safeError = error instanceof Error && error.name === 'AbortError'
-      ? new AIClientError('timeout', 'AI image provider request timed out')
-      : new AIClientError('network_error', 'AI image provider network error');
-    throw safeError;
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new AIClientError('timeout', 'AI image provider request timed out');
+    }
+    throw new AIClientError('network_error', 'AI image provider network error');
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function parseImageResponse(response: Record<string, unknown>) {
+  const topLevelImageUrl = typeof response.url === 'string' ? response.url : undefined;
+  const revisedPrompt = typeof response.revised_prompt === 'string'
+    ? response.revised_prompt
+    : typeof response.revisedPrompt === 'string'
+      ? response.revisedPrompt
+      : undefined;
+  const firstData = Array.isArray(response.data) ? response.data[0] as Record<string, unknown> | undefined : undefined;
+  const dataUrl = firstData && typeof firstData.url === 'string' ? firstData.url : undefined;
+  const imageBase64 = firstData && typeof firstData.b64_json === 'string' ? firstData.b64_json : undefined;
+  const mimeType = firstData && typeof firstData.mime_type === 'string' ? firstData.mime_type : 'image/png';
+
+  if (!topLevelImageUrl && !dataUrl && !imageBase64) return null;
+  return {
+    imageUrl: topLevelImageUrl || dataUrl,
+    imageBase64,
+    mimeType,
+    revisedPrompt,
+  };
 }
 
 export async function generateImage(input: GenerateImageInput): Promise<GeneratedImageResult> {
@@ -222,61 +223,58 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     throw new ImageGenerationError('请输入图片需求', 'invalid_input');
   }
 
-  const config = getImageGenerationConfig();
+  const providers = getImageGenerationProviders();
+  if (!envValue('GROK_IMAGE_API_KEY') || !envValue('GROK_IMAGE_BASE_URL') || !envValue('GROK_IMAGE_MODEL')) {
+    logImageProviderSkipped('grok');
+  }
+  if (!(envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY')) || !(envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL')) || !(envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL'))) {
+    logImageProviderSkipped('gpt');
+  }
+  if (providers.length === 0) {
+    logMissingProviderConfig();
+    throw new ImageGenerationError(IMAGE_UNAVAILABLE_MESSAGE, 'missing_config');
+  }
+
   const timeoutMs = getImageTimeoutMs();
   const size = normalizeSize(input.size);
   const style = normalizeStyle(input.style);
-  const requestBody = {
-    model: config.model,
-    prompt: style && style !== 'default' ? `${safePrompt}\n风格：${style}` : safePrompt,
-    size,
-    n: 1,
-  };
-
+  const prompt = style && style !== 'default' ? `${safePrompt}\n风格：${style}` : safePrompt;
   let lastError: AIClientError | null = null;
 
-  for (let attempt = 1; attempt <= RETRY_DELAYS_MS.length + 1; attempt += 1) {
-    try {
-      const response = await postImageGeneration(config.baseUrl, config.apiKey, requestBody, timeoutMs);
+  for (const provider of providers) {
+    const requestBody = {
+      model: provider.model,
+      prompt,
+      size,
+      n: 1,
+    };
 
-      const topLevelImageUrl = typeof response.url === 'string' ? response.url : undefined;
-      const revisedPrompt = typeof response.revised_prompt === 'string'
-        ? response.revised_prompt
-        : typeof response.revisedPrompt === 'string'
-          ? response.revisedPrompt
-          : undefined;
-      const firstData = Array.isArray(response.data) ? response.data[0] as Record<string, unknown> | undefined : undefined;
-      const dataUrl = firstData && typeof firstData.url === 'string' ? firstData.url : undefined;
-      const imageBase64 = firstData && typeof firstData.b64_json === 'string' ? firstData.b64_json : undefined;
-      const mimeType = firstData && typeof firstData.mime_type === 'string' ? firstData.mime_type : 'image/png';
+    for (const endpoint of buildImageEndpoints(provider.baseUrl)) {
+      try {
+        const response = await postImageGeneration(endpoint, provider.apiKey, requestBody, timeoutMs);
+        const parsed = parseImageResponse(response);
+        if (!parsed) {
+          throw new AIClientError('invalid_response', 'AI image provider returned empty content');
+        }
 
-      if (topLevelImageUrl || dataUrl || imageBase64) {
         return {
-          imageUrl: topLevelImageUrl || dataUrl,
-          imageBase64,
-          mimeType,
-          revisedPrompt,
-          provider: config.provider,
-          model: config.model,
+          ...parsed,
+          provider: provider.id,
+          model: provider.model,
         };
-      }
+      } catch (error) {
+        const classified = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
+        lastError = classified;
+        logImageFailure(provider, classified, safePrompt.length, endpoint);
 
-      throw new AIClientError('invalid_response', 'AI image provider returned empty content');
-    } catch (error) {
-      const classified = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
-      lastError = classified;
-      logImageFailure(config, classified, safePrompt.length);
-
-      if (classified.status === 400 || classified.status === 404 || classified.status === 405 || classified.type === 'missing_config' || classified.type === 'auth_error' || classified.type === 'invalid_response') {
+        if (classified.status === 404 && !/\/v1\/images\/generations$/i.test(endpoint)) {
+          break;
+        }
+        if (classified.status === 404) {
+          continue;
+        }
         break;
       }
-
-      if (attempt <= RETRY_DELAYS_MS.length) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt - 1]));
-        continue;
-      }
-
-      break;
     }
   }
 

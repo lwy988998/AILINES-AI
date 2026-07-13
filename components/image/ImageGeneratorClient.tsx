@@ -69,10 +69,10 @@ export function ImageGeneratorClient({ initialPrompt }: ImageGeneratorClientProp
         return;
       }
 
-      setState({ status: 'error', message: result.message || '当前生图服务暂时不可用，请稍后重试。' });
+      setState({ status: 'error', message: result.message || '生图暂不可用' });
     } catch {
       if (requestIdRef.current === requestId) {
-        setState({ status: 'error', message: '当前生图服务暂时不可用，请稍后重试。' });
+        setState({ status: 'error', message: '生图暂不可用' });
       }
     }
   }
@@ -143,8 +143,8 @@ export function ImageGeneratorClient({ initialPrompt }: ImageGeneratorClientProp
               <ImageIcon className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-slate-950">{state.message || '当前生图服务暂时不可用，请稍后重试。'}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">这通常表示当前 AI provider 暂未开放图片生成接口，学习路线、搜索资料和课程持久化功能不受影响。</p>
+              <p className="text-lg font-semibold text-slate-950">{state.message || '生图暂不可用'}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">当前图片生成服务暂时不可用，请稍后重试。学习路线、课程和资料搜索功能不受影响。</p>
             </div>
             <div className="flex flex-wrap justify-center gap-3">
               <button
