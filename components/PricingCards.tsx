@@ -1,8 +1,4 @@
-'use client';
-
-import { useState } from 'react';
-import Link from 'next/link';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { getMembershipLimits, getMembershipLabel, type MembershipTier } from '@/lib/membership/tiers';
 
 const planOrder: MembershipTier[] = ['free', 'pro', 'max'];
@@ -25,50 +21,18 @@ const planCopy: Record<MembershipTier, { name: string; description: string; feat
   },
 };
 
-export function PricingCards({ currentTier = 'free', isLoggedIn = false }: { currentTier?: MembershipTier; isLoggedIn?: boolean }) {
-  const [pendingTier, setPendingTier] = useState<MembershipTier | null>(null);
-  const [message, setMessage] = useState('');
-
-  async function simulateTier(tier: MembershipTier) {
-    if (!isLoggedIn) return;
-    setPendingTier(tier);
-    setMessage('');
-
-    try {
-      const response = await fetch('/api/membership/simulate-tier', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
-      });
-      const data = await response.json().catch(() => ({})) as { error?: string };
-
-      if (!response.ok) {
-        setMessage(data.error || '模拟开通失败，请稍后重试。');
-        return;
-      }
-
-      setMessage(`已模拟开通 ${getMembershipLabel(tier)}，正在刷新权益。`);
-      window.location.reload();
-    } catch {
-      setMessage('模拟开通失败，请检查网络后重试。');
-    } finally {
-      setPendingTier(null);
-    }
-  }
-
+export function PricingCards({ currentTier = 'free' }: { currentTier?: MembershipTier; isLoggedIn?: boolean }) {
   return (
     <section className="space-y-4">
-      <div className="rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-        <p className="font-semibold">测试功能：模拟开通会员</p>
-        <p className="mt-1">当前为测试阶段，会员为模拟开通，暂未接入支付，不会生成订单，也不会收集付款信息。</p>
-        {message ? <p className="mt-2 font-semibold text-amber-800">{message}</p> : null}
+      <div className="rounded-3xl border border-sky-100 bg-sky-50 px-5 py-4 text-sm leading-6 text-sky-900">
+        <p className="font-semibold">会员开通说明</p>
+        <p className="mt-1">会员开通暂由管理员处理，在线支付即将开放。当前页面仅展示 Free / Pro / Max 权益，不提供自助切换会员等级。</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         {planOrder.map((tier) => {
           const plan = planCopy[tier];
           const limits = getMembershipLimits(tier);
           const isCurrent = tier === currentTier;
-          const isPending = pendingTier === tier;
           const benefits = [
             `每日课程生成 ${limits.courseGeneratePerDay} 次`,
             `每日学习卡片生成 ${limits.learnGeneratePerDay} 次`,
@@ -99,32 +63,15 @@ export function PricingCards({ currentTier = 'free', isLoggedIn = false }: { cur
                   </li>
                 ))}
               </ul>
-              {isCurrent ? (
-                <button
-                  type="button"
-                  disabled
-                  className="mt-7 inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white"
-                >
-                  当前方案
-                </button>
-              ) : isLoggedIn ? (
-                <button
-                  type="button"
-                  onClick={() => simulateTier(tier)}
-                  disabled={Boolean(pendingTier)}
-                  className="mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  模拟开通 {getMembershipLabel(tier)}
-                </button>
-              ) : (
-                <Link
-                  href="/login"
-                  className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-100 px-5 text-sm font-semibold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
-                >
-                  登录后模拟开通
-                </Link>
-              )}
+              <button
+                type="button"
+                disabled
+                className={`mt-7 inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-xl px-5 text-sm font-semibold ${
+                  isCurrent ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {isCurrent ? '当前方案' : '联系管理员开通'}
+              </button>
             </article>
           );
         })}
