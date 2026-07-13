@@ -10,6 +10,12 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type PlanningMode = 'lite' | 'deep' | 'image';
 
+type MembershipMeResponse = {
+  permissions?: {
+    deep_plan?: boolean;
+  };
+};
+
 const planningModes: Array<{
   value: PlanningMode;
   title: string;
@@ -53,6 +59,36 @@ export function GoalForm() {
   const [imageError, setImageError] = useState('');
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [canUseDeepPlan, setCanUseDeepPlan] = useState(true);
+  const [membershipLoaded, setMembershipLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMembership() {
+      try {
+        const anonymousId = getOrCreateAnonymousId();
+        const response = await fetch(`/api/membership/me?anonymousId=${encodeURIComponent(anonymousId)}`, { cache: 'no-store' });
+        const data = (await response.json().catch(() => ({}))) as MembershipMeResponse;
+        if (!cancelled) {
+          setCanUseDeepPlan(data.permissions?.deep_plan !== false);
+        }
+      } catch {
+        if (!cancelled) {
+          setCanUseDeepPlan(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setMembershipLoaded(true);
+        }
+      }
+    }
+
+    void loadMembership();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -105,8 +141,16 @@ export function GoalForm() {
   }
 
   function selectMode(mode: PlanningMode) {
+    if (mode === 'deep' && membershipLoaded && !canUseDeepPlan) {
+      selectedModeRef.current = 'lite';
+      setModeValue('lite');
+      setImageError('深度 AILINES AI 规划是 Pro 功能，请升级后使用。已先为你切换到快速规划。');
+      return;
+    }
+
     selectedModeRef.current = mode;
     setModeValue(mode);
+    setImageError('');
   }
 
   function routeToTarget(goal: string, mode: PlanningMode) {
@@ -129,6 +173,13 @@ export function GoalForm() {
 
     if (!goal) {
       setImageError(mode === 'image' ? '请输入想生成的图片需求' : '请输入学习需求，或上传一张相关图片');
+      return;
+    }
+
+    if (mode === 'deep' && membershipLoaded && !canUseDeepPlan) {
+      selectedModeRef.current = 'lite';
+      setModeValue('lite');
+      setImageError('深度 AILINES AI 规划是 Pro 功能，请升级后使用。你可以先使用快速规划，或查看会员方案。');
       return;
     }
 
@@ -249,7 +300,12 @@ export function GoalForm() {
           </div>
         ) : null}
 
-        {imageError ? <p className="rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">{imageError}</p> : null}
+        {imageError ? (
+          <div className="rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
+            <p>{imageError}</p>
+            {imageError.includes('Pro 功能') ? <a href="/membership" className="mt-2 inline-flex font-semibold text-sky-800 underline underline-offset-4">查看会员方案</a> : null}
+          </div>
+        ) : null}
 
         <fieldset className="rounded-2xl border border-sky-100 bg-white/55 p-3">
           <legend className="px-1 text-xs font-semibold text-slate-600">生成模式</legend>
@@ -284,7 +340,10 @@ export function GoalForm() {
                       {selected ? <span className="h-2 w-2 rounded-full bg-white" /> : null}
                     </span>
                     <span>
-                      <span className="block font-semibold text-slate-950">{mode.title}</span>
+                      <span className="flex items-center gap-2 font-semibold text-slate-950">
+                        {mode.title}
+                        {mode.value === 'deep' && membershipLoaded && !canUseDeepPlan ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Pro</span> : null}
+                      </span>
                       <span className="mt-1 block text-sm text-slate-500">{mode.description}</span>
                     </span>
                   </span>

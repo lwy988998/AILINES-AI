@@ -3,6 +3,7 @@ import { GeneratePlanError, generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 import { getMockPlanByGoal } from '@/lib/mockPlan';
+import { canUseFeature } from '@/lib/membership/permissions';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
 export async function POST(request: NextRequest) {
@@ -24,6 +25,17 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await getCurrentUserFromRequest(request);
+  if (mode === 'deep') {
+    const access = canUseFeature(user?.membershipTier, 'deep_plan');
+    if (!access.allowed) {
+      return NextResponse.json({
+        error: access.reason || '深度 AILINES AI 规划是 Pro 功能。你可以升级会员，或先使用快速规划。',
+        requiredTier: access.requiredTier || 'pro',
+        feature: 'deep_plan',
+      }, { status: 403 });
+    }
+  }
+
   const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'course_generate' });
   if (!usage.allowed) {
     return NextResponse.json({ error: '今日课程生成次数已用完，升级会员可获得更多额度。', usage }, { status: 429 });

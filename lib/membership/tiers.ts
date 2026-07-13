@@ -7,11 +7,12 @@ export const MEMBERSHIP_LIMITS = {
     courseGeneratePerDay: 3,
     learnGeneratePerDay: 3,
     imageGeneratePerDay: 1,
-    assistantChatPerDay: 10,
-    allowDeepPlan: true,
+    assistantChatPerDay: 3,
+    allowDeepPlan: false,
     allowImageGeneration: true,
-    allowCourseSlides: true,
-    allowMindMap: true,
+    allowCourseSlides: false,
+    allowMindMap: false,
+    allowAssistantChat: false,
   },
   pro: {
     courseGeneratePerDay: 30,
@@ -22,6 +23,7 @@ export const MEMBERSHIP_LIMITS = {
     allowImageGeneration: true,
     allowCourseSlides: true,
     allowMindMap: true,
+    allowAssistantChat: true,
   },
   max: {
     courseGeneratePerDay: 200,
@@ -32,6 +34,7 @@ export const MEMBERSHIP_LIMITS = {
     allowImageGeneration: true,
     allowCourseSlides: true,
     allowMindMap: true,
+    allowAssistantChat: true,
   },
 } as const;
 

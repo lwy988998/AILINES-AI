@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 import { getMembershipLabel, getMembershipLimits, normalizeMembershipTier, type UsageType } from '@/lib/membership/tiers';
+import { getMembershipPermissions } from '@/lib/membership/permissions';
 import { checkUsageLimit } from '@/lib/membership/usage';
 
 const USAGE_TYPES: UsageType[] = ['course_generate', 'learn_generate', 'image_generate', 'assistant_chat'];
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
       membershipStartedAt: user?.membershipStartedAt || null,
       membershipExpiresAt: user?.membershipExpiresAt || null,
       limits: getMembershipLimits(tier),
+      permissions: getMembershipPermissions(tier),
       usage: Object.fromEntries(usageEntries),
     });
   } catch (error) {
@@ -33,6 +35,7 @@ export async function GET(request: NextRequest) {
       label: 'Free',
       status: 'active',
       limits: getMembershipLimits('free'),
+      permissions: getMembershipPermissions('free'),
       usage: {},
     });
   }

@@ -100,6 +100,7 @@ export async function StoredCoursePlan({ courseId }: { courseId: string }) {
       courseId={result.course.id}
       courseProgress={courseProgress}
       notice={notice}
+      membershipTier={user?.membershipTier || 'free'}
     />
   );
 }

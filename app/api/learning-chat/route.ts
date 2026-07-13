@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { generateContextualLearningAnswer } from '@/lib/ai/generateContextualLearningAnswer';
 import type { PlanMode } from '@/lib/ai/types';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { canUseFeature } from '@/lib/membership/permissions';
+import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,13 +79,35 @@ async function searchResourcesSafely(query: string): Promise<SearchResource[]> {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.json().catch(() => ({})) as ChatBody;
     const question = sanitizeText(rawBody.question, 1200);
 
     if (!question) {
       return NextResponse.json({ answer: '请先输入你想问的问题。', references: [], fallbackUsed: true }, { status: 400 });
+    }
+
+    const user = await getCurrentUserFromRequest(request);
+    const access = canUseFeature(user?.membershipTier, 'assistant_chat');
+    if (!access.allowed) {
+      return NextResponse.json({
+        answer: access.reason || '浮动 AILINES AI 学习助手是 Pro 功能，升级后可在学习页面随时追问。',
+        references: [],
+        fallbackUsed: true,
+        upgradeRequired: true,
+        requiredTier: access.requiredTier || 'pro',
+      }, { status: 200 });
+    }
+
+    const usage = await checkUsageLimit({ userId: user?.id, anonymousId: null, tier: user?.membershipTier, type: 'assistant_chat' });
+    if (!usage.allowed) {
+      return NextResponse.json({
+        answer: '今日 AILINES AI 学习助手次数已用完，升级会员可获得更多额度。',
+        references: [],
+        fallbackUsed: true,
+        usage,
+      }, { status: 200 });
     }
 
     const context = {
@@ -99,8 +124,9 @@ export async function POST(request: Request) {
 
     const resources = await searchResourcesSafely(buildSearchQuery(context));
     const answer = await generateContextualLearningAnswer({ ...context, resources });
+    await incrementUsage('assistant_chat', usage.scope);
 
-    return NextResponse.json(answer);
+    return NextResponse.json({ ...answer, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     console.warn('Learning chat fallback response', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json({

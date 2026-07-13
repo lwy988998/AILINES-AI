@@ -11,6 +11,8 @@ import type { PlanMode } from '@/lib/ai/types';
 import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
+import { canUseFeature } from '@/lib/membership/permissions';
+import { UpgradeRequiredCard } from '@/components/membership/UpgradeRequiredCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,8 +57,28 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   let quotaNotice = '';
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
+  const user = await getCurrentUser();
+  const deepAccess = mode === 'deep' ? canUseFeature(user?.membershipTier, 'deep_plan') : { allowed: true };
+
+  if (rawGoal && !deepAccess.allowed) {
+    return (
+      <main className="min-h-screen bg-[#f5f9ff]">
+        <SiteHeader />
+        <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+          <UpgradeRequiredCard
+            feature="deep_plan"
+            title="需要升级会员"
+            description={deepAccess.reason || '深度 AILINES AI 规划是 Pro 功能。你可以升级会员，或先使用快速规划。'}
+            requiredTier={deepAccess.requiredTier || 'pro'}
+            goal={goal}
+            showLiteLink
+          />
+        </div>
+      </main>
+    );
+  }
+
   if (rawGoal) {
-    const user = await getCurrentUser();
     const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'course_generate' });
 
     if (!usage.allowed) {
@@ -147,6 +169,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
           modeDescription={modeDescription}
           resourceSourceMessage={resourceSourceMessage}
           notice={notice}
+          membershipTier={user?.membershipTier || 'free'}
         />
       )}
     </main>
