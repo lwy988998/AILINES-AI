@@ -47,8 +47,70 @@ input {
   }
 }
 
+@keyframes ailines-shimmer {
+  from {
+    transform: translateX(-120%) rotate(12deg);
+  }
+
+  to {
+    transform: translateX(260%) rotate(12deg);
+  }
+}
+
+@keyframes ailines-progress {
+  0% {
+    transform: translateX(-70%);
+  }
+
+  50% {
+    transform: translateX(25%);
+  }
+
+  100% {
+    transform: translateX(115%);
+  }
+}
+
+@keyframes ailines-soft-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes ailines-skeleton {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 .page-transition {
   animation: page-fade-in 220ms ease-out both;
+}
+
+.ailines-shimmer {
+  animation: ailines-shimmer 3.2s ease-in-out infinite;
+}
+
+.ailines-progress {
+  animation: ailines-progress 2.4s ease-in-out infinite;
+}
+
+.ailines-soft-float {
+  animation: ailines-soft-float 3s ease-in-out infinite;
+}
+
+.ailines-skeleton {
+  background-image: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 42%, #dbeafe 55%, #e2e8f0 100%);
+  background-size: 220% 100%;
+  animation: ailines-skeleton 1.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -56,7 +118,11 @@ input {
     scroll-behavior: auto;
   }
 
-  .page-transition {
+  .page-transition,
+  .ailines-shimmer,
+  .ailines-progress,
+  .ailines-soft-float,
+  .ailines-skeleton {
     animation: none;
   }
 }

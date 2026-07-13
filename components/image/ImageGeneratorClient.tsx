@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Download, ImageIcon, Loader2, RefreshCw } from 'lucide-react';
+import { Download, ImageIcon, RefreshCw } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
+import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
 type ImageGenerationState = {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -98,19 +99,15 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
           disabled={state.status === 'loading'}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
         >
-          {state.status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          {state.status === 'loading' ? '正在生成图片...' : '重新生成'}
+          <RefreshCw className={`h-4 w-4 ${state.status === 'loading' ? 'motion-safe:animate-pulse' : ''}`} />
+          {state.status === 'loading' ? '生成中' : '重新生成'}
         </button>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
         {state.status === 'loading' ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-sky-700" />
-            <div>
-              <p className="text-lg font-semibold text-slate-950">正在生成图片...</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">如果当前 provider 不支持生图，会显示友好提示，不会影响学习路线功能。</p>
-            </div>
+          <div className="bg-[#f5f9ff] p-4 sm:p-6">
+            <AilinesGeneratingState type="image" />
           </div>
         ) : null}
 
