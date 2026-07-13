@@ -6,7 +6,10 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
-    "lint": "next lint"
+    "lint": "next lint",
+    "desktop": "electron desktop/main.js",
+    "desktop:build": "electron-builder --win",
+    "desktop:build:dir": "electron-builder --win --dir"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -21,7 +24,30 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
     "prisma": "^6.19.3",
     "typescript": "latest"
+  },
+  "build": {
+    "appId": "com.ailines.ai",
+    "productName": "AILINES AI",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "AILINES-AI-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

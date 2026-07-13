@@ -13,3 +13,8 @@ prisma/dev.db
 *.db
 
 /generated/prisma
+release/
+*.exe
+*.msi
+*.AppImage
+*.dmg
