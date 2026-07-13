@@ -11,13 +11,13 @@ export default function PlanLoading() {
             AILINES AI 生成中
           </div>
           <h1 className="mt-8 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-            正在生成你的学习方案
+            正在准备你的学习内容
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-            AILINES AI 正在根据你的学习目标规划路线、课程、资源和项目实战路径。
+            AILINES AI 正在根据你的目标整理适合的学习内容。快速规划会优先给出基础步骤，深度规划会补充完整课程和资料。
           </p>
           <p className="mt-6 rounded-2xl border border-sky-100 bg-sky-50 p-5 text-sm leading-6 text-slate-600">
-            通常需要几十秒；如果深度生成暂时未完成，会先展示可学习的基础课程版本。
+            通常需要几十秒；如果生成暂时未完成，会先展示一份可执行的基础版本。
           </p>
         </section>
         <section className="grid gap-4 lg:grid-cols-2">

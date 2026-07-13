@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CourseHistoryRecorder } from '@/components/course/CourseHistoryRecorder';
 import { CoursePlanView } from '@/components/course/CoursePlanView';
+import { LitePlanView } from '@/components/course/LitePlanView';
 import { StoredCoursePlan } from '@/components/course/StoredCoursePlan';
 import { SiteHeader } from '@/components/site-header';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
@@ -64,7 +65,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     } else {
       try {
         const generatedPlan = await generatePlanWithAI(rawGoal, mode);
-        const adaptedPlan = adaptGeneratedPlan(generatedPlan);
+        const adaptedPlan = adaptGeneratedPlan(generatedPlan, mode);
 
         if (!isRenderablePlan(adaptedPlan)) {
           throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
@@ -118,7 +119,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         <p className="font-semibold text-slate-900">
           {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
         </p>
-        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || '当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。'}</p> : null}
+        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || (mode === 'lite' ? '当前快速生成暂时未完成，AILINES AI 已先展示贴合目标的基础步骤。你可以稍后点击“重新生成”获取更新版本。' : '当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。')}</p> : null}
       </div>
       {!isAIPlan ? (
         <Link
@@ -135,15 +136,19 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
     <main className="min-h-screen bg-[#f5f9ff]">
       {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} summary={plan.summary} source={isAIPlan ? 'ai' : 'fallback'} plan={plan} /> : null}
       <SiteHeader />
-      <CoursePlanView
-        goal={goal}
-        mode={mode}
-        plan={plan}
-        modeLabel={modeLabel}
-        modeDescription={modeDescription}
-        resourceSourceMessage={resourceSourceMessage}
-        notice={notice}
-      />
+      {mode === 'lite' ? (
+        <LitePlanView goal={goal} mode={mode} plan={plan} resourceSourceMessage={resourceSourceMessage} notice={notice} />
+      ) : (
+        <CoursePlanView
+          goal={goal}
+          mode={mode}
+          plan={plan}
+          modeLabel={modeLabel}
+          modeDescription={modeDescription}
+          resourceSourceMessage={resourceSourceMessage}
+          notice={notice}
+        />
+      )}
     </main>
   );
 }

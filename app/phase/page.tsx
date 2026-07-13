@@ -100,7 +100,7 @@ async function getPlanStage(goal: string, mode: PlanMode, phaseIndex: number, ph
   try {
     const cachedPlan = await readCachedPlan(goal, mode);
     if (cachedPlan) {
-      plan = adaptGeneratedPlan(cachedPlan);
+      plan = adaptGeneratedPlan(cachedPlan, mode);
     }
   } catch (error) {
     console.warn('Phase cached plan fallback', error instanceof Error ? error.message : 'unknown error');

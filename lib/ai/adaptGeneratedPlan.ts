@@ -116,16 +116,18 @@ function phaseTasks(phase: GeneratedPlanPhase) {
   return ensureArray(phase.topics).slice(0, 5);
 }
 
-export function adaptGeneratedPlan(plan: GeneratedPlan): MockPlan {
+export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 'deep'): MockPlan {
   const phases = ensureArray(plan.phases);
+  const titleFallback = mode === 'lite' ? `${safeText(plan.goal, '你的目标')}快速学习方案` : 'AILINES AI 学习方案';
+  const summaryFallback = mode === 'lite' ? '这是一份快速可执行方案，优先给出核心步骤、练习方法、检查标准和常见错误。' : '围绕你的目标生成阶段化学习路线。';
 
   return {
-    title: safeText(plan.title, 'AILINES AI 学习方案'),
-    duration: `${typeof plan.durationWeeks === 'number' ? plan.durationWeeks : phases.length * 2} 周`,
-    summary: safeText(plan.summary, safeText(plan.courseIntro || plan.overview, '围绕你的目标生成阶段化学习路线。')),
-    courseIntro: safeText(plan.courseIntro, safeText(plan.overview || plan.summary, '这门课程会通过阶段导学、分步讲解、练习和检查点帮助你真正掌握目标。')),
-    overview: safeText(plan.overview, safeText(plan.summary, '从目标拆解、核心知识、练习任务到阶段产出，逐步推进学习。')),
-    audience: safeText(plan.audience, '希望系统学习并通过练习获得实际产出的学习者。'),
+    title: safeText(plan.title, titleFallback),
+    duration: mode === 'lite' ? `${typeof plan.durationWeeks === 'number' ? Math.max(1, Math.min(2, plan.durationWeeks)) : 1} 周` : `${typeof plan.durationWeeks === 'number' ? plan.durationWeeks : phases.length * 2} 周`,
+    summary: safeText(plan.summary, safeText(plan.courseIntro || plan.overview, summaryFallback)),
+    courseIntro: safeText(plan.courseIntro, safeText(plan.overview || plan.summary, mode === 'lite' ? '这份快速规划会用更少步骤告诉你马上怎么做、怎么练、怎么检查。' : '这门课程会通过阶段导学、分步讲解、练习和检查点帮助你真正掌握目标。')),
+    overview: safeText(plan.overview, safeText(plan.summary, mode === 'lite' ? '从准备、核心步骤、练习、自检和常见错误快速推进。' : '从目标拆解、核心知识、练习任务到阶段产出，逐步推进学习。')),
+    audience: safeText(plan.audience, mode === 'lite' ? '希望快速上手并获得可执行步骤的学习者。' : '希望系统学习并通过练习获得实际产出的学习者。'),
     prerequisites: ensureArray(plan.prerequisites).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
     outcome: safeText(plan.outcome, '完成后能够形成可展示的学习成果，并知道下一步如何继续提升。'),
     learningOutcomes: isStringArray(plan.learningOutcomes) ? plan.learningOutcomes : [],

@@ -453,6 +453,79 @@ function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python'
   ];
 }
 
+
+function cleanGoalTitle(goal: string) {
+  return goal.trim().replace(/[。！？!?\s]+$/g, '') || '你的目标';
+}
+
+function isPracticalSkillGoal(goal: string) {
+  return /(如何|怎么|怎样|学会|练习|使用|安装|修|换|做|打结|绑|捆绑|剪视频|做饭|鱼钩|工具)/i.test(goal);
+}
+
+function createPracticalSkillPlan(goal: string, mode: PlanMode): MockPlan {
+  const safeGoal = cleanGoalTitle(goal);
+  const isFishingHook = /鱼钩|绑钩|捆绑鱼钩|鱼线/i.test(safeGoal);
+  const materialItems = isFishingHook ? ['鱼钩', '鱼线', '剪刀或线剪', '一小杯水用于润湿线结', '明亮桌面，方便观察线圈'] : ['完成操作所需工具或材料', '可反复练习的小样本', '记录问题的纸笔或手机备忘录'];
+  const mistakes = isFishingHook
+    ? ['绕线太少，线结受力后容易松', '没有拉紧主线和线头，结没有真正锁住', '拉紧前没有润湿，摩擦发热会伤线', '线头留太短，受力后容易滑脱', '绑完没有做拉力测试']
+    : ['只看示范不亲手练', '跳过准备和安全检查', '一次失败后没有记录原因', '没有用明确标准判断是否合格', '急着学复杂技巧，基础动作还不稳定'];
+  const stepNames = isFishingHook
+    ? ['准备鱼钩、鱼线和剪刀', '理解线结固定的核心原理', '学习一种基础绑钩方法', '反复练习拉紧和修剪', '检查牢固度和常见错误']
+    : ['准备材料和练习环境', '理解关键动作和安全边界', '跟着示例完成第一次操作', '重复练习并记录问题', '按标准自检并修正错误'];
+
+  const roadmap = stepNames.map((name, index) => ({
+    name: `第 ${index + 1} 步：${name}`,
+    duration: index === 0 ? '10-20 分钟' : '20-40 分钟',
+    goal: index === 0 ? `准备好练习「${safeGoal}」所需条件` : `完成${name}`,
+    description: isFishingHook
+      ? [
+          '先把鱼钩、鱼线和剪刀放在明亮桌面，剪一段方便练习的鱼线。初学不要直接在复杂钓组上操作，先用单钩反复练手，保证能看清线头、主线和钩柄位置。',
+          '绑钩的本质是让鱼线绕住钩柄并通过线结自锁。你要观察线圈方向、主线受力方向和线头位置，理解为什么拉紧后线圈会抱住钩柄，而不是只记一个动作顺序。',
+          '先固定一种基础绑法：让线沿钩柄放置，线头绕钩柄和主线多圈，再从预留线圈穿回。整个过程慢一点，重点保持线圈整齐，不要交叉压线。',
+          '每次绑完先轻轻收紧，再润湿线结，最后同时拉主线和线头让线圈锁紧。修剪线头时不要贴着线结剪，保留少量余量，避免受力滑脱。',
+          '用手稳定拉主线做小幅拉力测试，观察线结是否滑动、线圈是否散开、钩柄是否偏斜。如果不牢，拆掉重绑，不要带着隐患继续使用。',
+        ][index]
+      : `围绕「${safeGoal}」先完成“${name}”。这一阶段不要追求复杂，重点是亲手做一次、看见结果、记录问题，并用明确标准判断是否可以进入下一步。`,
+    why: index === 0 ? '准备充分可以减少第一次练习的挫败感。' : '快速规划强调马上行动，每一步都要能被检查。',
+    output: index === 4 ? '一份可复现的操作流程和错误清单' : name,
+    practice: isFishingHook ? (index === 3 ? '连续绑 5 次，每次记录是否松动、线圈是否整齐。' : `完成“${name}”并拍照或目视检查结果。`) : `完成 2-3 次“${name}”练习。`,
+    checkpoint: isFishingHook ? (index === 4 ? '线结受力不滑动，线头长度合适，线圈整齐贴住钩柄。' : '能说出这一步的作用，并独立复现。') : '能不看提示复现，并指出一个可改进点。',
+    commonMistakes: mistakes.slice(0, 3),
+    steps: [{
+      title: name,
+      explanation: isFishingHook ? `针对「${safeGoal}」，这一步要做到可观察、可重复、可检查。初学时动作慢一点比速度更重要：先确认线和钩的位置，再完成绕线、穿线、润湿、拉紧和修剪。每次练习后都要做拉力测试，线结不稳就拆掉重来。` : `针对「${safeGoal}」，这一步要把抽象目标变成一个能立刻执行的小动作。先照着示例做一遍，再独立做一遍，最后记录卡住的位置。`,
+      example: isFishingHook ? '例如先用粗一点的鱼线练习，更容易看清绕线方向；熟练后再换实际使用的线径。' : '例如把一次完整操作拆成准备、执行、检查、修正四个小环节。',
+      action: isFishingHook ? `完成“${name}”，并至少重复 3 次。` : `完成“${name}”并记录结果。`,
+      check: isFishingHook ? '线结不散、不滑，自己能解释线头和主线分别往哪里走。' : '不用看教程也能复现，并知道失败原因。',
+    }],
+  }));
+
+  return applyModeToFallbackPlan({
+    title: `${safeGoal}快速学习方案`,
+    duration: mode === 'lite' ? '1-3 天' : '2 周',
+    summary: isFishingHook
+      ? '这是一份轻量实践方案，帮助你先掌握鱼线与鱼钩连接的基本方法，重点是线结牢固、步骤正确、练习可重复。'
+      : `这是一份围绕「${safeGoal}」的轻量实践方案，重点告诉你先准备什么、按什么步骤做、如何练习和检查。`,
+    courseIntro: `先用最短路径完成「${safeGoal}」的基础操作，再根据练习中的问题决定是否深入学习。`,
+    overview: `按准备、理解、操作、练习、自检推进「${safeGoal}」。`,
+    audience: '想快速上手一个具体操作技能的学习者。',
+    prerequisites: materialItems,
+    outcome: `能独立完成「${safeGoal}」的基础流程，并知道如何检查和修正错误。`,
+    learningOutcomes: ['知道需要准备什么', '能按步骤完成一次操作', '能识别常见错误', '能做基础自检'],
+    roadmap,
+    courseStructure: [{ stage: '快速上手', topics: stepNames }],
+    resources: [
+      { name: `${safeGoal} 图文教程`, type: '图文教程', difficulty: '入门', free: true, description: '优先找带步骤图的资料，对照动作练习。', href: `https://www.bing.com/search?q=${encodeURIComponent(safeGoal + ' 图文教程')}` },
+      { name: `${safeGoal} 视频示范`, type: '视频教程', difficulty: '入门', free: true, description: '看手部动作和拉紧过程，注意暂停模仿。', href: `https://www.bing.com/search?q=${encodeURIComponent(safeGoal + ' 视频 教程')}` },
+      { name: `${safeGoal} 常见错误`, type: '文章', difficulty: '入门', free: true, description: '练习后对照错误清单排查。', href: `https://www.bing.com/search?q=${encodeURIComponent(safeGoal + ' 常见错误')}` },
+    ],
+    projects: [
+      { name: '完成 5 次连续练习', difficulty: '入门', duration: '30-60 分钟', output: '5 次练习记录和 1 份错误清单。', acceptance: '至少 4 次能通过自检标准。' },
+      { name: '复述并示范完整流程', difficulty: '入门', duration: '15 分钟', output: '一次完整演示。', acceptance: '能边做边说出关键注意点。' },
+    ],
+  }, mode);
+}
+
 function applyModeToFallbackPlan(plan: MockPlan, mode: PlanMode): MockPlan {
   if (mode === 'deep') {
     return plan;
@@ -460,18 +533,18 @@ function applyModeToFallbackPlan(plan: MockPlan, mode: PlanMode): MockPlan {
 
   return {
     ...plan,
-    duration: plan.duration.replace(/\d+/, (value) => String(Math.max(3, Math.min(6, Number(value) || 4)))),
-    summary: `${plan.summary} 当前为快速规划 / 轻量学习课程版本，优先保留最关键阶段、练习和资料。`,
-    roadmap: plan.roadmap.slice(0, 3).map((stage) => ({
+    duration: /天/.test(plan.duration) ? plan.duration : plan.duration.replace(/\d+/, (value) => String(Math.max(1, Math.min(3, Number(value) || 2)))),
+    summary: `${plan.summary} 当前为快速规划 / 轻量学习课程版本，优先保留最关键步骤、练习和少量资料。`,
+    roadmap: plan.roadmap.slice(0, 5).map((stage) => ({
       ...stage,
       steps: Array.isArray(stage.steps) ? stage.steps.slice(0, 2) : stage.steps,
       commonMistakes: Array.isArray(stage.commonMistakes) ? stage.commonMistakes.slice(0, 2) : stage.commonMistakes,
     })),
-    courseStructure: plan.courseStructure.slice(0, 3).map((stage) => ({
+    courseStructure: plan.courseStructure.slice(0, 5).map((stage) => ({
       ...stage,
-      topics: stage.topics.slice(0, 4),
+      topics: stage.topics.slice(0, 5),
     })),
-    resources: plan.resources.slice(0, 3),
+    resources: plan.resources.slice(0, 5),
     projects: plan.projects.slice(0, 2),
     slides: Array.isArray(plan.slides) ? plan.slides.slice(0, 6) : plan.slides,
     mindMap: plan.mindMap,
@@ -536,7 +609,11 @@ export function getMockPlanByGoal(goal: string, mode: PlanMode = 'deep'): MockPl
     return enhancePlan(excelPlan, goal, 'tool', mode);
   }
 
-  return enhancePlan(genericPlan, goal, 'general', mode);
+  if (isPracticalSkillGoal(goal)) {
+    return createPracticalSkillPlan(goal, mode);
+  }
+
+  return enhancePlan({ ...genericPlan, title: `${cleanGoalTitle(goal)}学习方案`, summary: `围绕「${cleanGoalTitle(goal)}」建立基础认知、核心步骤、练习路径和可检查成果。` }, goal, 'general', mode);
 }
 
 export const getMockPlan = getMockPlanByGoal;

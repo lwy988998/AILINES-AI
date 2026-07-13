@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, Home, RefreshCw } from 'lucide-react';
 import { CoursePlanView } from '@/components/course/CoursePlanView';
+import { LitePlanView } from '@/components/course/LitePlanView';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import { getCourseOwnedByRequester, getCourseWithLatestSnapshot } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
@@ -62,6 +63,32 @@ export async function StoredCoursePlan({ courseId }: { courseId: string }) {
     courseProgress = await recomputeCourseProgress({ courseId: result.course.id, anonymousId: result.course.anonymousId || undefined });
   }
 
+  const notice = (
+    <section className="flex flex-col gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="flex items-center gap-2 font-semibold text-emerald-900"><CheckCircle2 className="h-4 w-4" />已恢复历史课堂</p>
+        <p className="mt-1 font-medium">本页来自数据库中保存的课程快照，没有重新调用 AI provider 生成课程。</p>
+      </div>
+      <Link href={`/progress?goal=${encodeURIComponent(goal)}&mode=${result.course.mode}&courseId=${encodeURIComponent(result.course.id)}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+        进入进度追踪
+      </Link>
+    </section>
+  );
+
+  if (result.course.mode === 'lite') {
+    return (
+      <LitePlanView
+        goal={goal}
+        mode={result.course.mode}
+        plan={plan}
+        resourceSourceMessage="已从数据库历史课堂快照恢复资料，不会重新搜索或重新生成。"
+        courseId={result.course.id}
+        courseProgress={courseProgress}
+        notice={notice}
+      />
+    );
+  }
+
   return (
     <CoursePlanView
       goal={goal}
@@ -72,17 +99,7 @@ export async function StoredCoursePlan({ courseId }: { courseId: string }) {
       resourceSourceMessage="已从数据库历史课堂快照恢复资料，不会重新搜索或重新生成。"
       courseId={result.course.id}
       courseProgress={courseProgress}
-      notice={(
-        <section className="flex flex-col gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="flex items-center gap-2 font-semibold text-emerald-900"><CheckCircle2 className="h-4 w-4" />已恢复历史课堂</p>
-            <p className="mt-1 font-medium">本页来自数据库中保存的课程快照，没有重新调用 AI provider 生成课程。</p>
-          </div>
-          <Link href={`/progress?goal=${encodeURIComponent(goal)}&mode=${result.course.mode}&courseId=${encodeURIComponent(result.course.id)}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100">
-            进入进度追踪
-          </Link>
-        </section>
-      )}
+      notice={notice}
     />
   );
 }
