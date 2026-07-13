@@ -33,7 +33,9 @@ type ApiCourseItem = {
 };
 
 function getModeLabel(mode: string) {
-  return mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
+  if (mode === 'lite') return '快速规划';
+  if (mode === 'image') return '生图模式';
+  return '深度 AILINES AI 规划';
 }
 
 function formatDateTime(value: string) {
