@@ -19,6 +19,15 @@ type CreateCourseSnapshotInput = {
   payload: unknown;
 };
 
+const courseWithLatestSnapshotInclude = {
+  snapshots: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+  },
+};
+
+type CourseWithLatestSnapshot = Prisma.CourseGetPayload<{ include: typeof courseWithLatestSnapshotInclude }>;
+
 export class CourseRepositoryError extends Error {
   constructor(message = '课程历史暂时不可用') {
     super(message);
@@ -146,6 +155,7 @@ export async function createOrUpdateCourseSnapshot(input: CreateCourseSnapshotIn
   }
 }
 
+
 export async function getCourseWithLatestSnapshot(courseId: string) {
   try {
     const course = await prisma.course.findFirst({
@@ -167,24 +177,49 @@ export async function getCourseWithLatestSnapshot(courseId: string) {
   }
 }
 
-export async function listRecentCourses({ anonymousId, userId, limit = 5 }: { anonymousId?: string; userId?: string; limit?: number }) {
+type RequesterInput = {
+  userId?: string;
+  anonymousId?: string;
+};
+
+type ListCoursesInput = RequesterInput & {
+  limit?: number;
+  offset?: number;
+};
+
+function clampTake(value?: number) {
+  if (!Number.isFinite(value)) return 50;
+  return Math.min(Math.max(Math.trunc(value || 50), 1), 100);
+}
+
+function clampSkip(value?: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(Math.trunc(value || 0), 0);
+}
+
+export async function listCoursesForUserOrAnonymous(input: ListCoursesInput) {
   try {
-    const safeAnonymousId = normalizeOptionalString(anonymousId);
-    const safeUserId = normalizeOptionalString(userId);
+    const safeAnonymousId = normalizeOptionalString(input.anonymousId);
+    const safeUserId = normalizeOptionalString(input.userId);
     if (!safeUserId && !safeAnonymousId) return [];
+
     const courses = await prisma.course.findMany({
       where: safeUserId ? { userId: safeUserId, status: 'active' } : { anonymousId: safeAnonymousId, status: 'active' },
       orderBy: { updatedAt: 'desc' },
-      take: Math.min(Math.max(limit, 1), 5),
+      take: clampTake(input.limit),
+      skip: clampSkip(input.offset),
       select: {
         id: true,
         goal: true,
         mode: true,
         title: true,
         summary: true,
+        source: true,
+        createdAt: true,
         updatedAt: true,
       },
     });
+
     const progressByCourseId = await listCourseProgressByCourseIds(courses.map((course) => course.id));
     return courses.map((course) => ({ ...course, progress: progressByCourseId.get(course.id) || null }));
   } catch (error) {
@@ -193,19 +228,66 @@ export async function listRecentCourses({ anonymousId, userId, limit = 5 }: { an
   }
 }
 
-export async function deleteCourse(courseId: string, anonymousId?: string, userId?: string) {
+export async function getCourseOwnedByRequester(input: { courseId: string } & RequesterInput): Promise<CourseWithLatestSnapshot | null> {
   try {
-    const safeAnonymousId = normalizeOptionalString(anonymousId);
-    const safeUserId = normalizeOptionalString(userId);
-    const result = await prisma.course.deleteMany({
-      where: {
-        id: courseId,
-        ...(safeUserId ? { userId: safeUserId } : safeAnonymousId ? { anonymousId: safeAnonymousId } : {}),
-      },
+    const courseId = normalizeOptionalString(input.courseId);
+    const safeAnonymousId = normalizeOptionalString(input.anonymousId);
+    const safeUserId = normalizeOptionalString(input.userId);
+    if (!courseId || (!safeUserId && !safeAnonymousId)) return null;
+
+    const course = await prisma.course.findFirst({
+      where: { id: courseId, status: 'active' },
+      include: courseWithLatestSnapshotInclude,
     });
-    return result.count > 0;
+
+    if (!course) return null;
+
+    if (safeUserId) {
+      if (course.userId === safeUserId) return course;
+      if (!course.userId && safeAnonymousId && course.anonymousId === safeAnonymousId) {
+        await prisma.$transaction([
+          prisma.course.update({
+            where: { id: course.id },
+            data: { userId: safeUserId },
+          }),
+          prisma.courseProgress.updateMany({
+            where: { courseId: course.id },
+            data: { userId: safeUserId },
+          }),
+        ]);
+        return prisma.course.findFirst({
+          where: { id: course.id, status: 'active' },
+          include: courseWithLatestSnapshotInclude,
+        });
+      }
+      return null;
+    }
+
+    if (safeAnonymousId && course.anonymousId === safeAnonymousId) return course;
+    return null;
+  } catch (error) {
+    console.warn('get owned course failed', error instanceof Error ? error.message : 'unknown');
+    throw new CourseRepositoryError();
+  }
+}
+
+export async function listRecentCourses({ anonymousId, userId, limit = 5 }: { anonymousId?: string; userId?: string; limit?: number }) {
+  return listCoursesForUserOrAnonymous({ anonymousId, userId, limit: Math.min(Math.max(limit, 1), 5), offset: 0 });
+}
+
+export async function deleteCourseForRequester(input: { courseId: string } & RequesterInput) {
+  try {
+    const course = await getCourseOwnedByRequester(input);
+    if (!course) return false;
+
+    await prisma.course.delete({ where: { id: course.id } });
+    return true;
   } catch (error) {
     console.warn('delete course failed', error instanceof Error ? error.message : 'unknown');
     throw new CourseRepositoryError();
   }
+}
+
+export async function deleteCourse(courseId: string, anonymousId?: string, userId?: string) {
+  return deleteCourseForRequester({ courseId, anonymousId, userId });
 }

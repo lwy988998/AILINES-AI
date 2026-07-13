@@ -96,7 +96,7 @@ export function CourseHistoryButton() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/courses?anonymousId=${encodeURIComponent(anonymousId)}`, { cache: 'no-store' });
+      const response = await fetch(`/api/courses?anonymousId=${encodeURIComponent(anonymousId)}&limit=5`, { cache: 'no-store' });
       if (!response.ok) throw new Error('history api failed');
       const data = await response.json() as { courses?: ApiCourseItem[] };
       const courses = Array.isArray(data.courses) ? data.courses : [];

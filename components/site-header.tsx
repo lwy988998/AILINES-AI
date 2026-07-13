@@ -5,7 +5,7 @@ import { AuthStatus } from './auth/AuthStatus';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 
 const navItems = [
-  { label: '我的路线', href: '/routes' },
+  { label: '我的课堂', href: '/my-courses' },
   { label: '会员', href: '/membership' },
 ];
 

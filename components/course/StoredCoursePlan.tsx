@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, Home, RefreshCw } from 'lucide-react';
 import { CoursePlanView } from '@/components/course/CoursePlanView';
-import { getCourseWithLatestSnapshot } from '@/lib/course/courseRepository';
+import { getCurrentUser } from '@/lib/auth/currentUser';
+import { getCourseOwnedByRequester, getCourseWithLatestSnapshot } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import type { PlanMode } from '@/lib/ai/types';
 import type { MockPlan } from '@/lib/mockPlan';
@@ -45,7 +46,9 @@ function MissingCourseState() {
 }
 
 export async function StoredCoursePlan({ courseId }: { courseId: string }) {
-  const result = await getCourseWithLatestSnapshot(courseId);
+  const user = await getCurrentUser();
+  const ownedCourse = user ? await getCourseOwnedByRequester({ courseId, userId: user.id }) : null;
+  const result = ownedCourse?.snapshots[0] ? { course: ownedCourse, snapshot: ownedCourse.snapshots[0] } : user ? null : await getCourseWithLatestSnapshot(courseId);
 
   if (!result || !isPlanMode(result.course.mode) || !isStoredPlan(result.snapshot.payload)) {
     return <MissingCourseState />;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrUpdateCourseSnapshot, listRecentCourses } from '@/lib/course/courseRepository';
+import { createOrUpdateCourseSnapshot, listCoursesForUserOrAnonymous } from '@/lib/course/courseRepository';
 import type { CourseHistoryMode } from '@/lib/courseHistory';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 
@@ -7,12 +7,48 @@ function normalizeMode(value: unknown): CourseHistoryMode {
   return value === 'lite' || value === 'deep' ? value : 'deep';
 }
 
+function parseIntegerParam(value: string | null, fallback: number) {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function serializeProgress(progress?: {
+  overallPercent: number;
+  completedCount: number;
+  totalCount: number;
+  lastVisitedUrl: string | null;
+  lastPageType: string | null;
+  lastPhaseName: string | null;
+  lastTopicTitle: string | null;
+} | null) {
+  return progress ? {
+    overallPercent: progress.overallPercent,
+    completedCount: progress.completedCount,
+    totalCount: progress.totalCount,
+    lastVisitedUrl: progress.lastVisitedUrl,
+    lastPageType: progress.lastPageType,
+    lastPhaseName: progress.lastPhaseName,
+    lastTopicTitle: progress.lastTopicTitle,
+  } : {
+    overallPercent: 0,
+    completedCount: 0,
+    totalCount: 0,
+    lastVisitedUrl: null,
+    lastPageType: null,
+    lastPhaseName: null,
+    lastTopicTitle: null,
+  };
+}
+
 export async function GET(request: NextRequest) {
   const anonymousId = request.nextUrl.searchParams.get('anonymousId') || undefined;
+  const limit = parseIntegerParam(request.nextUrl.searchParams.get('limit'), 50);
+  const offset = parseIntegerParam(request.nextUrl.searchParams.get('offset'), 0);
 
   try {
     const user = await getCurrentUserFromRequest(request);
-    const courses = await listRecentCourses({ anonymousId, userId: user?.id, limit: 5 });
+    const courses = await listCoursesForUserOrAnonymous({ anonymousId, userId: user?.id, limit, offset });
     return NextResponse.json({
       courses: courses.map((course) => ({
         id: course.id,
@@ -20,19 +56,10 @@ export async function GET(request: NextRequest) {
         mode: course.mode,
         title: course.title,
         summary: course.summary,
+        createdAt: course.createdAt.toISOString(),
         updatedAt: course.updatedAt.toISOString(),
         href: `/plan?courseId=${encodeURIComponent(course.id)}`,
-        progress: course.progress ? {
-          overallPercent: course.progress.overallPercent,
-          completedCount: course.progress.completedCount,
-          totalCount: course.progress.totalCount,
-          lastVisitedUrl: course.progress.lastVisitedUrl,
-        } : {
-          overallPercent: 0,
-          completedCount: 0,
-          totalCount: 0,
-          lastVisitedUrl: null,
-        },
+        progress: serializeProgress(course.progress),
       })),
     });
   } catch {
