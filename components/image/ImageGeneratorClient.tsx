@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Download, ImageIcon, Loader2, RefreshCw } from 'lucide-react';
+import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 
 type ImageGenerationState = {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -16,6 +17,7 @@ type ImageGenerationState = {
 
 type ImageGeneratorClientProps = {
   initialPrompt: string;
+  anonymousId?: string;
 };
 
 function buildDataUrl(imageBase64?: string, mimeType = 'image/png') {
@@ -23,7 +25,7 @@ function buildDataUrl(imageBase64?: string, mimeType = 'image/png') {
   return imageBase64.startsWith('data:') ? imageBase64 : `data:${mimeType};base64,${imageBase64}`;
 }
 
-export function ImageGeneratorClient({ initialPrompt }: ImageGeneratorClientProps) {
+export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGeneratorClientProps) {
   const [state, setState] = useState<ImageGenerationState>({ status: 'loading' });
   const requestIdRef = useRef(0);
   const prompt = initialPrompt.trim();
@@ -43,7 +45,7 @@ export function ImageGeneratorClient({ initialPrompt }: ImageGeneratorClientProp
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size: '1024x1024' }),
+        body: JSON.stringify({ prompt, size: '1024x1024', anonymousId: anonymousId || getOrCreateAnonymousId() }),
       });
       const result = await response.json() as {
         success?: boolean;

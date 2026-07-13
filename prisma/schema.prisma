@@ -35,17 +35,38 @@ model Course {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String?
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String?
+  passwordHash        String
+  membershipTier      String    @default("free")
+  membershipStatus    String    @default("active")
+  membershipStartedAt DateTime?
+  membershipExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   sessions UserSession[]
   courses  Course[]
 
   @@index([email])
+  @@index([membershipTier])
+}
+
+model UsageCounter {
+  id        String   @id @default(cuid())
+  scopeId   String
+  scopeType String
+  type      String
+  dateKey   String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([scopeId, scopeType, type, dateKey])
+  @@index([scopeId])
+  @@index([type])
+  @@index([dateKey])
 }
 
 model UserSession {

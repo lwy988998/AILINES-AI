@@ -5,12 +5,14 @@ import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { LearnCompletionButton } from '@/components/LearnCompletionButton';
 import { SiteHeader } from '@/components/site-header';
 import { generateLearningAnswer } from '@/lib/ai/generateLearningAnswer';
+import { getCurrentUser } from '@/lib/auth/currentUser';
 import type { PlanMode } from '@/lib/ai/types';
 import { getLearningSession, upsertLearningSession } from '@/lib/course/learningSessionRepository';
-import type { LearningAnswer } from '@/lib/learning/mockLearningAnswer';
+import { getMockLearningAnswer, type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import { ResourceSearchError, searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
+import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +28,7 @@ type LearnPageProps = {
     topicIndex?: string;
     courseId?: string;
     regenerate?: string;
+    anonymousId?: string;
   }>;
 };
 
@@ -132,6 +135,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const phaseName = decodeValue(params.phaseName, '当前阶段');
   const topic = decodeValue(params.topic, goal);
   const courseId = params.courseId?.trim() || '';
+  const anonymousId = params.anonymousId?.trim() || undefined;
   const phaseIndex = parsePositiveIndex(params.phaseIndex, 1);
   const topicIndex = parsePositiveIndex(params.topicIndex, 1);
   const modeText = getModeText(mode);
@@ -163,10 +167,24 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
       ? '已恢复上次生成的学习内容（上次使用基础 fallback 课程）。你可以点击“重新生成本课”再次尝试 AILINES AI 整合。'
       : '已恢复上次生成的学习内容';
   } else {
-    const { resources, searchNotice } = await searchLearningResources(searchQuery);
-    answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
-    const fallbackUsed = Boolean(answer.notice);
-    notice = searchNotice || answer.notice || (shouldRegenerate ? '已按你的要求重新生成本课内容。' : '');
+    const user = await getCurrentUser();
+    const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'learn_generate' });
+    let resources: SearchResource[] = [];
+    let searchNotice = '';
+
+    if (!usage.allowed) {
+      answer = getMockLearningAnswer({ goal, phaseName, topic, mode, resources: [] });
+      notice = '今日学习卡片生成次数已用完，升级会员可获得更多额度。已先展示基础 fallback 课程。';
+    } else {
+      const searchResult = await searchLearningResources(searchQuery);
+      resources = searchResult.resources;
+      searchNotice = searchResult.searchNotice;
+      answer = await generateLearningAnswer({ goal, phaseName, topic, mode, resources });
+      notice = searchNotice || answer.notice || (shouldRegenerate ? '已按你的要求重新生成本课内容。' : '');
+      await incrementUsage('learn_generate', usage.scope);
+    }
+
+    const fallbackUsed = Boolean(answer.notice) || !usage.allowed;
 
     if (courseId) {
       await upsertLearningSession({

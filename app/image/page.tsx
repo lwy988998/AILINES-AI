@@ -9,6 +9,7 @@ type ImagePageProps = {
   searchParams: Promise<{
     prompt?: string;
     mode?: string;
+    anonymousId?: string;
   }>;
 };
 
@@ -16,15 +17,17 @@ function decodeValue(value: string | undefined) {
   return value?.trim() || '';
 }
 
-function createRegenerateHref(prompt: string) {
+function createRegenerateHref(prompt: string, anonymousId?: string) {
   const params = new URLSearchParams({ prompt, mode: 'image', regenerate: String(Date.now()) });
+  if (anonymousId) params.set('anonymousId', anonymousId);
   return `/image?${params.toString()}`;
 }
 
 export default async function ImagePage({ searchParams }: ImagePageProps) {
   const params = await searchParams;
   const prompt = decodeValue(params.prompt);
-  const regenerateHref = prompt ? createRegenerateHref(prompt) : '/';
+  const anonymousId = decodeValue(params.anonymousId);
+  const regenerateHref = prompt ? createRegenerateHref(prompt, anonymousId) : '/';
 
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
@@ -57,7 +60,7 @@ export default async function ImagePage({ searchParams }: ImagePageProps) {
         </section>
 
         {prompt ? (
-          <ImageGeneratorClient initialPrompt={prompt} />
+          <ImageGeneratorClient initialPrompt={prompt} anonymousId={anonymousId} />
         ) : (
           <section className="rounded-3xl border border-sky-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
             <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-sky-50 text-sky-700">

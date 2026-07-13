@@ -7,8 +7,16 @@ import { prisma } from '@/lib/db/prisma';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function safeUser(user: { id: string; email: string; name: string | null }) {
-  return { id: user.id, email: user.email, name: user.name };
+function safeUser(user: { id: string; email: string; name: string | null; membershipTier: string; membershipStatus: string; membershipStartedAt: Date | null; membershipExpiresAt: Date | null }) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    membershipTier: user.membershipTier,
+    membershipStatus: user.membershipStatus,
+    membershipStartedAt: user.membershipStartedAt,
+    membershipExpiresAt: user.membershipExpiresAt,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +39,15 @@ export async function POST(request: NextRequest) {
   try {
     const user = await prisma.user.create({
       data: { email, name, passwordHash: await hashPassword(password) },
-      select: { id: true, email: true, name: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        membershipTier: true,
+        membershipStatus: true,
+        membershipStartedAt: true,
+        membershipExpiresAt: true,
+      },
     });
     const session = await createSession(user.id);
     const attachResult = await attachAnonymousDataToUser({ anonymousId, userId: user.id });

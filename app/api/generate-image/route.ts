@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ImageGenerationError, generateImage } from '@/lib/ai/generateImage';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
 const MAX_PROMPT_LENGTH = 2_000;
 
@@ -18,6 +20,7 @@ export async function POST(request: NextRequest) {
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
   const prompt = optionalString(data.prompt) || '';
+  const anonymousId = optionalString(data.anonymousId);
 
   if (!prompt) {
     return NextResponse.json({ success: false, message: '请输入图片需求。' }, { status: 400 });
@@ -27,7 +30,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: '图片需求过长，请精简到 2000 字以内。' }, { status: 400 });
   }
 
+  const user = await getCurrentUserFromRequest(request);
+  const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'image_generate' });
+  if (!usage.allowed) {
+    return NextResponse.json({
+      success: false,
+      message: '今日生图次数已用完，升级会员可获得更多额度。',
+      usage,
+    }, { status: 200 });
+  }
+
   try {
+    await incrementUsage('image_generate', usage.scope);
     const result = await generateImage({
       prompt,
       size: optionalString(data.size),
@@ -41,6 +55,7 @@ export async function POST(request: NextRequest) {
       mimeType: result.mimeType,
       revisedPrompt: result.revisedPrompt,
       provider: result.provider,
+      usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
     });
   } catch (error) {
     const safeError = error instanceof ImageGenerationError ? error : new ImageGenerationError();

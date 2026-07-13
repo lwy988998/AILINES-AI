@@ -7,6 +7,10 @@ export type SafeUser = {
   id: string;
   email: string;
   name: string | null;
+  membershipTier: string;
+  membershipStatus: string;
+  membershipStartedAt: string | null;
+  membershipExpiresAt: string | null;
 };
 
 async function getUserByToken(token?: string | null): Promise<SafeUser | null> {
@@ -14,7 +18,19 @@ async function getUserByToken(token?: string | null): Promise<SafeUser | null> {
 
   const session = await prisma.userSession.findUnique({
     where: { tokenHash: hashSessionToken(token) },
-    include: { user: { select: { id: true, email: true, name: true } } },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          membershipTier: true,
+          membershipStatus: true,
+          membershipStartedAt: true,
+          membershipExpiresAt: true,
+        },
+      },
+    },
   });
 
   if (!session) return null;
@@ -23,7 +39,11 @@ async function getUserByToken(token?: string | null): Promise<SafeUser | null> {
     return null;
   }
 
-  return session.user;
+  return {
+    ...session.user,
+    membershipStartedAt: session.user.membershipStartedAt?.toISOString() || null,
+    membershipExpiresAt: session.user.membershipExpiresAt?.toISOString() || null,
+  };
 }
 
 export async function getCurrentUser() {

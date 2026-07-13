@@ -1,81 +1,75 @@
-'use client';
-
 import { CheckCircle2 } from 'lucide-react';
+import { getMembershipLimits, getMembershipLabel, type MembershipTier } from '@/lib/membership/tiers';
 
-const plans = [
-  {
-    name: '免费版',
-    price: '¥0',
-    description: '适合初次体验 AILINES AI 学习规划',
-    benefits: ['每日 1 条基础学习路线', '每日 5 次轻量问答', '可保存 1 条路线', '查看基础资源推荐'],
-    buttonLabel: '当前方案',
+const planOrder: MembershipTier[] = ['free', 'pro', 'max'];
+
+const planCopy: Record<MembershipTier, { name: string; description: string; featured: boolean }> = {
+  free: {
+    name: 'Free',
+    description: '适合体验 AILINES AI 学习规划和基础学习流程。',
     featured: false,
-    disabled: true,
   },
-  {
-    name: 'AILINES 会员',
-    price: '¥29/月',
-    description: '适合持续学习和多路线规划',
-    benefits: ['无限生成学习路线', '无限轻量问答', '完整资源清单', '完整项目实战路径', '进度追踪与学习提醒', '优先体验新功能'],
-    buttonLabel: '开通会员',
+  pro: {
+    name: 'Pro',
+    description: '适合持续学习、多课程管理和更高频使用。',
     featured: true,
-    disabled: false,
   },
-  {
-    name: '精品路线包',
-    price: '¥39/条',
-    description: '适合针对单一领域深度学习',
-    benefits: ['单领域深度路线', '完整课程结构', '项目实战指导', '验收 checklist', '可长期查看'],
-    buttonLabel: '购买路线包',
+  max: {
+    name: 'Max',
+    description: '适合高频学习、团队试用和后续高级能力。',
     featured: false,
-    disabled: false,
   },
-];
+};
 
-export function PricingCards() {
-  function showPaymentPlaceholder() {
-    alert('支付功能将在后续任务中接入');
-  }
-
+export function PricingCards({ currentTier = 'free' }: { currentTier?: MembershipTier }) {
   return (
     <section className="grid gap-4 lg:grid-cols-3">
-      {plans.map((plan) => (
-        <article
-          key={plan.name}
-          className={`relative rounded-3xl border bg-white p-6 shadow-sm shadow-sky-900/5 ${
-            plan.featured ? 'border-sky-400 ring-4 ring-sky-100' : 'border-sky-100'
-          }`}
-        >
-          {plan.featured ? (
-            <span className="absolute right-5 top-5 rounded-full bg-sky-700 px-3 py-1 text-xs font-semibold text-white">推荐</span>
-          ) : null}
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">{plan.name}</h2>
-          <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">{plan.price}</p>
-          <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600">{plan.description}</p>
-          <ul className="mt-6 space-y-3">
-            {plan.benefits.map((benefit) => (
-              <li key={benefit} className="flex gap-3 text-sm leading-6 text-slate-700">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            disabled={plan.disabled}
-            onClick={showPaymentPlaceholder}
-            className={`mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl px-5 text-sm font-semibold transition focus:outline-none focus:ring-4 ${
-              plan.disabled
-                ? 'cursor-not-allowed bg-slate-100 text-slate-500'
-                : plan.featured
-                  ? 'bg-sky-700 text-white hover:bg-sky-800 focus:ring-sky-200'
-                  : 'border border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100 focus:ring-sky-100'
+      {planOrder.map((tier) => {
+        const plan = planCopy[tier];
+        const limits = getMembershipLimits(tier);
+        const isCurrent = tier === currentTier;
+        const benefits = [
+          `每日课程生成 ${limits.courseGeneratePerDay} 次`,
+          `每日学习卡片生成 ${limits.learnGeneratePerDay} 次`,
+          `每日生图 ${limits.imageGeneratePerDay} 次`,
+          '历史课堂和课程进度保存',
+          limits.allowCourseSlides ? '课程课件和思维导图' : '基础课程总览',
+          tier === 'max' ? '所有功能开放，后续高级能力优先接入' : tier === 'pro' ? '浮动 AILINES AI 助手和深度规划' : '基础搜索资料和 Free 权限',
+        ];
+
+        return (
+          <article
+            key={tier}
+            className={`relative rounded-3xl border bg-white p-6 shadow-sm shadow-sky-900/5 ${
+              plan.featured ? 'border-sky-400 ring-4 ring-sky-100' : 'border-sky-100'
             }`}
           >
-            {plan.buttonLabel}
-          </button>
-        </article>
-      ))}
+            {plan.featured ? (
+              <span className="absolute right-5 top-5 rounded-full bg-sky-700 px-3 py-1 text-xs font-semibold text-white">推荐</span>
+            ) : null}
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">{plan.name}</h2>
+            <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">{getMembershipLabel(tier)}</p>
+            <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600">{plan.description}</p>
+            <ul className="mt-6 space-y-3">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex gap-3 text-sm leading-6 text-slate-700">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              disabled
+              className={`mt-7 inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-xl px-5 text-sm font-semibold transition ${
+                isCurrent ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {isCurrent ? '当前方案' : '即将开放'}
+            </button>
+          </article>
+        );
+      })}
     </section>
   );
 }

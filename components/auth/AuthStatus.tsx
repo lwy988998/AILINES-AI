@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { SafeUser } from '@/lib/auth/currentUser';
+import { getMembershipLabel } from '@/lib/membership/tiers';
 
 export function AuthStatus({ user }: { user: SafeUser | null }) {
   const router = useRouter();
@@ -31,6 +32,9 @@ export function AuthStatus({ user }: { user: SafeUser | null }) {
     <div className="flex items-center gap-2">
       <span className="hidden max-w-[11rem] truncate rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 sm:inline-block" title={user.email}>
         {user.name || user.email}
+      </span>
+      <span className="hidden rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 sm:inline-block">
+        {getMembershipLabel(user.membershipTier)}
       </span>
       <button
         type="button"

@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, X } from 'lucide-react';
+import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -110,12 +111,12 @@ export function GoalForm() {
 
   function routeToTarget(goal: string, mode: PlanningMode) {
     if (mode === 'image') {
-      const params = new URLSearchParams({ prompt: goal, mode: 'image' });
+      const params = new URLSearchParams({ prompt: goal, mode: 'image', anonymousId: getOrCreateAnonymousId() });
       router.push(`/image?${params.toString()}`);
       return;
     }
 
-    const params = new URLSearchParams({ goal, mode });
+    const params = new URLSearchParams({ goal, mode, anonymousId: getOrCreateAnonymousId() });
     router.push(`/plan?${params.toString()}`);
   }
 

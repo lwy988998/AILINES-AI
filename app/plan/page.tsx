@@ -4,10 +4,12 @@ import { CoursePlanView } from '@/components/course/CoursePlanView';
 import { StoredCoursePlan } from '@/components/course/StoredCoursePlan';
 import { SiteHeader } from '@/components/site-header';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
+import { getCurrentUser } from '@/lib/auth/currentUser';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
+import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,7 @@ type PlanPageProps = {
     mode?: string;
     forcePlan?: string;
     courseId?: string;
+    anonymousId?: string;
   }>;
 };
 
@@ -38,6 +41,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   const rawGoal = params.goal?.trim() || '';
   const mode: PlanMode = params.mode === 'lite' || params.mode === 'deep' ? params.mode : 'deep';
   const forcePlan = params.forcePlan === '1';
+  const anonymousId = params.anonymousId?.trim() || undefined;
   const goal = rawGoal || '你的目标';
   const modeLabel = mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
   const modeDescription = mode === 'lite' ? '轻量学习课程：保留讲解与练习，但阶段和资源更精简。' : '系统学习课程：更完整的阶段、分步讲解、课件、知识结构和练习。';
@@ -47,21 +51,32 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   let isAIPlan = false;
   let fallbackNotice = false;
   let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
+  let quotaNotice = '';
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
   if (rawGoal) {
-    try {
-      const generatedPlan = await generatePlanWithAI(rawGoal, mode);
-      const adaptedPlan = adaptGeneratedPlan(generatedPlan);
+    const user = await getCurrentUser();
+    const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'course_generate' });
 
-      if (!isRenderablePlan(adaptedPlan)) {
-        throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
-      }
-
-      plan = adaptedPlan;
-      isAIPlan = true;
-    } catch {
+    if (!usage.allowed) {
       fallbackNotice = true;
+      quotaNotice = '今日课程生成次数已用完，升级会员可获得更多额度。已先展示基础课程版本。';
+    } else {
+      try {
+        const generatedPlan = await generatePlanWithAI(rawGoal, mode);
+        const adaptedPlan = adaptGeneratedPlan(generatedPlan);
+
+        if (!isRenderablePlan(adaptedPlan)) {
+          throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
+        }
+
+        plan = adaptedPlan;
+        isAIPlan = true;
+        await incrementUsage('course_generate', usage.scope);
+      } catch {
+        fallbackNotice = true;
+        await incrementUsage('course_generate', usage.scope);
+      }
     }
 
     try {
@@ -103,7 +118,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
         <p className="font-semibold text-slate-900">
           {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
         </p>
-        {fallbackNotice ? <p className="font-medium text-slate-600">当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。</p> : null}
+        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || '当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。'}</p> : null}
       </div>
       {!isAIPlan ? (
         <Link
