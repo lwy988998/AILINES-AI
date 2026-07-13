@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, X } from 'lucide-react';
 
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
@@ -41,7 +42,9 @@ function formatFileSize(size: number) {
 }
 
 export function GoalForm() {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedModeRef = useRef<PlanningMode>('deep');
   const [goalValue, setGoalValue] = useState('');
   const [modeValue, setModeValue] = useState<PlanningMode>('deep');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -100,14 +103,20 @@ export function GoalForm() {
     setSelectedImagePreviewUrl(URL.createObjectURL(file));
   }
 
+  function selectMode(mode: PlanningMode) {
+    selectedModeRef.current = mode;
+    setModeValue(mode);
+  }
+
   function routeToTarget(goal: string, mode: PlanningMode) {
     if (mode === 'image') {
       const params = new URLSearchParams({ prompt: goal, mode: 'image' });
-      window.location.href = `/image?${params.toString()}`;
+      router.push(`/image?${params.toString()}`);
       return;
     }
 
-    window.location.href = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}`;
+    const params = new URLSearchParams({ goal, mode });
+    router.push(`/plan?${params.toString()}`);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -115,7 +124,7 @@ export function GoalForm() {
     setImageError('');
 
     const goal = goalValue.trim();
-    const mode = modeValue;
+    const mode = selectedModeRef.current;
 
     if (!goal) {
       setImageError(mode === 'image' ? '请输入想生成的图片需求' : '请输入学习需求，或上传一张相关图片');
@@ -155,7 +164,8 @@ export function GoalForm() {
       };
 
       if (response.ok && result.success && result.goal?.trim()) {
-        window.location.href = `/plan?goal=${encodeURIComponent(result.goal.trim())}&mode=${mode}`;
+        const params = new URLSearchParams({ goal: result.goal.trim(), mode });
+        router.push(`/plan?${params.toString()}`);
         return;
       }
 
@@ -182,7 +192,7 @@ export function GoalForm() {
 
   return (
     <div className="rounded-[2rem] border border-white/70 bg-white/72 p-4 shadow-2xl shadow-sky-950/20 backdrop-blur-md sm:p-5">
-      <form action="/plan" method="GET" className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
         </label>
@@ -251,7 +261,7 @@ export function GoalForm() {
                 <button
                   key={mode.value}
                   type="button"
-                  onClick={() => setModeValue(mode.value)}
+                  onClick={() => selectMode(mode.value)}
                   aria-pressed={selected}
                   data-mode-option={mode.value}
                   data-selected={selected ? 'true' : 'false'}
