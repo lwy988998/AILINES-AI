@@ -32,37 +32,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'tier must be one of: free, pro, max.' }, { status: 400 });
   }
 
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  }).catch(() => null);
+
+  if (!existingUser) {
+    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+  }
+
   const now = new Date();
   const user = await prisma.user.update({
     where: { email },
     data: {
       membershipTier: tier,
       membershipStatus: 'active',
-      membershipStartedAt: tier === 'free' ? null : now,
-      membershipExpiresAt: tier === 'free' ? null : undefined,
+      membershipStartedAt: now,
+      membershipExpiresAt: null,
     },
     select: {
       id: true,
       email: true,
+      name: true,
       membershipTier: true,
       membershipStatus: true,
-      membershipStartedAt: true,
-      membershipExpiresAt: true,
     },
   }).catch(() => null);
 
   if (!user) {
-    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    return NextResponse.json({ error: 'Could not update membership tier.' }, { status: 500 });
   }
 
-  return NextResponse.json({
-    ok: true,
-    user: {
-      ...user,
-      membershipStartedAt: user.membershipStartedAt?.toISOString() || null,
-      membershipExpiresAt: user.membershipExpiresAt?.toISOString() || null,
-    },
-  });
+  return NextResponse.json({ ok: true, user });
 }
 
 export async function GET() {
