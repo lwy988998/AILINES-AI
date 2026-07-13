@@ -31,7 +31,7 @@ export function BenefitsTable() {
             {benefitRows.map((row) => (
               <tr key={row[0]} className="bg-white">
                 {row.map((cell, index) => (
-                  <td key={`${row[0]}-${cell}`} className={`px-4 py-4 ${index === 0 ? 'font-semibold text-slate-950' : ''}`}>
+                  <td key={`${row[0]}-${index}-${cell}`} className={`px-4 py-4 ${index === 0 ? 'font-semibold text-slate-950' : ''}`}>
                     {cell}
                   </td>
                 ))}

@@ -17,7 +17,7 @@ export default async function MembershipPage() {
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <MembershipHero tier={tier} />
-        <PricingCards currentTier={tier} />
+        <PricingCards currentTier={tier} isLoggedIn={Boolean(user)} />
         <BenefitsTable />
         <MembershipFAQ />
       </div>
