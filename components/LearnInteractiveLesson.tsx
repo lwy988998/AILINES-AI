@@ -41,7 +41,24 @@ function uniqueOptions(options: string[], fallback: string[]) {
   return merged.slice(0, 4).length >= 2 ? merged.slice(0, 4) : fallback.slice(0, 4);
 }
 
+function isValidQuizItem(item: unknown): item is QuizItem {
+  if (!item || typeof item !== 'object') return false;
+  const record = item as Record<string, unknown>;
+  const options = Array.isArray(record.options) ? record.options.map((option) => String(option || '').trim()).filter(Boolean) : [];
+  const answerIndex = typeof record.answerIndex === 'number' ? record.answerIndex : -1;
+  return typeof record.question === 'string' && record.question.trim().length > 0
+    && options.length === 4
+    && Number.isInteger(answerIndex)
+    && answerIndex >= 0
+    && answerIndex < options.length
+    && typeof record.explanation === 'string'
+    && record.explanation.trim().length > 0;
+}
+
 function buildQuiz(answer: LearningAnswer): QuizItem[] {
+  const aiQuiz = Array.isArray(answer.quiz) ? answer.quiz.filter(isValidQuizItem).slice(0, 5) : [];
+  if (aiQuiz.length >= 3) return aiQuiz;
+
   const stepTitles = answer.lessonSteps.map((step) => step.title).filter(Boolean);
   const concepts = answer.keyConcepts.filter(Boolean);
   const checkpoints = answer.checkpoint.filter(Boolean);

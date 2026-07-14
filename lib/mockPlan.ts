@@ -39,6 +39,7 @@ export type RoadmapStage = {
   checkpoint?: string;
   commonMistakes?: string[];
   steps?: CourseStep[];
+  tasks?: string[];
 };
 
 export type CourseStage = {

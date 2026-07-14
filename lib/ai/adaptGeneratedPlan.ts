@@ -10,6 +10,41 @@ function safeText(value: unknown, fallback: string) {
 }
 
 
+
+function compactStrings(values: unknown[], limit = 6) {
+  return values
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function fallbackStepsFromPhase(phase: GeneratedPlanPhase): GeneratedPlanStep[] {
+  const phaseName = safeText(phase.name, '本阶段');
+  const topics = compactStrings(ensureArray(phase.topics), 5);
+  const tasks = compactStrings(ensureArray(phase.tasks), 5);
+  const anchors = topics.length > 0 ? topics : tasks;
+
+  if (anchors.length > 0) {
+    return anchors.slice(0, 5).map((topic, index) => ({
+      title: `第 ${index + 1} 步：${topic}`,
+      explanation: `先把「${topic}」放到「${phaseName}」的目标里理解：它不是孤立知识点，而是为了完成阶段产出服务。学习时先弄清它解决什么问题，再看一个具体例子，最后立刻做一个小练习，把“看懂”转成能说明、能操作、能检查的能力。`,
+      example: `围绕「${topic}」写一个真实使用场景或题目场景，说明它什么时候会用到。`,
+      action: `完成一个和「${topic}」直接相关的小练习，并记录过程、结果和卡点。`,
+      check: `能用自己的话解释「${topic}」，并拿出一个可检查的练习结果。`,
+    }));
+  }
+
+  return [
+    {
+      title: `第 1 步：理解${phaseName}要解决的问题`,
+      explanation: `先明确本阶段为什么要学、要解决什么问题、学完要留下什么成果。这样后续学习不会变成泛泛看资料，而是围绕一个可检查的能力推进。`,
+      example: '把阶段目标写成“我能完成什么成果，并用什么标准判断合格”。',
+      action: '写下阶段目标、应用场景和验收标准。',
+      check: '能用 1 分钟说明本阶段的学习价值和完成标准。',
+    },
+  ];
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
@@ -143,7 +178,8 @@ export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 
       practice: safeText(phase.practice, ''),
       checkpoint: safeText(phase.checkpoint, ''),
       commonMistakes: ensureArray(phase.commonMistakes).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
-      steps: ensureArray(phase.steps).map((step, stepIndex) => adaptStep(step, stepIndex, phase)),
+      tasks: compactStrings(ensureArray(phase.tasks), 6),
+      steps: (ensureArray(phase.steps).length > 0 ? ensureArray(phase.steps) : fallbackStepsFromPhase(phase)).map((step, stepIndex) => adaptStep(step, stepIndex, phase)),
     })),
     courseStructure: phases.map((phase) => ({
       stage: safeText(phase.name, '学习阶段'),

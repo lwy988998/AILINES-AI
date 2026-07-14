@@ -30,6 +30,13 @@ export type LearningPractice = {
   check: string;
 };
 
+export type LearningQuizItem = {
+  question: string;
+  options: string[];
+  answerIndex: number;
+  explanation: string;
+};
+
 export type LearningAnswer = {
   title: string;
   summary: string;
@@ -39,6 +46,7 @@ export type LearningAnswer = {
   practice: LearningPractice[];
   commonMistakes: string[];
   checkpoint: string[];
+  quiz?: LearningQuizItem[];
   resourceSummary: string;
   references: LearningReference[];
   notice?: string;

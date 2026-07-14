@@ -1,7 +1,7 @@
 import { AIClientError, createChatCompletion, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import type { PlanMode } from '@/lib/ai/types';
-import { getMockLearningAnswer, referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningReference } from '@/lib/learning/mockLearningAnswer';
+import { getMockLearningAnswer, referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
 const DEFAULT_LEARNING_TIMEOUT_MS = 25_000;
@@ -85,6 +85,29 @@ function sanitizePractice(value: unknown, fallback: LearningPractice[]) {
   return practice.length ? practice : fallback;
 }
 
+function sanitizeQuiz(value: unknown, fallback: LearningQuizItem[] = []): LearningQuizItem[] {
+  if (!Array.isArray(value)) return fallback;
+
+  const quiz = value.map((item) => {
+    const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const options = Array.isArray(record.options)
+      ? record.options.map((option) => sanitizeText(option)).filter(Boolean)
+      : [];
+    const answerIndex = typeof record.answerIndex === 'number' ? record.answerIndex : Number.parseInt(String(record.answerIndex ?? ''), 10);
+
+    if (options.length !== 4 || !Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= options.length) return null;
+
+    return {
+      question: sanitizeText(record.question),
+      options,
+      answerIndex,
+      explanation: sanitizeText(record.explanation, '这道题用于检查你是否理解了本节课的关键概念和应用方式。'),
+    };
+  }).filter((item): item is LearningQuizItem => Boolean(item && item.question && item.explanation));
+
+  return quiz.length ? quiz.slice(0, 5) : fallback;
+}
+
 function normalizeResources(resources: SearchResource[]): ResourceBrief[] {
   return resources.slice(0, 8).map((resource) => ({
     title: resource.title.slice(0, 120),
@@ -119,24 +142,29 @@ function filterReferences(value: unknown, resources: SearchResource[]): Learning
 
 function createLearningPromptMessages(input: GenerateLearningAnswerInput, resourceBriefs: ResourceBrief[]) {
   const stepRange = input.mode === 'lite' ? '3-4' : '5-6';
-  const stepLength = input.mode === 'lite' ? '80-120' : '150-250';
+  const stepLength = input.mode === 'lite' ? '90-140' : '160-260';
   const practiceCount = input.mode === 'lite' ? '2-3' : '3-5';
 
   return [
     {
       role: 'system' as const,
-      content: `你是 AILINES AI 学习导师。你已经拿到联网搜索资料摘要。你必须先整合资料，再用自己的教学语言生成课程式回答。不要直接复制资料。不要把搜索结果列表当回答。不要编造链接。references 必须只来自用户提供的 resources.url。每次学习请求都遵循：搜索真实资料 -> 整合资料 -> 教学回答 -> 最后展示引用资料入口。只输出 JSON。`,
+      content: `你是 AILINES AI 学习导师。你已经拿到联网搜索资料摘要。你必须先理解、筛选、整合资料，再用自己的教学语言生成一节完整微课程。正文必须像老师讲课：为什么学 -> 是什么 -> 怎么用 -> 具体例子 -> 可执行练习 -> 小测验 -> 总结。不要直接复制资料，不要把搜索结果列表当正文，不要空泛鸡汤，不要只列大纲。references 必须只来自用户提供的 resources.url，且只放在最后参考资料。只输出严格 JSON。`,
     },
     {
       role: 'user' as const,
       content: JSON.stringify({
-        task: '根据学习目标、阶段和学习点，生成资料整合后的超详细课程。',
+        task: '根据学习目标、阶段和学习点，生成资料整合后的高质量微课程。',
+        teachingStyle: ['通俗、具体、像老师在讲课', '围绕 topic，不跑题', '适合目标人群，不拔高到不相关层级', '每段都要能帮助用户真正学会或完成练习'],
+        avoid: ['深入学习相关知识', '掌握基本概念', '多加练习', '参考相关资料', '提升综合能力', '只给链接', '只列大纲'],
         requirements: {
-          lessonSteps: `${stepRange} 步，每步 explanation ${stepLength} 字，必须包含 title/explanation/example/action/check。`,
-          examples: '数学类必须有例题和分步解法；编程类必须有代码/报错/调试步骤；工具类必须有操作步骤。',
-          practice: `${practiceCount} 个练习，带难度梯度。`,
-          commonMistakes: '3-5 个常见误区。',
-          checkpoint: '学完后用户应该能做到什么。',
+          summary: '说明这节课解决什么问题、适合谁、学完能做什么。',
+          keyConcepts: '3-6 个核心概念；每个概念名称要具体，不要空泛。',
+          lessonSteps: `${stepRange} 步，每步 explanation ${stepLength} 字，必须包含 title/explanation/example/action/check；按“解释-例子-行动-检查”组织。`,
+          examples: '至少 1-2 个强相关示例；数学/考试类要有题目和分步解法；编程类要有代码或调试步骤；摄影/设计类要有场景案例。',
+          practice: `${practiceCount} 个练习，带难度梯度；task 要写清楚要做什么；check 要写可验证结果，可包含提示或参考答案。`,
+          quiz: '3-5 道选择题；每题 4 个非空选项；answerIndex 必须唯一且和 explanation 一致；干扰项不能过于离谱。',
+          commonMistakes: '3-5 个常见误区，必须和 topic 强相关。',
+          checkpoint: '3-5 条可衡量学习目标/完成标准。',
           resourceSummary: '用一小段话说明你如何综合了资料摘要，不要罗列搜索结果。',
           references: '只能引用输入 resources 里的 title/source/url/type，不得新增链接。',
         },
@@ -147,6 +175,7 @@ function createLearningPromptMessages(input: GenerateLearningAnswerInput, resour
           lessonSteps: [{ title: 'string', explanation: 'string', example: 'string', action: 'string', check: 'string' }],
           examples: [{ title: 'string', content: 'string', solution: ['string'] }],
           practice: [{ title: 'string', difficulty: 'string', task: 'string', check: 'string' }],
+          quiz: [{ question: 'string', options: ['A', 'B', 'C', 'D'], answerIndex: 0, explanation: 'string' }],
           commonMistakes: ['string'],
           checkpoint: ['string'],
           resourceSummary: 'string',
@@ -178,6 +207,7 @@ function adaptLearningAnswer(rawAnswer: unknown, fallback: LearningAnswer, resou
     practice: sanitizePractice(record.practice, fallback.practice),
     commonMistakes: sanitizeStringArray(record.commonMistakes, fallback.commonMistakes),
     checkpoint: sanitizeStringArray(record.checkpoint, fallback.checkpoint),
+    quiz: sanitizeQuiz(record.quiz, fallback.quiz),
     resourceSummary: sanitizeText(record.resourceSummary, fallback.resourceSummary),
     references: filterReferences(record.references, resources),
   };

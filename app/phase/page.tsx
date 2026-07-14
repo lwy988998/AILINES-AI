@@ -7,7 +7,7 @@ import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { SiteHeader } from '@/components/site-header';
 import { InteractiveLearningSteps } from '@/components/phase/InteractiveLearningSteps';
 import { InteractivePhaseTasks } from '@/components/phase/InteractivePhaseTasks';
-import { getMockPhaseDetail, type PhaseResource, type PhaseStep } from '@/lib/mockPhaseDetail';
+import { getMockPhaseDetail, type PhaseResource, type PhaseStep, type PhaseTask } from '@/lib/mockPhaseDetail';
 import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
 import { readCachedPlan } from '@/lib/ai/planCache';
 import type { PlanMode } from '@/lib/ai/types';
@@ -93,6 +93,26 @@ function stepsFromStage(stage: RoadmapStage | undefined, detailSteps: PhaseStep[
   return [];
 }
 
+
+function tasksFromStage(stage: RoadmapStage | undefined, fallbackTasks: PhaseTask[], stageOutput: string): PhaseTask[] {
+  if (!stage) return fallbackTasks;
+
+  const stageTasks = Array.isArray(stage.tasks) ? stage.tasks : [];
+  const titles = stageTasks
+    .map((task) => (typeof task === 'string' ? task.trim() : ''))
+    .filter(Boolean)
+    .slice(0, 6);
+
+  if (titles.length === 0) return fallbackTasks;
+
+  return titles.map((title, index) => ({
+    title,
+    duration: stage.duration || fallbackTasks[index]?.duration || '30-60 分钟',
+    description: `围绕「${stage.name}」执行这个任务：先阅读或理解相关学习点，再完成一次可观察的练习，最后记录结果和问题。不要只把它当成待办标题，要留下过程证据。`,
+    output: index === titles.length - 1 ? (stageOutput || fallbackTasks[index]?.output || '一份阶段复盘和下一步计划') : (fallbackTasks[index]?.output || `${title} 的练习记录、例子或操作结果`),
+  }));
+}
+
 async function getPlanStage(goal: string, mode: PlanMode, phaseIndex: number, phaseName: string): Promise<RoadmapStage | undefined> {
   const fallbackPlan = getMockPlanByGoal(goal, mode);
   let plan = fallbackPlan;
@@ -140,6 +160,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const planStage = await getPlanStage(goal, mode, phaseIndex, phaseName);
   const teachingSteps = stepsFromStage(planStage, detail.steps);
   const stageOutput = planStage?.output || detail.output;
+  const phaseTasks = tasksFromStage(planStage, detail.tasks, stageOutput);
   const phaseSlides = teachingSteps.map((step, index) => ({
     title: step.title || `第 ${index + 1} 步`,
     subtitle: detail.phaseName,
@@ -270,7 +291,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
         <InteractiveLearningSteps steps={teachingSteps} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} commonMistakes={commonMistakes} />
 
-        <InteractivePhaseTasks tasks={detail.tasks} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} />
+        <InteractivePhaseTasks tasks={phaseTasks} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} />
 
         <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" />
 
@@ -279,7 +300,8 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">阶段相关资料</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">优先使用稳定免费资源</h2>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">先整合，再作为参考资料使用</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">这些资料只作为本阶段的补充入口。正文学习仍以阶段导学、分步讲解、任务练习和验收标准为主，避免把链接列表当课程内容。</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             {resources.map((resource) => (
