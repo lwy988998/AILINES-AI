@@ -8,6 +8,7 @@ import { getLearningCardKey, ProgressStageCard, type LearningCardStatusByKey } f
 import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
 import type { LearningCardProgressItem, LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
+import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/progressStorage';
 
 type ProgressTrackerProps = {
@@ -149,6 +150,15 @@ export function ProgressTracker({ goal, mode, courseId, title, courseProgress }:
     clearProgressState(goal);
     for (const { stage, task } of allTopics) window.localStorage.removeItem(topicStorageKey(goal, stage.title, task.title));
     setStatuses({});
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <ProgressHeader goal={goal} mode={mode} courseId={courseId} title={title} />
+        <AilinesGeneratingState type="progress" compact estimatedSeconds={6} />
+      </div>
+    );
   }
 
   return (

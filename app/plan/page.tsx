@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { CourseHistoryRecorder } from '@/components/course/CourseHistoryRecorder';
 import { CoursePlanView } from '@/components/course/CoursePlanView';
 import { LitePlanView } from '@/components/course/LitePlanView';
 import { StoredCoursePlan } from '@/components/course/StoredCoursePlan';
 import { SiteHeader } from '@/components/site-header';
+import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
@@ -31,18 +33,45 @@ type PlanPageProps = {
 export default async function PlanPage({ searchParams }: PlanPageProps) {
   const params = await searchParams;
   const courseId = params.courseId?.trim() || '';
+  const rawGoal = params.goal?.trim() || '';
+  const mode: PlanMode = params.mode === 'lite' || params.mode === 'deep' ? params.mode : 'deep';
 
   if (courseId) {
     return (
       <main className="min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
-        <StoredCoursePlan courseId={courseId} />
+        <Suspense
+          fallback={
+            <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+              <AilinesGeneratingState type="restore" estimatedSeconds={6} />
+            </div>
+          }
+        >
+          <StoredCoursePlan courseId={courseId} />
+        </Suspense>
       </main>
     );
   }
 
-  const rawGoal = params.goal?.trim() || '';
-  const mode: PlanMode = params.mode === 'lite' || params.mode === 'deep' ? params.mode : 'deep';
+  return (
+    <main className="min-h-screen bg-[#f5f9ff]">
+      <SiteHeader />
+      <Suspense
+        fallback={
+          <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+            <AilinesGeneratingState type={mode === 'lite' ? 'lite-plan' : rawGoal ? 'plan' : 'generic'} estimatedSeconds={mode === 'lite' ? 10 : 24} />
+          </div>
+        }
+      >
+        <GeneratedPlanContent params={{ ...params, goal: rawGoal, mode }} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps['searchParams']> & { goal: string; mode: PlanMode } }) {
+  const rawGoal = params.goal;
+  const mode = params.mode;
   const forcePlan = params.forcePlan === '1';
   const anonymousId = params.anonymousId?.trim() || undefined;
   const goal = rawGoal || '你的目标';
@@ -62,19 +91,16 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 
   if (rawGoal && !deepAccess.allowed) {
     return (
-      <main className="min-h-screen bg-[#f5f9ff]">
-        <SiteHeader />
-        <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-          <UpgradeRequiredCard
-            feature="deep_plan"
-            title="需要升级会员"
-            description={deepAccess.reason || '深度 AILINES AI 规划是 Pro 功能。你可以升级会员，或先使用快速规划。'}
-            requiredTier={deepAccess.requiredTier || 'pro'}
-            goal={goal}
-            showLiteLink
-          />
-        </div>
-      </main>
+      <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+        <UpgradeRequiredCard
+          feature="deep_plan"
+          title="需要升级会员"
+          description={deepAccess.reason || '深度 AILINES AI 规划是 Pro 功能。你可以升级会员，或先使用快速规划。'}
+          requiredTier={deepAccess.requiredTier || 'pro'}
+          goal={goal}
+          showLiteLink
+        />
+      </div>
     );
   }
 
@@ -155,9 +181,8 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   ) : null;
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <>
       {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} summary={plan.summary} source={isAIPlan ? 'ai' : 'fallback'} plan={plan} /> : null}
-      <SiteHeader />
       {mode === 'lite' ? (
         <LitePlanView goal={goal} mode={mode} plan={plan} resourceSourceMessage={resourceSourceMessage} notice={notice} />
       ) : (
@@ -172,6 +197,6 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
           membershipTier={user?.membershipTier || 'free'}
         />
       )}
-    </main>
+    </>
   );
 }

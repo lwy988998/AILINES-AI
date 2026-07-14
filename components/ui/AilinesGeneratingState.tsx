@@ -1,123 +1,189 @@
-import { Sparkles } from 'lucide-react';
+'use client';
 
-export type AilinesGeneratingType = 'plan' | 'lite-plan' | 'deep-plan' | 'learn' | 'image' | 'search' | 'generic';
+import { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Circle, Sparkles } from 'lucide-react';
+
+export type AilinesGeneratingType = 'plan' | 'lite-plan' | 'deep-plan' | 'restore' | 'phase' | 'learn' | 'image' | 'progress' | 'search' | 'generic';
 
 type AilinesGeneratingStateProps = {
   type?: AilinesGeneratingType;
   title?: string;
   subtitle?: string;
   steps?: string[];
+  showSkeleton?: boolean;
+  compact?: boolean;
+  estimatedSeconds?: number;
+  className?: string;
 };
 
 const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; steps: string[]; hint: string }> = {
   generic: {
-    title: '正在准备你的学习内容',
-    subtitle: 'AILINES AI 正在根据你的目标整理学习路径。',
-    steps: ['理解你的需求', '拆解学习目标', '搜索真实资料', '整理课程内容', '生成学习卡片'],
-    hint: '如果生成较慢，会先展示可学习的基础版本。',
+    title: 'AILINES AI 正在准备内容',
+    subtitle: '我们正在理解你的需求，并把信息整理成可继续学习的结构。',
+    steps: ['理解你的需求', '拆解核心目标', '整理上下文', '生成内容结构', '准备展示结果'],
+    hint: '真实请求完成后会立即进入结果页，不会强制等待固定时间。',
   },
   plan: {
-    title: '正在准备你的学习内容',
-    subtitle: 'AILINES AI 正在根据你的目标整理学习路径。',
-    steps: ['理解你的需求', '拆解学习目标', '搜索真实资料', '整理课程内容', '生成学习卡片'],
-    hint: '如果深度生成较慢，会先展示可学习的基础版本。',
+    title: '正在生成你的课程总览',
+    subtitle: 'AILINES AI 正在整合学习目标、真实资料和课程结构，生成可持续学习的课堂。',
+    steps: ['正在读取学习目标', '正在整合真实搜索资料', '正在构建课程大纲', '正在生成思维导图与课件', '正在保存课程快照'],
+    hint: '搜索资料暂时不可用时，会使用基础课程结构兜底，学习流程不会中断。',
   },
   'lite-plan': {
-    title: '正在生成快速规划',
-    subtitle: 'AILINES AI 正在提炼关键步骤，优先给你可立即执行的轻量学习方案。',
-    steps: ['理解学习目标', '提取核心步骤', '整理练习建议', '准备基础资料'],
-    hint: '快速规划会优先输出能马上行动的步骤，再补充少量资料。',
+    title: 'AILINES AI 正在快速规划你的学习路线',
+    subtitle: '我们正在提炼关键知识模块，优先生成轻量、可立即执行的学习路线。',
+    steps: ['正在理解你的学习目标', '正在识别核心知识模块', '正在生成轻量学习路线', '正在整理阶段任务', '正在准备结果页面'],
+    hint: '快速规划会优先给出清晰路径，减少等待时间。',
   },
   'deep-plan': {
-    title: '正在生成深度课程',
-    subtitle: 'AILINES AI 正在规划阶段课程、课件、知识结构和真实资料。',
-    steps: ['理解学习目标', '拆解阶段路线', '搜索真实学习资料', '整合课程课件', '生成思维导图', '准备阶段任务'],
-    hint: '深度课程需要更完整的结构整理，稍慢时会先给出可学习的基础版本。',
+    title: 'AILINES AI 正在深度设计你的课程',
+    subtitle: '我们正在搜索资料、筛选资源、设计课程结构，并准备保存你的课堂。',
+    steps: ['正在理解你的学习目标与当前水平', '正在搜索真实学习资料', '正在筛选高质量参考资源', '正在设计课程结构与阶段目标', '正在生成课件、任务与学习路径', '正在保存你的课堂'],
+    hint: '深度规划需要更完整的资料整合；如果外部搜索失败，会自动降级为基础课程结构。',
+  },
+  restore: {
+    title: '正在恢复你的课堂',
+    subtitle: 'AILINES AI 正在从数据库读取课程快照和学习进度，不会重新生成课程。',
+    steps: ['正在读取课程记录', '正在恢复课程快照', '正在加载学习进度', '正在准备继续学习入口'],
+    hint: '这是历史课堂恢复流程，不会重新调用 AI 生成。',
+  },
+  phase: {
+    title: '正在生成阶段课程',
+    subtitle: 'AILINES AI 正在围绕当前阶段整理知识点、参考资料和任务卡片。',
+    steps: ['正在分析当前阶段目标', '正在整理关键知识点', '正在整合参考资料', '正在生成任务卡片', '正在准备阶段课件'],
+    hint: '资料搜索失败时会保留基础阶段课程，不会把原始搜索结果直接丢给你。',
   },
   learn: {
-    title: '正在生成本节学习内容',
-    subtitle: 'AILINES AI 正在结合当前主题和资料，整理成可学习的分步课程。',
-    steps: ['理解当前学习点', '搜索相关资料', '整理关键概念', '生成例题和练习', '准备完成检查'],
-    hint: '如果资料搜索较慢，会先展示基础讲解和练习。',
+    title: '正在准备这节课',
+    subtitle: 'AILINES AI 正在把当前学习点整理成讲解、示例、练习和总结。',
+    steps: ['正在读取学习点', '正在组织讲解结构', '正在生成示例与练习', '正在整理课程总结', '正在更新学习状态'],
+    hint: '如果这节课之前生成过，会优先恢复已保存的学习内容。',
   },
   image: {
-    title: '正在生成图片',
-    subtitle: 'AILINES AI 正在根据你的描述生成视觉内容。',
-    steps: ['理解画面需求', '优化图像提示词', '调用生图模型', '接收生成结果'],
-    hint: '若当前模型暂不可用，会自动尝试备用 provider，并给出友好提示。',
+    title: 'AILINES AI 正在生成图像',
+    subtitle: '我们正在理解画面需求、优化提示词，并调用图像模型准备结果。',
+    steps: ['正在理解你的画面需求', '正在优化图像提示词', '正在调用图像生成模型', '正在处理生成结果', '正在准备展示图片'],
+    hint: '生图会保持 Grok 优先、GPT fallback；失败时会显示友好提示。',
+  },
+  progress: {
+    title: '正在加载学习进度',
+    subtitle: 'AILINES AI 正在恢复学习卡片、计算完成状态并准备继续学习入口。',
+    steps: ['正在读取课程任务', '正在恢复学习卡片', '正在计算完成进度', '正在准备继续学习入口'],
+    hint: '进度加载完成后，你可以直接进入下一张学习卡片。',
   },
   search: {
     title: '正在搜索并整合资料',
-    subtitle: 'AILINES AI 正在查找真实资料，并把资料整理成课程内容。',
+    subtitle: 'AILINES AI 正在查找真实资料，并将资料吸收进课程内容。',
     steps: ['查询网络资料', '筛选可用资源', '提炼核心内容', '生成学习说明'],
     hint: '搜索失败时不会中断学习流程，会先提供基础内容。',
   },
 };
 
-export function AilinesGeneratingState({ type = 'generic', title, subtitle, steps }: AilinesGeneratingStateProps) {
+export function AilinesGeneratingState({
+  type = 'generic',
+  title,
+  subtitle,
+  steps,
+  showSkeleton = true,
+  compact = false,
+  estimatedSeconds = 18,
+  className = '',
+}: AilinesGeneratingStateProps) {
   const preset = presets[type];
-  const visibleSteps = steps?.length ? steps : preset.steps;
+  const visibleSteps = useMemo(() => (steps?.length ? steps : preset.steps), [preset.steps, steps]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(12);
+
+  useEffect(() => {
+    setActiveIndex(0);
+    setProgress(12);
+
+    const stepMs = Math.max(900, Math.round((estimatedSeconds * 1000) / Math.max(visibleSteps.length + 1, 2)));
+    const stepTimer = window.setInterval(() => {
+      setActiveIndex((current) => Math.min(current + 1, visibleSteps.length - 1));
+    }, stepMs);
+    const progressTimer = window.setInterval(() => {
+      setProgress((current) => {
+        if (current >= 94) return current;
+        const next = current + Math.max(1, Math.round((94 - current) * 0.08));
+        return Math.min(94, next);
+      });
+    }, 650);
+
+    return () => {
+      window.clearInterval(stepTimer);
+      window.clearInterval(progressTimer);
+    };
+  }, [estimatedSeconds, visibleSteps.length]);
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5 sm:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(56,189,248,0.22),transparent_30%),radial-gradient(circle_at_85%_20%,rgba(14,165,233,0.16),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.9),rgba(240,249,255,0.78))]" />
+    <section className={`relative overflow-hidden rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5 sm:p-8 ${className}`}>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(56,189,248,0.22),transparent_30%),radial-gradient(circle_at_85%_20%,rgba(14,165,233,0.16),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.94),rgba(240,249,255,0.8))]" />
       <div className="pointer-events-none absolute left-[-20%] top-0 h-full w-1/2 rotate-12 bg-gradient-to-r from-transparent via-white/60 to-transparent ailines-shimmer" />
 
-      <div className="relative grid gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+      <div className={`relative grid gap-7 ${compact || !showSkeleton ? '' : 'lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch'}`}>
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/80 px-3 py-2 text-sm font-semibold text-sky-800 shadow-sm shadow-sky-900/5">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 motion-safe:animate-ping" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-700" />
             </span>
-            AILINES AI 正在生成
+            AILINES AI 工作流
           </div>
 
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{title || preset.title}</h1>
+            <h1 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl lg:text-5xl'} font-semibold tracking-tight text-slate-950`}>{title || preset.title}</h1>
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">{subtitle || preset.subtitle}</p>
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-sky-100 bg-white/75 shadow-sm shadow-sky-900/5">
-            <div className="h-1.5 overflow-hidden bg-sky-50">
-              <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-sky-300 via-sky-600 to-cyan-300 ailines-progress" />
+            <div className="h-2 overflow-hidden bg-sky-50">
+              <div className="h-full rounded-full bg-gradient-to-r from-sky-300 via-sky-600 to-cyan-300 transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
             </div>
             <ol className="grid gap-0 divide-y divide-sky-50 p-2 sm:grid-cols-2 sm:divide-y-0">
-              {visibleSteps.map((step, index) => (
-                <li key={`${step}-${index}`} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-700">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-50 text-xs font-bold text-sky-800 ring-1 ring-sky-100">
-                    {index + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
+              {visibleSteps.map((step, index) => {
+                const done = index < activeIndex;
+                const active = index === activeIndex;
+                return (
+                  <li key={`${step}-${index}`} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? 'bg-sky-50 text-sky-950' : done ? 'text-emerald-700' : 'text-slate-500'}`}>
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${done ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : active ? 'bg-sky-700 text-white ring-sky-200' : 'bg-white text-slate-400 ring-slate-200'}`}>
+                      {done ? <CheckCircle2 className="h-4 w-4" /> : active ? index + 1 : <Circle className="h-3.5 w-3.5" />}
+                    </span>
+                    <span className={active ? 'font-semibold' : ''}>{step}</span>
+                  </li>
+                );
+              })}
             </ol>
           </div>
 
           <p className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm leading-6 text-slate-600">{preset.hint}</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          {[0, 1, 2].map((item) => (
-            <div key={item} className="rounded-3xl border border-sky-100 bg-white/80 p-5 shadow-sm shadow-sky-900/5 backdrop-blur ailines-soft-float" style={{ animationDelay: `${item * 120}ms` }}>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-50 text-sky-700">
-                  <Sparkles className="h-5 w-5" />
+        {showSkeleton ? (
+          <div className={`grid gap-4 sm:grid-cols-2 ${compact ? '' : 'lg:grid-cols-1'}`}>
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="rounded-3xl border border-sky-100 bg-white/80 p-5 shadow-sm shadow-sky-900/5 backdrop-blur ailines-soft-float" style={{ animationDelay: `${item * 120}ms` }}>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-50 text-sky-700">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-3/5 rounded-full bg-slate-100 ailines-skeleton" />
+                    <div className="h-2.5 w-2/5 rounded-full bg-slate-100 ailines-skeleton" />
+                  </div>
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-3/5 rounded-full bg-slate-100 ailines-skeleton" />
-                  <div className="h-2.5 w-2/5 rounded-full bg-slate-100 ailines-skeleton" />
+                <div className="mt-5 space-y-3">
+                  <div className="h-3 w-full rounded-full bg-slate-100 ailines-skeleton" />
+                  <div className="h-3 w-11/12 rounded-full bg-slate-100 ailines-skeleton" />
+                  <div className="h-3 w-2/3 rounded-full bg-slate-100 ailines-skeleton" />
                 </div>
               </div>
-              <div className="mt-5 space-y-3">
-                <div className="h-3 w-full rounded-full bg-slate-100 ailines-skeleton" />
-                <div className="h-3 w-11/12 rounded-full bg-slate-100 ailines-skeleton" />
-                <div className="h-3 w-2/3 rounded-full bg-slate-100 ailines-skeleton" />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );
 }
+
+export const AILoading = AilinesGeneratingState;

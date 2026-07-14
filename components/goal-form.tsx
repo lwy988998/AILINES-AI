@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, X } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
+import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
 const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -52,6 +53,7 @@ export function GoalForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedModeRef = useRef<PlanningMode>('deep');
+  const submitLockRef = useRef(false);
   const [goalValue, setGoalValue] = useState('');
   const [modeValue, setModeValue] = useState<PlanningMode>('deep');
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
@@ -59,6 +61,8 @@ export function GoalForm() {
   const [imageError, setImageError] = useState('');
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
+  const [submittingMode, setSubmittingMode] = useState<PlanningMode>('deep');
   const [canUseDeepPlan, setCanUseDeepPlan] = useState(true);
   const [membershipLoaded, setMembershipLoaded] = useState(false);
 
@@ -166,6 +170,7 @@ export function GoalForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitLockRef.current) return;
     setImageError('');
 
     const goal = goalValue.trim();
@@ -183,21 +188,28 @@ export function GoalForm() {
       return;
     }
 
+    submitLockRef.current = true;
+
     if (mode === 'image') {
       if (selectedImageFile) {
         setImageError('当前生图模式暂只支持文字描述，参考图能力后续开放。');
       }
+      setSubmittingMode(mode);
       setIsGeneratingImage(true);
       routeToTarget(goal, mode);
       return;
     }
 
     if (!selectedImageFile) {
+      setSubmittingMode(mode);
+      setIsSubmittingPlan(true);
       routeToTarget(goal, mode);
       return;
     }
 
+    setSubmittingMode(mode);
     setIsAnalyzingImage(true);
+    let didNavigate = false;
 
     try {
       const formData = new FormData();
@@ -216,14 +228,17 @@ export function GoalForm() {
       };
 
       if (response.ok && result.success && result.goal?.trim()) {
-        const params = new URLSearchParams({ goal: result.goal.trim(), mode });
+        setIsSubmittingPlan(true);
+        const params = new URLSearchParams({ goal: result.goal.trim(), mode, anonymousId: getOrCreateAnonymousId() });
         router.push(`/plan?${params.toString()}`);
+        didNavigate = true;
         return;
       }
 
       if (goal) {
         setImageError(result.message || '图片识别暂不可用，已按文字描述生成学习路线');
         routeToTarget(goal, mode);
+        didNavigate = true;
         return;
       }
 
@@ -232,13 +247,18 @@ export function GoalForm() {
       if (goal) {
         setImageError('图片识别暂不可用，已按文字描述生成学习路线');
         routeToTarget(goal, mode);
+        didNavigate = true;
         return;
       }
 
       setImageError('图片识别暂不可用，请补充文字描述');
     } finally {
-      setIsAnalyzingImage(false);
-      setIsGeneratingImage(false);
+      if (!didNavigate) {
+        submitLockRef.current = false;
+        setIsAnalyzingImage(false);
+        setIsGeneratingImage(false);
+        setIsSubmittingPlan(false);
+      }
     }
   }
 
@@ -270,10 +290,10 @@ export function GoalForm() {
           </div>
           <button
             type="submit"
-            disabled={isAnalyzingImage || isGeneratingImage}
+            disabled={isAnalyzingImage || isGeneratingImage || isSubmittingPlan}
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
           >
-            {isAnalyzingImage ? '识别中...' : isGeneratingImage ? '准备生成...' : modeValue === 'image' ? '生成图片' : '生成学习路线'}
+            {isAnalyzingImage ? '识别中...' : isGeneratingImage || isSubmittingPlan ? '准备生成...' : modeValue === 'image' ? '生成图片' : '生成学习路线'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -356,6 +376,17 @@ export function GoalForm() {
           </p>
         </fieldset>
       </form>
+
+      {(isSubmittingPlan || isGeneratingImage || isAnalyzingImage) ? (
+        <div className="mt-4 text-left">
+          <AilinesGeneratingState
+            type={submittingMode === 'image' ? 'image' : submittingMode === 'lite' ? 'lite-plan' : 'deep-plan'}
+            compact
+            showSkeleton={false}
+            estimatedSeconds={submittingMode === 'lite' ? 8 : submittingMode === 'image' ? 18 : 22}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         {(modeValue === 'image' ? imageExamples : homepageExamples).map((example) => (

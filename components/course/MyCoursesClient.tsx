@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, BookOpen, CheckCircle2, Clock3, GraduationCap, Loader2, LogIn, PlayCircle, Plus, RefreshCw, Sparkles, Trash2, UserPlus } from 'lucide-react';
+import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
 type CourseStatus = 'not_started' | 'learning' | 'completed';
 
@@ -59,8 +60,18 @@ function formatDateTime(value?: string | null) {
 
 function LoadingState() {
   return (
-    <section className="grid gap-4 lg:grid-cols-2">
-      {Array.from({ length: 4 }).map((_, index) => (
+    <div className="space-y-4">
+      <AilinesGeneratingState
+        type="restore"
+        title="正在加载我的课堂"
+        subtitle="AILINES AI 正在读取课程列表、学习进度和继续学习入口。"
+        steps={["正在读取课程记录", "正在恢复课程进度", "正在准备继续学习入口", "正在整理课堂列表"]}
+        compact
+        showSkeleton={false}
+        estimatedSeconds={6}
+      />
+      <section className="grid gap-4 lg:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5">
           <div className="h-4 w-24 animate-pulse rounded-full bg-sky-100" />
           <div className="mt-4 h-7 w-3/4 animate-pulse rounded-full bg-slate-100" />
@@ -71,8 +82,9 @@ function LoadingState() {
             <div className="h-11 animate-pulse rounded-xl bg-slate-100" />
           </div>
         </div>
-      ))}
-    </section>
+        ))}
+      </section>
+    </div>
   );
 }
 
