@@ -5,12 +5,15 @@ dist
 .DS_Store
 *.log
 .env
+.env.local
 .env*.local
 .vercel
 data/ai-plan-cache/
 data/resource-search-cache/
 prisma/dev.db
 *.db
+*.sqlite
+*.sqlite3
 
 /generated/prisma
 release/
