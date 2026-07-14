@@ -15,15 +15,15 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex min-h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="mx-auto flex min-h-16 w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6 lg:flex-nowrap lg:px-8">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           <BackHomeButton />
-          <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight text-sky-900">
+          <Link href="/" className="shrink-0 text-base font-semibold tracking-tight text-sky-900 sm:text-lg">
             AILINES AI
           </Link>
           <CourseHistoryButton />
         </div>
-        <nav className="flex shrink-0 items-center gap-1 text-sm font-medium text-slate-600 sm:gap-4">
+        <nav className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1 text-sm font-medium text-slate-600 sm:gap-2 lg:flex-none lg:flex-nowrap lg:gap-4">
           {user ? (
             <Link
               href="/my-courses"

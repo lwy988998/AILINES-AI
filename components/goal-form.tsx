@@ -6,7 +6,7 @@ import { ArrowRight, Plus, X } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
-const homepageExamples = ['GPT 高效使用', 'Python 数据分析', 'React 前端开发', '三角函数'];
+const homepageExamples = ['中考英语阅读理解提分', 'Python 零基础入门', '学习摄影构图', 'AI 绘画提示词入门', '产品经理入门', '高中数学函数专题'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type PlanningMode = 'lite' | 'deep' | 'image';
@@ -284,8 +284,8 @@ export function GoalForm() {
               name="goal"
               value={goalValue}
               onChange={(event) => setGoalValue(event.target.value)}
-              placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '在这里输入需求'}
-              className="min-h-12 flex-1 border-0 bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-400"
+              placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '例如：中考英语阅读理解提分 / Python 零基础入门 / 学习摄影构图'}
+              className="min-h-12 min-w-0 flex-1 border-0 bg-transparent px-2 text-base text-slate-950 outline-none placeholder:text-slate-400"
             />
           </div>
           <button
