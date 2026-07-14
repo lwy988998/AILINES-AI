@@ -15,6 +15,7 @@ type LitePlanViewProps = {
   resourceSourceMessage: string;
   notice?: React.ReactNode;
   courseId?: string;
+  anonymousId?: string;
   courseProgress?: CourseProgressSummary | null;
 };
 
@@ -104,7 +105,7 @@ function LiteResources({ resources, message }: { resources: ResourceItem[]; mess
   );
 }
 
-export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, courseId, courseProgress }: LitePlanViewProps) {
+export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, courseId, anonymousId, courseProgress }: LitePlanViewProps) {
   const title = titleForGoal(goal, plan.title);
   const stages = plan.roadmap.slice(0, 5);
   const coreSteps = getCoreSteps(plan);
@@ -117,7 +118,7 @@ export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, 
 
   return (
     <>
-      {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="plan" /> : null}
+      {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={anonymousId} goal={goal} mode={mode} lastPageType="plan" /> : null}
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="overflow-hidden rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 p-6 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-800">
@@ -220,15 +221,15 @@ export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, 
               <p className="mt-2 text-sm leading-6 text-slate-600">先完成第一轮操作和自检。如果你发现某一步不稳定，再进入进度页逐项练习，或切换深度规划生成完整课程。</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href={`/progress?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}`} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800">进入进度追踪</Link>
-              {firstStage ? <Link href={`/phase?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}&phaseIndex=1&phaseName=${encodeURIComponent(firstStage.name)}`} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100">开始第一个阶段</Link> : null}
+              <Link href={`/progress?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}${anonymousId ? `&anonymousId=${encodeURIComponent(anonymousId)}` : ''}`} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800">进入进度追踪</Link>
+              {firstStage ? <Link href={`/phase?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}${anonymousId ? `&anonymousId=${encodeURIComponent(anonymousId)}` : ''}&phaseIndex=1&phaseName=${encodeURIComponent(firstStage.name)}`} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-100">开始第一个阶段</Link> : null}
               <Link href={`/plan?goal=${encodedGoal}&mode=lite&forcePlan=1&retry=${Date.now()}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"><RefreshCw className="h-4 w-4" />重新生成</Link>
             </div>
           </div>
         </section>
 
         <LiteResources resources={plan.resources} message={resourceSourceMessage} />
-        <PlanActions goal={goal} title={title} mode={mode} courseId={courseId} />
+        <PlanActions goal={goal} title={title} mode={mode} courseId={courseId} anonymousId={anonymousId} />
       </div>
       <FloatingAilinesChat
         pageType="plan"

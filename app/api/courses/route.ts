@@ -58,7 +58,9 @@ export async function GET(request: NextRequest) {
         summary: course.summary,
         createdAt: course.createdAt.toISOString(),
         updatedAt: course.updatedAt.toISOString(),
-        href: `/plan?courseId=${encodeURIComponent(course.id)}`,
+        href: user?.id || !anonymousId
+          ? `/plan?courseId=${encodeURIComponent(course.id)}`
+          : `/plan?courseId=${encodeURIComponent(course.id)}&anonymousId=${encodeURIComponent(anonymousId)}`,
         progress: serializeProgress(course.progress),
       })),
     });
@@ -82,7 +84,6 @@ export async function POST(request: NextRequest) {
   const summary = typeof data.summary === 'string' ? data.summary.trim() : undefined;
   const source = typeof data.source === 'string' ? data.source.trim() : undefined;
   const anonymousId = typeof data.anonymousId === 'string' ? data.anonymousId.trim() : undefined;
-  const userId = typeof data.userId === 'string' ? data.userId.trim() : undefined;
   const payload = data.payload;
 
   if (!goal || !title || !payload) {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUserFromRequest(request);
     const { courseId } = await createOrUpdateCourseSnapshot({
       anonymousId,
-      userId: user?.id || userId,
+      userId: user?.id,
       goal,
       mode: normalizeMode(data.mode),
       title,

@@ -7,9 +7,10 @@ type RoadmapSectionProps = {
   stages: RoadmapStage[];
   mode?: 'lite' | 'deep';
   courseId?: string;
+  anonymousId?: string;
 };
 
-export function RoadmapSection({ goal, stages, mode = 'deep', courseId }: RoadmapSectionProps) {
+export function RoadmapSection({ goal, stages, mode = 'deep', courseId, anonymousId }: RoadmapSectionProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
@@ -21,6 +22,9 @@ export function RoadmapSection({ goal, stages, mode = 'deep', courseId }: Roadma
           const phaseParams = new URLSearchParams({ goal, mode, phaseIndex: `${index + 1}`, phaseName: stage.name });
           if (courseId) {
             phaseParams.set('courseId', courseId);
+          }
+          if (anonymousId) {
+            phaseParams.set('anonymousId', anonymousId);
           }
           const phaseHref = `/phase?${phaseParams.toString()}`;
 

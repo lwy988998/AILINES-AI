@@ -47,7 +47,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             </div>
           }
         >
-          <StoredCoursePlan courseId={courseId} />
+          <StoredCoursePlan courseId={courseId} anonymousId={params.anonymousId?.trim() || undefined} />
         </Suspense>
       </main>
     );

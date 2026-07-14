@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { createEmptyCourseProgress, getCourseProgress, recomputeCourseProgress, updateLastVisited } from '@/lib/course/courseProgressRepository';
 
 function optionalString(value: unknown) {
@@ -29,9 +31,14 @@ function serializeProgress(progress: ReturnType<typeof createEmptyCourseProgress
 
 export async function GET(request: NextRequest) {
   const courseId = request.nextUrl.searchParams.get('courseId')?.trim() || '';
+  const anonymousId = request.nextUrl.searchParams.get('anonymousId')?.trim() || undefined;
   if (!courseId) return NextResponse.json({ error: 'courseId 缺失' }, { status: 400 });
 
   try {
+    const user = await getCurrentUserFromRequest(request);
+    const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
+    if (!course) return NextResponse.json({ error: '无权查看这个课程的学习进度' }, { status: 403 });
+
     const progress = await getCourseProgress(courseId);
     return NextResponse.json({ progress: serializeProgress(progress || createEmptyCourseProgress(courseId)) });
   } catch {
@@ -53,8 +60,14 @@ export async function POST(request: NextRequest) {
   if (!courseId) return NextResponse.json({ error: 'courseId 缺失' }, { status: 400 });
 
   try {
+    const anonymousId = optionalString(data.anonymousId);
+    const user = await getCurrentUserFromRequest(request);
+    const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
+    if (!course) return NextResponse.json({ error: '无权修改这个课程的学习进度' }, { status: 403 });
+    const ownedAnonymousId = course.anonymousId || anonymousId;
+
     if (action === 'recompute') {
-      const progress = await recomputeCourseProgress({ courseId, anonymousId: optionalString(data.anonymousId) });
+      const progress = await recomputeCourseProgress({ courseId, anonymousId: ownedAnonymousId });
       return NextResponse.json({ ok: true, progress: serializeProgress(progress || createEmptyCourseProgress(courseId)) });
     }
 
@@ -68,7 +81,7 @@ export async function POST(request: NextRequest) {
 
       const progress = await updateLastVisited({
         courseId,
-        anonymousId: optionalString(data.anonymousId),
+        anonymousId: ownedAnonymousId,
         goal,
         mode: optionalString(data.mode),
         lastVisitedUrl,

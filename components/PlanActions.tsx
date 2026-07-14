@@ -9,11 +9,13 @@ type PlanActionsProps = {
   title?: string;
   mode?: 'lite' | 'deep';
   courseId?: string;
+  anonymousId?: string;
 };
 
-export function PlanActions({ goal, title, mode = 'deep', courseId }: PlanActionsProps) {
+export function PlanActions({ goal, title, mode = 'deep', courseId, anonymousId }: PlanActionsProps) {
   const encodedGoal = encodeURIComponent(goal);
   const encodedMode = encodeURIComponent(mode);
+  const courseQuery = `${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}${anonymousId ? `&anonymousId=${encodeURIComponent(anonymousId)}` : ''}`;
 
   return (
     <div className="mt-8 flex flex-col gap-3 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-end sm:p-5">
@@ -36,7 +38,7 @@ export function PlanActions({ goal, title, mode = 'deep', courseId }: PlanAction
         问 AILINES AI
       </Link>
       <Link
-        href={`/progress?goal=${encodedGoal}&mode=${encodedMode}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}`}
+        href={`/progress?goal=${encodedGoal}&mode=${encodedMode}${courseQuery}`}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
       >
         <PlayCircle className="h-4 w-4" />

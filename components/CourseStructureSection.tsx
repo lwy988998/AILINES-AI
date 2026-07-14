@@ -7,9 +7,10 @@ type CourseStructureSectionProps = {
   goal?: string;
   mode?: 'lite' | 'deep';
   courseId?: string;
+  anonymousId?: string;
 };
 
-function createLearnHref(input: { goal: string; mode: 'lite' | 'deep'; courseId?: string; phaseIndex: number; phaseName: string; topicIndex: number; topic: string }) {
+function createLearnHref(input: { goal: string; mode: 'lite' | 'deep'; courseId?: string; anonymousId?: string; phaseIndex: number; phaseName: string; topicIndex: number; topic: string }) {
   const params = new URLSearchParams({
     goal: input.goal,
     mode: input.mode,
@@ -19,10 +20,11 @@ function createLearnHref(input: { goal: string; mode: 'lite' | 'deep'; courseId?
     topic: input.topic,
   });
   if (input.courseId) params.set('courseId', input.courseId);
+  if (input.anonymousId) params.set('anonymousId', input.anonymousId);
   return `/learn?${params.toString()}`;
 }
 
-export function CourseStructureSection({ stages, goal, mode = 'deep', courseId }: CourseStructureSectionProps) {
+export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, anonymousId }: CourseStructureSectionProps) {
   const canLinkToLearn = Boolean(goal);
 
   return (
@@ -38,7 +40,7 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId }
             <ul className="mt-4 space-y-3">
               {stage.topics.map((topic, topicIndex) => {
                 const href = canLinkToLearn
-                  ? createLearnHref({ goal: goal!, mode, courseId, phaseIndex: phaseIndex + 1, phaseName: stage.stage, topicIndex: topicIndex + 1, topic })
+                  ? createLearnHref({ goal: goal!, mode, courseId, anonymousId, phaseIndex: phaseIndex + 1, phaseName: stage.stage, topicIndex: topicIndex + 1, topic })
                   : '';
                 const content = (
                   <>

@@ -24,31 +24,32 @@ type CoursePlanViewProps = {
   resourceSourceMessage: string;
   notice?: React.ReactNode;
   courseId?: string;
+  anonymousId?: string;
   courseProgress?: CourseProgressSummary | null;
   membershipTier?: string | null;
 };
 
-export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, resourceSourceMessage, notice, courseId, courseProgress, membershipTier }: CoursePlanViewProps) {
+export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, resourceSourceMessage, notice, courseId, anonymousId, courseProgress, membershipTier }: CoursePlanViewProps) {
   const slidesAccess = canUseFeature(membershipTier, 'course_slides');
   const mindMapAccess = canUseFeature(membershipTier, 'mind_map');
 
   return (
     <>
-      {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="plan" /> : null}
+      {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={anonymousId} goal={goal} mode={mode} lastPageType="plan" /> : null}
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
         {courseProgress ? <CourseProgressBanner progress={courseProgress} /> : null}
         {notice}
         {slidesAccess.allowed ? <CourseSlides slides={plan.slides} phases={plan.roadmap} /> : <LockedFeatureCard feature="course_slides" title="课程课件是 Pro 功能" requiredTier={slidesAccess.requiredTier || 'pro'} />}
         {mindMapAccess.allowed ? <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} /> : <LockedFeatureCard feature="mind_map" title="思维导图是 Pro 功能" requiredTier={mindMapAccess.requiredTier || 'pro'} />}
-        <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} courseId={courseId} />
-        <CourseStructureSection stages={plan.courseStructure} goal={goal} mode={mode} courseId={courseId} />
+        <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} courseId={courseId} anonymousId={anonymousId} />
+        <CourseStructureSection stages={plan.courseStructure} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} />
         <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
           {resourceSourceMessage}
         </section>
         <ResourcesSection resources={plan.resources} />
         <ProjectsSection projects={plan.projects} />
-        <PlanActions goal={goal} title={plan.title} mode={mode} courseId={courseId} />
+        <PlanActions goal={goal} title={plan.title} mode={mode} courseId={courseId} anonymousId={anonymousId} />
       </div>
       <FloatingAilinesChat
         pageType="plan"
