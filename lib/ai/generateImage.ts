@@ -1,4 +1,4 @@
-import { AIClientError, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
+import { AIClientError, toSafeAIError } from '@/lib/ai/aiClient';
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 45_000;
 const MAX_PROMPT_LENGTH = 2_000;
@@ -85,8 +85,7 @@ function logMissingProviderConfig() {
 }
 
 function getImageTimeoutMs() {
-  const configuredTimeout = Number(process.env.AI_IMAGE_TIMEOUT_MS);
-  return Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? configuredTimeout : getAIRequestTimeoutMs(DEFAULT_IMAGE_TIMEOUT_MS);
+  return DEFAULT_IMAGE_TIMEOUT_MS;
 }
 
 function normalizePrompt(prompt: string) {
