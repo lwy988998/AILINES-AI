@@ -3,6 +3,7 @@ import { BackHomeButton } from './back-home-button';
 import { CourseHistoryButton } from './course/CourseHistoryButton';
 import { AuthStatus } from './auth/AuthStatus';
 import { getCurrentUser } from '@/lib/auth/currentUser';
+import { isAdminUser } from '@/lib/admin';
 
 const navItems = [
   { label: '会员', href: '/membership' },
@@ -10,6 +11,7 @@ const navItems = [
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
+  const isAdmin = isAdminUser(user);
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -28,6 +30,14 @@ export async function SiteHeader() {
               className="rounded-md px-2.5 py-2 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300"
             >
               我的课堂
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="rounded-md px-2.5 py-2 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            >
+              管理员后台
             </Link>
           ) : null}
           {navItems.map((item) => (
