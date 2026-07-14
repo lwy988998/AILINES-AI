@@ -57,9 +57,9 @@ export function getImageGenerationProviders(): ImageProviderConfig[] {
     },
     {
       id: 'gpt',
-      apiKey: envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY'),
-      baseUrl: envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL'),
-      model: envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL'),
+      apiKey: envValue('GPT_IMAGE_API_KEY'),
+      baseUrl: envValue('GPT_IMAGE_BASE_URL'),
+      model: envValue('GPT_IMAGE_MODEL'),
     },
   ];
 
@@ -78,9 +78,9 @@ function logMissingProviderConfig() {
     grokApiKey: envValue('GROK_IMAGE_API_KEY') ? 'set' : 'missing',
     grokBaseUrl: envValue('GROK_IMAGE_BASE_URL') ? 'set' : 'missing',
     grokModel: envValue('GROK_IMAGE_MODEL') ? 'set' : 'missing',
-    gptApiKey: envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY') ? 'set' : 'missing',
-    gptBaseUrl: envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL') ? 'set' : 'missing',
-    gptModel: envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL') ? 'set' : 'missing',
+    gptApiKey: envValue('GPT_IMAGE_API_KEY') ? 'set' : 'missing',
+    gptBaseUrl: envValue('GPT_IMAGE_BASE_URL') ? 'set' : 'missing',
+    gptModel: envValue('GPT_IMAGE_MODEL') ? 'set' : 'missing',
   });
 }
 
@@ -196,21 +196,51 @@ async function postImageGeneration(
   }
 }
 
-function parseImageResponse(response: Record<string, unknown>) {
-  const topLevelImageUrl = typeof response.url === 'string' ? response.url : undefined;
-  const revisedPrompt = typeof response.revised_prompt === 'string'
-    ? response.revised_prompt
-    : typeof response.revisedPrompt === 'string'
-      ? response.revisedPrompt
-      : undefined;
-  const firstData = Array.isArray(response.data) ? response.data[0] as Record<string, unknown> | undefined : undefined;
-  const dataUrl = firstData && typeof firstData.url === 'string' ? firstData.url : undefined;
-  const imageBase64 = firstData && typeof firstData.b64_json === 'string' ? firstData.b64_json : undefined;
-  const mimeType = firstData && typeof firstData.mime_type === 'string' ? firstData.mime_type : 'image/png';
+function firstString(...values: unknown[]) {
+  return values.find((value): value is string => typeof value === 'string' && value.trim().length > 0)?.trim();
+}
 
-  if (!topLevelImageUrl && !dataUrl && !imageBase64) return null;
+function firstObject(...values: unknown[]) {
+  return values.find((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value));
+}
+
+function parseImageResponse(response: Record<string, unknown>) {
+  const firstData = Array.isArray(response.data) ? response.data[0] as Record<string, unknown> | undefined : undefined;
+  const firstOutput = Array.isArray(response.output) ? response.output[0] as Record<string, unknown> | undefined : undefined;
+  const imageUrlObject = firstObject(firstData?.image_url, firstOutput?.image_url, response.image_url);
+  const imageObject = firstObject(firstData?.image, firstOutput?.image, response.image);
+  const revisedPrompt = firstString(response.revised_prompt, response.revisedPrompt, firstData?.revised_prompt, firstData?.revisedPrompt);
+  const imageUrl = firstString(
+    response.url,
+    response.imageUrl,
+    response.output_url,
+    firstData?.url,
+    firstData?.imageUrl,
+    firstData?.output_url,
+    firstOutput?.url,
+    firstOutput?.imageUrl,
+    firstOutput?.output_url,
+    imageUrlObject?.url,
+    imageObject?.url,
+  );
+  const imageBase64 = firstString(
+    response.b64_json,
+    response.base64,
+    response.image_base64,
+    firstData?.b64_json,
+    firstData?.base64,
+    firstData?.image_base64,
+    firstOutput?.b64_json,
+    firstOutput?.base64,
+    firstOutput?.image_base64,
+    imageObject?.b64_json,
+    imageObject?.base64,
+  );
+  const mimeType = firstString(response.mime_type, response.mimeType, firstData?.mime_type, firstData?.mimeType, firstOutput?.mime_type, firstOutput?.mimeType) || 'image/png';
+
+  if (!imageUrl && !imageBase64) return null;
   return {
-    imageUrl: topLevelImageUrl || dataUrl,
+    imageUrl,
     imageBase64,
     mimeType,
     revisedPrompt,
@@ -227,7 +257,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   if (!envValue('GROK_IMAGE_API_KEY') || !envValue('GROK_IMAGE_BASE_URL') || !envValue('GROK_IMAGE_MODEL')) {
     logImageProviderSkipped('grok');
   }
-  if (!(envValue('GPT_IMAGE_API_KEY') || envValue('AI_IMAGE_API_KEY')) || !(envValue('GPT_IMAGE_BASE_URL') || envValue('AI_IMAGE_BASE_URL')) || !(envValue('GPT_IMAGE_MODEL') || envValue('AI_IMAGE_MODEL'))) {
+  if (!envValue('GPT_IMAGE_API_KEY') || !envValue('GPT_IMAGE_BASE_URL') || !envValue('GPT_IMAGE_MODEL')) {
     logImageProviderSkipped('gpt');
   }
   if (providers.length === 0) {
