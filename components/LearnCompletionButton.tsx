@@ -106,7 +106,7 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
     const version = Date.now();
     latestSaveRef.current = version;
     const anonymousId = getOrCreateAnonymousId();
-    fetch('/api/learning-card-progress', {
+    fetch('/api/learn/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -119,6 +119,7 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
         topicIndex,
         topicTitle: topic,
         status: nextStatus,
+        lastVisitedUrl: `${window.location.pathname}${window.location.search}`,
       }),
     })
       .then((response) => {

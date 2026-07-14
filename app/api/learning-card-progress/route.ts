@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import { listLearningCardProgress, normalizeLearningCardStatus, upsertLearningCardProgress } from '@/lib/course/learningCardProgressRepository';
 
@@ -21,9 +23,17 @@ export async function GET(request: NextRequest) {
   if (!goal) return NextResponse.json({ error: '学习卡片进度参数不完整' }, { status: 400 });
 
   try {
+    const courseId = request.nextUrl.searchParams.get('courseId') || undefined;
+    const anonymousId = request.nextUrl.searchParams.get('anonymousId') || undefined;
+    if (courseId) {
+      const user = await getCurrentUserFromRequest(request);
+      const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
+      if (!course) return NextResponse.json({ error: '无权查看这个课程的学习进度' }, { status: 403 });
+    }
+
     const items = await listLearningCardProgress({
-      courseId: request.nextUrl.searchParams.get('courseId') || undefined,
-      anonymousId: request.nextUrl.searchParams.get('anonymousId') || undefined,
+      courseId,
+      anonymousId,
       goal,
       mode: request.nextUrl.searchParams.get('mode') || undefined,
       phaseIndex: parsePositiveInt(request.nextUrl.searchParams.get('phaseIndex')),
@@ -55,7 +65,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const courseId = optionalString(data.courseId);
-    const anonymousId = optionalString(data.anonymousId);
+    let anonymousId = optionalString(data.anonymousId);
+    if (courseId) {
+      const user = await getCurrentUserFromRequest(request);
+      const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
+      if (!course) return NextResponse.json({ error: '无权修改这个课程的学习进度' }, { status: 403 });
+      anonymousId = course.anonymousId || anonymousId;
+    }
+
     const item = await upsertLearningCardProgress({
       courseId,
       anonymousId,
