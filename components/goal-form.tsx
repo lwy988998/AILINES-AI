@@ -287,7 +287,7 @@ export function GoalForm() {
             }}
             placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
             rows={4}
-            className="block min-h-24 w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-28 sm:text-lg"
+            className="block min-h-[150px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[170px] sm:text-lg lg:min-h-[190px]"
           />
           <div className="mt-2.5 flex flex-col gap-2.5 border-t border-slate-100 pt-2.5 lg:flex-row lg:items-end lg:justify-between">
             <button

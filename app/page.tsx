@@ -24,7 +24,7 @@ export default async function HomePage() {
     <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(14,165,233,0.14),transparent_32%),linear-gradient(180deg,#f8fbff_0%,#ffffff_62%,#f8fafc_100%)] text-slate-950">
       <SiteHeader />
 
-      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col items-center px-4 pb-10 pt-10 text-center sm:px-6 sm:pt-14 lg:px-8">
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col items-center px-4 pb-10 pt-8 text-center sm:px-6 sm:pt-10 lg:px-8">
         <div className="flex flex-col items-center">
           <Image
             src="/ailines-logo-transparent.png"
@@ -32,10 +32,10 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-28 w-auto object-contain drop-shadow-sm sm:h-36"
+            className="h-40 w-auto object-contain drop-shadow-sm sm:h-48 lg:h-56"
           />
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">AILINES AI</h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">AILINES AI</h1>
+          <p className="mt-3 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
             把学习目标变成可以一步步完成的课程。
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
@@ -43,7 +43,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="mt-7 w-full max-w-4xl">
+        <div className="mt-4 w-full max-w-3xl">
           <GoalForm />
         </div>
 
