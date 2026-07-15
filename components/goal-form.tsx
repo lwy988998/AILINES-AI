@@ -263,13 +263,13 @@ export function GoalForm() {
   }
 
   return (
-    <div className="rounded-[2rem] border border-slate-200/80 bg-white/88 p-2.5 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-3">
-      <form className="space-y-3" onSubmit={handleSubmit}>
+    <div className="rounded-[2rem] border border-slate-200/80 bg-white/88 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
+      <form className="space-y-2.5" onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
         </label>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-3 transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100 sm:px-5 sm:py-3.5">
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-2.5 transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100 sm:px-5 sm:py-3">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-800">
             <Sparkles className="h-4 w-4" />
             今天你想学什么？
@@ -287,9 +287,9 @@ export function GoalForm() {
             }}
             placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
             rows={4}
-            className="block min-h-28 w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-32 sm:text-lg"
+            className="block min-h-24 w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-28 sm:text-lg"
           />
-          <div className="mt-3 flex flex-col gap-3 border-t border-slate-100 pt-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="mt-2.5 flex flex-col gap-2.5 border-t border-slate-100 pt-2.5 lg:flex-row lg:items-end lg:justify-between">
             <button
               type="button"
               aria-label="上传图片"

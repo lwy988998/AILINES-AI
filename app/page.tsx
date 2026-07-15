@@ -32,7 +32,7 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-20 w-auto object-contain drop-shadow-sm sm:h-28"
+            className="h-28 w-auto object-contain drop-shadow-sm sm:h-36"
           />
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">AILINES AI</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
