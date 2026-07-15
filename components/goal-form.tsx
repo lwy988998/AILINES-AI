@@ -25,17 +25,17 @@ const planningModes: Array<{
   {
     value: 'lite',
     title: '快速规划',
-    description: '快速生成基础学习方案',
+    description: '快速生成学习路线',
   },
   {
     value: 'deep',
-    title: '深度 AILINES AI 规划',
-    description: '完整生成路线、资料和实战路径',
+    title: '深度课程',
+    description: '搜索资料并生成课程',
   },
   {
     value: 'image',
     title: '生图模式',
-    description: '根据需求生成对应图片',
+    description: '根据描述生成图片',
   },
 ];
 
@@ -262,56 +262,93 @@ export function GoalForm() {
     }
   }
 
+  const isWorking = isAnalyzingImage || isGeneratingImage || isSubmittingPlan;
+  const submitLabel = modeValue === 'image' ? '生成图片' : modeValue === 'lite' ? '开始快速规划' : '生成深度课程';
+
   return (
-    <div className="rounded-[2rem] border border-slate-200/80 bg-white/88 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
-      <form className="space-y-2.5" onSubmit={handleSubmit}>
+    <div className="w-full rounded-[28px] border border-slate-200/80 bg-white/90 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
+      <form onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
         </label>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white px-4 py-2.5 transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100 sm:px-5 sm:py-3">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-800">
-            <Sparkles className="h-4 w-4" />
-            今天你想学什么？
+        <input type="hidden" name="mode" value={modeValue} />
+
+        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
+          <div className="px-4 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-800">
+              <Sparkles className="h-4 w-4" />
+              今天你想学什么？
+            </div>
+            <textarea
+              id="learning-goal"
+              name="goal"
+              value={goalValue}
+              onChange={(event) => setGoalValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
+              rows={4}
+              className="block min-h-[110px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[120px] sm:text-lg lg:min-h-[130px]"
+            />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                aria-label="上传图片"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
+              >
+                <Plus className="h-4 w-4" />
+                上传参考图
+              </button>
+              <button
+                type="submit"
+                disabled={isWorking}
+                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
+              >
+                {isAnalyzingImage ? '识别中...' : isWorking ? '准备生成...' : submitLabel}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <textarea
-            id="learning-goal"
-            name="goal"
-            value={goalValue}
-            onChange={(event) => setGoalValue(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                event.preventDefault();
-                event.currentTarget.form?.requestSubmit();
-              }
-            }}
-            placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
-            rows={4}
-            className="block min-h-[150px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[170px] sm:text-lg lg:min-h-[190px]"
-          />
-          <div className="mt-2.5 flex flex-col gap-2.5 border-t border-slate-100 pt-2.5 lg:flex-row lg:items-end lg:justify-between">
-            <button
-              type="button"
-              aria-label="上传图片"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300 sm:w-auto"
-            >
-              <Plus className="h-4 w-4" />
-              上传参考图
-            </button>
-            <button
-              type="submit"
-              disabled={isAnalyzingImage || isGeneratingImage || isSubmittingPlan}
-              className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400 sm:w-auto sm:min-w-40"
-            >
-              {isAnalyzingImage ? '识别中...' : isGeneratingImage || isSubmittingPlan ? '准备生成...' : modeValue === 'image' ? '生成图片' : modeValue === 'lite' ? '开始快速规划' : '生成深度课程'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+
+          <div className="grid grid-cols-1 border-t border-slate-200 bg-slate-50/70 sm:grid-cols-3">
+            {planningModes.map((mode, index) => {
+              const selected = modeValue === mode.value;
+
+              return (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => selectMode(mode.value)}
+                  aria-pressed={selected}
+                  data-mode-option={mode.value}
+                  data-selected={selected ? 'true' : 'false'}
+                  className={[
+                    'min-h-[82px] w-full px-4 py-3 text-left transition-all sm:min-h-[92px] sm:px-5',
+                    index > 0 ? 'border-t border-slate-200 sm:border-l sm:border-t-0' : '',
+                    'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-400',
+                    selected ? 'bg-white text-sky-900 shadow-[inset_0_3px_0_#0284c7]' : 'text-slate-600 hover:bg-white hover:text-slate-950',
+                  ].join(' ')}
+                >
+                  <span className="flex flex-wrap items-center gap-2 text-sm font-semibold sm:text-base">
+                    {mode.title}
+                    {mode.value === 'deep' ? <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-700">推荐</span> : null}
+                    {mode.value === 'deep' && membershipLoaded && !canUseDeepPlan ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Pro</span> : null}
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500 sm:text-sm">{mode.description}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {selectedImageFile && selectedImagePreviewUrl ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-left">
+          <div className="mt-2.5 flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-left">
             <img
               src={selectedImagePreviewUrl}
               alt={selectedImageFile.name || '已上传图片预览'}
@@ -333,45 +370,11 @@ export function GoalForm() {
         ) : null}
 
         {imageError ? (
-          <div className="rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
+          <div className="mt-2.5 rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
             <p>{imageError}</p>
             {imageError.includes('Pro 功能') ? <a href="/membership" className="mt-2 inline-flex font-semibold text-sky-800 underline underline-offset-4">查看会员方案</a> : null}
           </div>
         ) : null}
-
-        <fieldset className="rounded-2xl border border-slate-200 bg-slate-50/70 p-2">
-          <legend className="px-2 text-xs font-semibold text-slate-500">生成模式</legend>
-          <input type="hidden" name="mode" value={modeValue} />
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {planningModes.map((mode) => {
-              const selected = modeValue === mode.value;
-
-              return (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => selectMode(mode.value)}
-                  aria-pressed={selected}
-                  data-mode-option={mode.value}
-                  data-selected={selected ? 'true' : 'false'}
-                  className={[
-                    'min-h-14 w-full cursor-pointer rounded-xl border px-3 py-2 text-left transition-all',
-                    'focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2',
-                    selected
-                      ? 'border-sky-500 bg-white text-sky-900 shadow-sm ring-1 ring-sky-100'
-                      : 'border-transparent bg-transparent text-slate-600 hover:bg-white hover:text-slate-950',
-                  ].join(' ')}
-                >
-                  <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                    {mode.value === 'lite' ? '快速规划' : mode.value === 'deep' ? '深度课程' : '生图模式'}
-                    {mode.value === 'deep' && membershipLoaded && !canUseDeepPlan ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Pro</span> : null}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">{mode.description}</span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
       </form>
 
       {(isSubmittingPlan || isGeneratingImage || isAnalyzingImage) ? (

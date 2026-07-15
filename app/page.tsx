@@ -42,7 +42,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="mt-4 w-full max-w-3xl">
+        <div className="mt-4 w-full max-w-5xl">
           <GoalForm />
         </div>
 
