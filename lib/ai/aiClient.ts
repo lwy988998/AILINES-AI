@@ -21,6 +21,7 @@ export type ChatCompletionOptions = {
   maxTokens?: number;
   responseFormat?: 'json_object';
   timeoutMs?: number;
+  maxAttempts?: number;
   purpose: 'plan' | 'ask' | 'image';
 };
 
@@ -198,8 +199,11 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
   };
 
   let lastError: AIClientError | null = null;
+  const maxAttempts = Number.isInteger(options.maxAttempts) && Number(options.maxAttempts) > 0
+    ? Math.min(Number(options.maxAttempts), RETRY_DELAYS_MS.length + 1)
+    : RETRY_DELAYS_MS.length + 1;
 
-  for (let attempt = 1; attempt <= RETRY_DELAYS_MS.length + 1; attempt += 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const body = lastError?.status === 400 ? { ...baseBody, response_format: undefined } : baseBody;
 
     try {
@@ -212,7 +216,7 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
         continue;
       }
 
-      if (!shouldRetry(classified) || attempt > RETRY_DELAYS_MS.length) {
+      if (!shouldRetry(classified) || attempt >= maxAttempts) {
         throw classified;
       }
 

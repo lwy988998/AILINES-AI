@@ -14,6 +14,7 @@ type ProgressStageCardProps = {
   goal: string;
   mode: 'lite' | 'deep';
   courseId?: string;
+  anonymousId?: string;
   phaseIndex: number;
   statuses: LearningCardStatusByKey;
   onSetTopicStatus: (phaseIndex: number, topicIndex: number, status: LearningCardStatus) => void;
@@ -23,7 +24,7 @@ export function getLearningCardKey(phaseIndex: number, topicIndex: number) {
   return `${phaseIndex}:${topicIndex}`;
 }
 
-function createLearnHref(goal: string, mode: 'lite' | 'deep', courseId: string | undefined, stage: ProgressStage, phaseIndex: number, topic: string, topicIndex: number) {
+function createLearnHref(goal: string, mode: 'lite' | 'deep', courseId: string | undefined, anonymousId: string | undefined, stage: ProgressStage, phaseIndex: number, topic: string, topicIndex: number) {
   const params = new URLSearchParams({
     goal,
     mode,
@@ -33,6 +34,7 @@ function createLearnHref(goal: string, mode: 'lite' | 'deep', courseId: string |
     topicIndex: String(topicIndex + 1),
   });
   if (courseId) params.set('courseId', courseId);
+  if (anonymousId) params.set('anonymousId', anonymousId);
 
   return `/learn?${params.toString()}`;
 }
@@ -53,7 +55,7 @@ function getActionLabel(status: LearningCardStatus) {
   return '开始学习';
 }
 
-export function ProgressStageCard({ stage, goal, mode, courseId, phaseIndex, statuses, onSetTopicStatus }: ProgressStageCardProps) {
+export function ProgressStageCard({ stage, goal, mode, courseId, anonymousId, phaseIndex, statuses, onSetTopicStatus }: ProgressStageCardProps) {
   const completedInStage = stage.tasks.filter((_task, topicIndex) => statuses[getLearningCardKey(phaseIndex, topicIndex)] === 'completed').length;
 
   return (
@@ -72,7 +74,7 @@ export function ProgressStageCard({ stage, goal, mode, courseId, phaseIndex, sta
           const status = statuses[getLearningCardKey(phaseIndex, topicIndex)] || 'not_started';
           const checked = status === 'completed';
           const isLearning = status === 'in_progress';
-          const learnHref = createLearnHref(goal, mode, courseId, stage, phaseIndex, task.title, topicIndex);
+          const learnHref = createLearnHref(goal, mode, courseId, anonymousId, stage, phaseIndex, task.title, topicIndex);
           const topicStorageKey = createTopicStorageKey(goal, stage.title, task.title);
           const actionLabel = getActionLabel(status);
 

@@ -281,8 +281,10 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   let answer: LearningAnswer;
   let notice = '';
 
-  const savedSession = courseId && !shouldRegenerate
-    ? await getLearningSession({ courseId, anonymousId: ownedCourse?.anonymousId || anonymousId, goal: courseGoal, mode, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex, topicTitle: location.topic }).catch((error) => {
+  const sessionAnonymousId = ownedCourse?.anonymousId || anonymousId;
+  const canUseLearningSession = Boolean(courseId || sessionAnonymousId);
+  const savedSession = canUseLearningSession && !shouldRegenerate
+    ? await getLearningSession({ courseId, anonymousId: sessionAnonymousId, goal: courseGoal, mode, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex, topicTitle: location.topic }).catch((error) => {
         console.warn('Learning session restore failed; generating fresh content.', error instanceof Error ? error.message : 'unknown');
         return null;
       })
@@ -295,16 +297,16 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     }
     restoredFromSession = true;
     notice = savedSession.fallbackUsed
-      ? '已恢复上次生成的学习内容（上次使用基础 fallback 课程）。你可以点击“重新生成本课”再次尝试 AILINES AI 整合。'
+      ? '已恢复上次生成的基础版本课程；你可以点击“重新生成本课”再次尝试生成更完整内容。'
       : '已恢复上次生成的学习内容';
   } else {
-    const usage = await checkUsageLimit({ userId: user?.id, anonymousId: ownedCourse?.anonymousId || anonymousId, tier: user?.membershipTier, type: 'learn_generate' });
+    const usage = await checkUsageLimit({ userId: user?.id, anonymousId: sessionAnonymousId, tier: user?.membershipTier, type: 'learn_generate' });
     let resources: SearchResource[] = [];
     let searchNotice = '';
 
     if (!usage.allowed) {
       answer = getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
-      notice = '今日学习卡片生成次数已用完，升级会员可获得更多额度。已先展示基础 fallback 课程。';
+      notice = '今日学习卡片生成次数已用完，升级会员可获得更多额度。已先展示基础版本课程。';
     } else {
       const searchResult = await searchLearningResources(searchQuery);
       resources = searchResult.resources;
@@ -316,10 +318,10 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
     const fallbackUsed = Boolean(answer.notice) || !usage.allowed;
 
-    if (courseId) {
+    if (canUseLearningSession) {
       await upsertLearningSession({
-        courseId,
-        anonymousId: ownedCourse?.anonymousId || anonymousId,
+        courseId: courseId || undefined,
+        anonymousId: sessionAnonymousId,
         goal: courseGoal,
         mode,
         phaseIndex: location.phaseIndex,

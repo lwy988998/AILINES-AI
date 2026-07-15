@@ -4,7 +4,7 @@ import type { PlanMode } from '@/lib/ai/types';
 import { getMockLearningAnswer, referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
-const DEFAULT_LEARNING_TIMEOUT_MS = 25_000;
+const DEFAULT_LEARNING_TIMEOUT_MS = 35_000;
 
 type GenerateLearningAnswerInput = {
   goal: string;
@@ -108,11 +108,14 @@ function sanitizeQuiz(value: unknown, fallback: LearningQuizItem[] = []): Learni
   return quiz.length ? quiz.slice(0, 5) : fallback;
 }
 
-function normalizeResources(resources: SearchResource[]): ResourceBrief[] {
-  return resources.slice(0, 8).map((resource) => ({
+function normalizeResources(resources: SearchResource[], mode: PlanMode): ResourceBrief[] {
+  const limit = mode === 'lite' ? 4 : 6;
+  const descriptionLength = mode === 'lite' ? 260 : 360;
+
+  return resources.slice(0, limit).map((resource) => ({
     title: resource.title.slice(0, 120),
     source: resource.source.slice(0, 80),
-    description: resource.description.slice(0, 500),
+    description: resource.description.slice(0, descriptionLength),
     url: resource.url,
     type: resource.type,
   }));
@@ -223,16 +226,17 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
     resources: input.resources.slice(0, 8),
   };
   const fallback = getMockLearningAnswer(safeInput);
-  const resourceBriefs = normalizeResources(safeInput.resources);
+  const resourceBriefs = normalizeResources(safeInput.resources, safeInput.mode);
 
   try {
     const content = await createChatCompletion({
       purpose: 'ask',
       messages: createLearningPromptMessages(safeInput, resourceBriefs),
       temperature: safeInput.mode === 'lite' ? 0.25 : 0.3,
-      maxTokens: safeInput.mode === 'lite' ? 1800 : 3200,
+      maxTokens: safeInput.mode === 'lite' ? 2400 : 3800,
       responseFormat: 'json_object',
       timeoutMs: getLearningTimeoutMs(),
+      maxAttempts: 1,
     });
 
     return adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources);
@@ -249,8 +253,8 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
     return getMockLearningAnswer({
       ...safeInput,
       notice: safeInput.resources.length
-        ? 'AILINES AI 深度整合暂时未完成，已先展示基础课程和参考资料。'
-        : 'AILINES AI 深度整合暂时未完成，已先展示基础课程。',
+        ? '这节课已先生成基础版本，并附上可用参考资料；点击“重新生成本课”可再次尝试生成更完整内容。'
+        : '这节课已先生成基础版本；点击“重新生成本课”可再次尝试生成更完整内容。',
     });
   }
 }

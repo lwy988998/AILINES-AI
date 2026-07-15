@@ -59,7 +59,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
     <main className="min-h-screen bg-[#f5f9ff]">
       {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="progress" /> : null}
       <SiteHeader />
-      <ProgressTracker goal={goal} mode={mode} courseId={courseId} title={title} courseProgress={courseProgress} />
+      <ProgressTracker goal={goal} mode={mode} courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} title={title} courseProgress={courseProgress} />
       <FloatingAilinesChat
         pageType="progress"
         goal={goal}

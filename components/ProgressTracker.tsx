@@ -15,6 +15,7 @@ type ProgressTrackerProps = {
   goal: string;
   mode: 'lite' | 'deep';
   courseId?: string;
+  anonymousId?: string;
   title: string;
   courseProgress?: CourseProgressSummary | null;
 };
@@ -30,8 +31,9 @@ function itemsToStatuses(items: LearningCardProgressItem[]) {
   }, {});
 }
 
-export function ProgressTracker({ goal, mode, courseId, title, courseProgress }: ProgressTrackerProps) {
+export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnonymousId, title, courseProgress }: ProgressTrackerProps) {
   const [statuses, setStatuses] = useState<LearningCardStatusByKey>({});
+  const [anonymousId, setAnonymousId] = useState(initialAnonymousId || '');
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
 
@@ -75,8 +77,9 @@ export function ProgressTracker({ goal, mode, courseId, title, courseProgress }:
     let cancelled = false;
 
     async function loadDb() {
-      const anonymousId = getOrCreateAnonymousId();
-      const params = new URLSearchParams({ anonymousId, goal, mode });
+      const currentAnonymousId = initialAnonymousId || getOrCreateAnonymousId();
+      setAnonymousId(currentAnonymousId);
+      const params = new URLSearchParams({ anonymousId: currentAnonymousId, goal, mode });
       if (courseId) params.set('courseId', courseId);
       try {
         const response = await fetch(`/api/learning-card-progress?${params.toString()}`, { cache: 'no-store' });
@@ -102,7 +105,7 @@ export function ProgressTracker({ goal, mode, courseId, title, courseProgress }:
     loadDb();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goal, mode, courseId, allTopics.length]);
+  }, [goal, mode, courseId, initialAnonymousId, allTopics.length]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -113,13 +116,14 @@ export function ProgressTracker({ goal, mode, courseId, title, courseProgress }:
   function saveToDatabase(phaseIndex: number, topicIndex: number, status: LearningCardStatus) {
     const item = allTopics.find((topic) => topic.phaseIndex === phaseIndex && topic.topicIndex === topicIndex);
     if (!item) return;
-    const anonymousId = getOrCreateAnonymousId();
+    const currentAnonymousId = anonymousId || getOrCreateAnonymousId();
+    if (!anonymousId) setAnonymousId(currentAnonymousId);
     fetch('/api/learning-card-progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         courseId: courseId || undefined,
-        anonymousId,
+        anonymousId: currentAnonymousId,
         goal,
         mode,
         phaseIndex: phaseIndex + 1,
@@ -186,7 +190,7 @@ export function ProgressTracker({ goal, mode, courseId, title, courseProgress }:
       <ProgressOverview completedCount={completedCount} totalCount={totalCount} percent={percent} onReset={resetProgress} syncLabel={syncLabel} />
       <section className="grid gap-6 lg:grid-cols-2">
         {progressStages.map((stage, phaseIndex) => (
-          <ProgressStageCard key={stage.id} stage={stage} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} statuses={statuses} onSetTopicStatus={setTopicStatus} />
+          <ProgressStageCard key={stage.id} stage={stage} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId || initialAnonymousId} phaseIndex={phaseIndex} statuses={statuses} onSetTopicStatus={setTopicStatus} />
         ))}
       </section>
     </div>
