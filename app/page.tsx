@@ -34,8 +34,7 @@ export default async function HomePage() {
             priority
             className="h-40 w-auto object-contain drop-shadow-sm sm:h-48 lg:h-56"
           />
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">AILINES AI</h1>
-          <p className="mt-3 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+          <p className="mt-2 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
             把学习目标变成可以一步步完成的课程。
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
