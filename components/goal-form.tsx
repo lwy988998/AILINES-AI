@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Plus, X } from 'lucide-react';
+import { ArrowRight, Plus, Sparkles, X } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
@@ -263,7 +263,14 @@ export function GoalForm() {
   }
 
   return (
-    <div className="rounded-[2rem] border border-white/70 bg-white/72 p-4 shadow-2xl shadow-sky-950/20 backdrop-blur-md sm:p-5">
+    <div className="rounded-[2rem] border border-white/70 bg-white/75 p-4 shadow-2xl shadow-sky-950/20 backdrop-blur-md sm:p-5">
+      <div className="mb-4 px-1 text-center sm:px-2 sm:text-left">
+        <p className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800">
+          <Sparkles className="h-3.5 w-3.5" /> 今天你想学什么？
+        </p>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">从一个目标开始生成课程</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">选择 lite 快速规划、deep 深度课程规划或 image 生图模式，点击生成或按 Enter 都会使用当前模式。</p>
+      </div>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
@@ -291,7 +298,7 @@ export function GoalForm() {
           <button
             type="submit"
             disabled={isAnalyzingImage || isGeneratingImage || isSubmittingPlan}
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
+            className="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-6 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400 sm:min-w-36"
           >
             {isAnalyzingImage ? '识别中...' : isGeneratingImage || isSubmittingPlan ? '准备生成...' : modeValue === 'image' ? '生成图片' : '生成学习路线'}
             <ArrowRight className="h-4 w-4" />
@@ -330,7 +337,7 @@ export function GoalForm() {
         <fieldset className="rounded-2xl border border-sky-100 bg-white/55 p-3">
           <legend className="px-1 text-xs font-semibold text-slate-600">生成模式</legend>
           <input type="hidden" name="mode" value={modeValue} />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {planningModes.map((mode) => {
               const selected = modeValue === mode.value;
 
@@ -359,8 +366,8 @@ export function GoalForm() {
                     >
                       {selected ? <span className="h-2 w-2 rounded-full bg-white" /> : null}
                     </span>
-                    <span>
-                      <span className="flex items-center gap-2 font-semibold text-slate-950">
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-center gap-2 font-semibold text-slate-950">
                         {mode.title}
                         {mode.value === 'deep' && membershipLoaded && !canUseDeepPlan ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Pro</span> : null}
                       </span>

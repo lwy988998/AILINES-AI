@@ -86,24 +86,25 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-950">
-      <section id="top" className="relative overflow-hidden bg-[radial-gradient(circle_at_12%_10%,rgba(125,211,252,0.35),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(99,102,241,0.32),transparent_28%),linear-gradient(180deg,#f8fbff_0%,#eef7ff_52%,#ffffff_100%)]">
-        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-white/70 to-transparent" />
-        <div className="absolute -left-24 top-32 h-72 w-72 rounded-full bg-sky-300/25 blur-3xl" />
-        <div className="absolute -right-24 top-60 h-80 w-80 rounded-full bg-indigo-300/25 blur-3xl" />
+      <section id="top" className="relative overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(125,211,252,0.32),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(99,102,241,0.22),transparent_26%),linear-gradient(180deg,#f8fbff_0%,#eef7ff_54%,#ffffff_100%)]">
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/80 to-transparent" />
+        <div className="absolute -left-28 top-28 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl" />
+        <div className="absolute -right-28 top-72 h-80 w-80 rounded-full bg-indigo-300/18 blur-3xl" />
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />
 
-          <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-10 px-4 pb-14 pt-8 sm:px-6 sm:pb-18 lg:grid-cols-[1.04fr_0.96fr] lg:px-8 lg:py-16">
+          <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-8 px-4 pb-12 pt-8 sm:px-6 sm:pb-16 lg:grid-cols-[0.94fr_1.06fr] lg:px-8 lg:py-14">
             <div className="min-w-0 text-center lg:text-left">
-              <div className="mx-auto mb-5 w-28 sm:w-36 lg:mx-0">
+              <div className="mx-auto mb-4 flex items-center justify-center gap-3 lg:mx-0 lg:justify-start">
                 <Image
                   src="/ailines-logo-transparent.png"
                   alt="AILINES AI Logo"
                   width={1024}
                   height={776}
                   priority
-                  className="h-auto w-full object-contain drop-shadow-sm"
+                  className="h-14 w-auto object-contain drop-shadow-sm sm:h-16"
                 />
+                <span className="text-lg font-semibold tracking-tight text-sky-950 sm:text-xl">AILINES AI</span>
               </div>
 
               <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
@@ -114,7 +115,7 @@ export default async function HomePage() {
                 ))}
               </div>
 
-              <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl md:text-5xl lg:text-6xl lg:leading-[1.06]">
+              <h1 className="mx-auto mt-6 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl md:text-5xl lg:mx-0 lg:leading-[1.08]">
                 让 AI 把你的目标变成一门真正能学的课程
               </h1>
               <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg lg:mx-0">
@@ -136,23 +137,28 @@ export default async function HomePage() {
                   </Link>
                 )}
               </div>
+
+              <div className="mt-8 rounded-[1.75rem] border border-white/80 bg-white/55 p-4 text-left shadow-sm shadow-sky-900/5 backdrop-blur">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-sky-700 text-white">
+                    <BrainCircuit className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-950">课程化学习系统</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">从总览、阶段、学习点到进度保存，不只停在一份计划。</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div id="generate" className="scroll-mt-24 rounded-[2rem] border border-white/80 bg-white/55 p-3 shadow-2xl shadow-sky-950/15 backdrop-blur-xl sm:p-4">
-              <div className="mb-4 px-1 text-center sm:px-3 lg:text-left">
-                <p className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800">
-                  <Sparkles className="h-3.5 w-3.5" /> 今天你想学什么？
-                </p>
-                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">从一个目标开始生成课程</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">保留 lite 快速规划、deep 深度课程规划和 image 生图模式，选择后点击生成或按 Enter 都会使用当前模式。</p>
-              </div>
+            <div id="generate" className="min-w-0 scroll-mt-24 rounded-[2rem] border border-white/80 bg-white/50 p-3 shadow-2xl shadow-sky-950/15 backdrop-blur-xl sm:p-4">
               <GoalForm />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <section id="learn-more" className="bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold text-sky-700">不只是学习计划</p>

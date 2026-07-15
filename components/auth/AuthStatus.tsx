@@ -22,18 +22,23 @@ export function AuthStatus({ user }: { user: SafeUser | null }) {
 
   if (!user) {
     return (
-      <a href="/login" className="rounded-md px-2.5 py-2 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
-        登录
-      </a>
+      <div className="flex items-center gap-1 sm:gap-2">
+        <a href="/login" className="rounded-md px-2.5 py-2 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
+          登录
+        </a>
+        <a href="/register" className="rounded-md bg-sky-700 px-2.5 py-2 text-white transition hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
+          注册
+        </a>
+      </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="hidden max-w-[11rem] truncate rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 sm:inline-block" title={user.email}>
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 sm:flex-nowrap sm:gap-2">
+      <span className="max-w-[8rem] truncate rounded-full bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-800 sm:max-w-[11rem]" title={user.email}>
         {user.name || user.email}
       </span>
-      <span className="hidden rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 sm:inline-block">
+      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
         {getMembershipLabel(user.membershipTier)}
       </span>
       <button
