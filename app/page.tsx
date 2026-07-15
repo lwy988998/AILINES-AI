@@ -32,7 +32,7 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-16 w-auto object-contain drop-shadow-sm sm:h-20"
+            className="h-20 w-auto object-contain drop-shadow-sm sm:h-28"
           />
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">AILINES AI</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
@@ -43,7 +43,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="mt-8 w-full max-w-4xl">
+        <div className="mt-7 w-full max-w-4xl">
           <GoalForm />
         </div>
 
@@ -62,7 +62,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid w-full max-w-4xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
+        <div className="mt-6 grid w-full max-w-4xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
           {capabilityNotes.map(([title, description]) => (
             <div key={title} className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
