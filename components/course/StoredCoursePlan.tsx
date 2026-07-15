@@ -7,6 +7,7 @@ import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import type { PlanMode } from '@/lib/ai/types';
 import type { MockPlan } from '@/lib/mockPlan';
+import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 
 function getModeText(mode: PlanMode) {
   return mode === 'lite'
@@ -56,8 +57,8 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
   }
 
   const modeText = getModeText(result.course.mode);
-  const plan = result.snapshot.payload;
-  const goal = result.course.goal || plan.title;
+  const goal = result.course.goal || result.snapshot.payload.title;
+  const plan = normalizeCoursePlanContent(result.snapshot.payload, goal);
   let courseProgress = await getCourseProgress(result.course.id);
   if (!courseProgress) {
     courseProgress = await recomputeCourseProgress({ courseId: result.course.id, anonymousId: result.course.anonymousId || undefined });

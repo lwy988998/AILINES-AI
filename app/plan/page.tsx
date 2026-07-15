@@ -13,6 +13,7 @@ import type { PlanMode } from '@/lib/ai/types';
 import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
+import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 import { canUseFeature } from '@/lib/membership/permissions';
 import { UpgradeRequiredCard } from '@/components/membership/UpgradeRequiredCard';
 
@@ -119,7 +120,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
           throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
         }
 
-        plan = adaptedPlan;
+        plan = normalizeCoursePlanContent(adaptedPlan, goal);
         isAIPlan = true;
         await incrementUsage('course_generate', usage.scope);
       } catch {
@@ -146,10 +147,10 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
           href: resource.url,
         }));
 
-        plan = {
+        plan = normalizeCoursePlanContent({
           ...plan,
           resources: searchedResources,
-        };
+        }, goal);
         resourceSourceMessage = '已为你补充全网真实学习资源';
       }
     } catch (error) {

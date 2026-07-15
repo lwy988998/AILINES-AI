@@ -1,4 +1,5 @@
 import type { PlanMode } from '@/lib/ai/types';
+import { createSpecificStepContent, normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 
 export type CourseStep = {
   title: string;
@@ -466,13 +467,22 @@ function isPracticalSkillGoal(goal: string) {
 function createPracticalSkillPlan(goal: string, mode: PlanMode): MockPlan {
   const safeGoal = cleanGoalTitle(goal);
   const isFishingHook = /鱼钩|绑钩|捆绑鱼钩|鱼线/i.test(safeGoal);
-  const materialItems = isFishingHook ? ['鱼钩', '鱼线', '剪刀或线剪', '一小杯水用于润湿线结', '明亮桌面，方便观察线圈'] : ['完成操作所需工具或材料', '可反复练习的小样本', '记录问题的纸笔或手机备忘录'];
+  const isPcBuild = /配电脑|装机|电脑配置|攒机|组装电脑|选电脑|台式机配置/i.test(safeGoal);
+  const materialItems = isFishingHook
+    ? ['鱼钩', '鱼线', '剪刀或线剪', '一小杯水用于润湿线结', '明亮桌面，方便观察线圈']
+    : isPcBuild
+      ? ['用途和预算清单', 'CPU/GPU/内存/硬盘/电源候选型号', '主板接口和机箱尺寸信息', '价格记录表']
+      : ['完成操作所需工具或材料', '可反复练习的小样本', '记录问题的纸笔或手机备忘录'];
   const mistakes = isFishingHook
     ? ['绕线太少，线结受力后容易松', '没有拉紧主线和线头，结没有真正锁住', '拉紧前没有润湿，摩擦发热会伤线', '线头留太短，受力后容易滑脱', '绑完没有做拉力测试']
-    : ['只看示范不亲手练', '跳过准备和安全检查', '一次失败后没有记录原因', '没有用明确标准判断是否合格', '急着学复杂技巧，基础动作还不稳定'];
+    : isPcBuild
+      ? ['不先明确用途和预算就选型号', 'CPU 和主板接口不兼容', '忽略显卡长度、电源功率或机箱散热', '只看单个跑分不看整机取舍', '没有准备可替代型号']
+      : ['只看示范不亲手练', '跳过准备和安全检查', '一次失败后没有记录原因', '没有用明确标准判断是否合格', '急着学复杂技巧，基础动作还不稳定'];
   const stepNames = isFishingHook
     ? ['准备鱼钩、鱼线和剪刀', '理解线结固定的核心原理', '学习一种基础绑钩方法', '反复练习拉紧和修剪', '检查牢固度和常见错误']
-    : ['准备材料和练习环境', '理解关键动作和安全边界', '跟着示例完成第一次操作', '重复练习并记录问题', '按标准自检并修正错误'];
+    : isPcBuild
+      ? ['明确用途、预算和性能目标', '选择 CPU/GPU/内存/硬盘/电源', '按不同预算练习配置清单', '检查兼容性并修正配置', '输出最终购买或装机方案']
+      : ['准备材料和练习环境', '理解关键动作和安全边界', '跟着示例完成第一次操作', '按不同场景重复练习', '按验收标准检查并修正'];
 
   const roadmap = stepNames.map((name, index) => ({
     name: `第 ${index + 1} 步：${name}`,
@@ -486,7 +496,7 @@ function createPracticalSkillPlan(goal: string, mode: PlanMode): MockPlan {
           '每次绑完先轻轻收紧，再润湿线结，最后同时拉主线和线头让线圈锁紧。修剪线头时不要贴着线结剪，保留少量余量，避免受力滑脱。',
           '用手稳定拉主线做小幅拉力测试，观察线结是否滑动、线圈是否散开、钩柄是否偏斜。如果不牢，拆掉重绑，不要带着隐患继续使用。',
         ][index]
-      : `围绕「${safeGoal}」先完成“${name}”。这一阶段不要追求复杂，重点是亲手做一次、看见结果、记录问题，并用明确标准判断是否可以进入下一步。`,
+      : createSpecificStepContent({ goal: safeGoal, phaseName: '快速上手', title: name, index }).explanation,
     why: index === 0 ? '准备充分可以减少第一次练习的挫败感。' : '快速规划强调马上行动，每一步都要能被检查。',
     output: index === 4 ? '一份可复现的操作流程和错误清单' : name,
     practice: isFishingHook ? (index === 3 ? '连续绑 5 次，每次记录是否松动、线圈是否整齐。' : `完成“${name}”并拍照或目视检查结果。`) : `完成 2-3 次“${name}”练习。`,
@@ -494,14 +504,18 @@ function createPracticalSkillPlan(goal: string, mode: PlanMode): MockPlan {
     commonMistakes: mistakes.slice(0, 3),
     steps: [{
       title: name,
-      explanation: isFishingHook ? `针对「${safeGoal}」，这一步要做到可观察、可重复、可检查。初学时动作慢一点比速度更重要：先确认线和钩的位置，再完成绕线、穿线、润湿、拉紧和修剪。每次练习后都要做拉力测试，线结不稳就拆掉重来。` : `针对「${safeGoal}」，这一步要把抽象目标变成一个能立刻执行的小动作。先照着示例做一遍，再独立做一遍，最后记录卡住的位置。`,
-      example: isFishingHook ? '例如先用粗一点的鱼线练习，更容易看清绕线方向；熟练后再换实际使用的线径。' : '例如把一次完整操作拆成准备、执行、检查、修正四个小环节。',
-      action: isFishingHook ? `完成“${name}”，并至少重复 3 次。` : `完成“${name}”并记录结果。`,
-      check: isFishingHook ? '线结不散、不滑，自己能解释线头和主线分别往哪里走。' : '不用看教程也能复现，并知道失败原因。',
+      ...(isFishingHook
+        ? {
+            explanation: `针对「${safeGoal}」，这一步要做到可观察、可重复、可检查。初学时动作慢一点比速度更重要：先确认线和钩的位置，再完成绕线、穿线、润湿、拉紧和修剪。每次练习后都要做拉力测试，线结不稳就拆掉重来。`,
+            example: '例如先用粗一点的鱼线练习，更容易看清绕线方向；熟练后再换实际使用的线径。',
+            action: `完成“${name}”，并至少重复 3 次。`,
+            check: '线结不散、不滑，自己能解释线头和主线分别往哪里走。',
+          }
+        : createSpecificStepContent({ goal: safeGoal, phaseName: '快速上手', title: name, index })),
     }],
   }));
 
-  return applyModeToFallbackPlan({
+  return normalizeCoursePlanContent(applyModeToFallbackPlan({
     title: `${safeGoal}快速学习方案`,
     duration: mode === 'lite' ? '1-3 天' : '2 周',
     summary: isFishingHook
@@ -524,7 +538,7 @@ function createPracticalSkillPlan(goal: string, mode: PlanMode): MockPlan {
       { name: '完成 5 次连续练习', difficulty: '入门', duration: '30-60 分钟', output: '5 次练习记录和 1 份错误清单。', acceptance: '至少 4 次能通过自检标准。' },
       { name: '复述并示范完整流程', difficulty: '入门', duration: '15 分钟', output: '一次完整演示。', acceptance: '能边做边说出关键注意点。' },
     ],
-  }, mode);
+  }, mode), safeGoal);
 }
 
 function applyModeToFallbackPlan(plan: MockPlan, mode: PlanMode): MockPlan {
@@ -574,11 +588,11 @@ function enhancePlan(plan: MockPlan, goal: string, domain: 'python' | 'math' | '
       : [],
   };
 
-  return applyModeToFallbackPlan({
+  return normalizeCoursePlanContent(applyModeToFallbackPlan({
     ...enhanced,
     slides: Array.isArray(enhanced.slides) && enhanced.slides.length > 0 ? enhanced.slides : buildSlidesFromPlan(enhanced, goal),
     mindMap: enhanced.mindMap || buildMindMapFromPlan(enhanced, goal),
-  }, mode);
+  }, mode), goal);
 }
 
 export function getMockPlanByGoal(goal: string, mode: PlanMode = 'deep'): MockPlan {

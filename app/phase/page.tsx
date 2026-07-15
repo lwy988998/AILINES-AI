@@ -14,6 +14,7 @@ import type { PlanMode } from '@/lib/ai/types';
 import { getMockPlanByGoal, type RoadmapStage } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
+import { createTaskDescription, createTaskOutput } from '@/lib/courseContentQuality';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,7 +95,7 @@ function stepsFromStage(stage: RoadmapStage | undefined, detailSteps: PhaseStep[
 }
 
 
-function tasksFromStage(stage: RoadmapStage | undefined, fallbackTasks: PhaseTask[], stageOutput: string): PhaseTask[] {
+function tasksFromStage(stage: RoadmapStage | undefined, fallbackTasks: PhaseTask[], stageOutput: string, goal: string): PhaseTask[] {
   if (!stage) return fallbackTasks;
 
   const stageTasks = Array.isArray(stage.tasks) ? stage.tasks : [];
@@ -108,8 +109,8 @@ function tasksFromStage(stage: RoadmapStage | undefined, fallbackTasks: PhaseTas
   return titles.map((title, index) => ({
     title,
     duration: stage.duration || fallbackTasks[index]?.duration || '30-60 分钟',
-    description: `围绕「${stage.name}」执行这个任务：先阅读或理解相关学习点，再完成一次可观察的练习，最后记录结果和问题。不要只把它当成待办标题，要留下过程证据。`,
-    output: index === titles.length - 1 ? (stageOutput || fallbackTasks[index]?.output || '一份阶段复盘和下一步计划') : (fallbackTasks[index]?.output || `${title} 的练习记录、例子或操作结果`),
+    description: createTaskDescription({ goal, stageName: stage.name, taskTitle: title, index }),
+    output: index === titles.length - 1 ? (stageOutput || fallbackTasks[index]?.output || createTaskOutput({ goal, stageName: stage.name, taskTitle: title, index })) : (fallbackTasks[index]?.output || createTaskOutput({ goal, stageName: stage.name, taskTitle: title, index })),
   }));
 }
 
@@ -160,7 +161,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const planStage = await getPlanStage(goal, mode, phaseIndex, phaseName);
   const teachingSteps = stepsFromStage(planStage, detail.steps);
   const stageOutput = planStage?.output || detail.output;
-  const phaseTasks = tasksFromStage(planStage, detail.tasks, stageOutput);
+  const phaseTasks = tasksFromStage(planStage, detail.tasks, stageOutput, goal);
   const phaseSlides = teachingSteps.map((step, index) => ({
     title: step.title || `第 ${index + 1} 步`,
     subtitle: detail.phaseName,
