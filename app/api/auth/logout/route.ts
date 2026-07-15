@@ -4,6 +4,6 @@ import { clearSessionCookie, deleteSession, getSessionTokenFromRequest } from '@
 export async function POST(request: NextRequest) {
   await deleteSession(getSessionTokenFromRequest(request));
   const response = NextResponse.json({ ok: true });
-  clearSessionCookie(response);
+  clearSessionCookie(response, request);
   return response;
 }

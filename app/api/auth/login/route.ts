@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const session = await createSession(user.id);
     const attachResult = await attachAnonymousDataToUser({ anonymousId, userId: user.id });
     const response = NextResponse.json({ ok: true, user: safeUser(user), warning: attachResult.warning });
-    setSessionCookie(response, session.token, session.expiresAt);
+    setSessionCookie(response, session.token, session.expiresAt, request);
     return response;
   } catch (error) {
     console.warn('login failed', error instanceof Error ? error.message : 'unknown');

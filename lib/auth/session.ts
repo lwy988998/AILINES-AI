@@ -5,6 +5,15 @@ import { prisma } from '@/lib/db/prisma';
 export const SESSION_COOKIE_NAME = 'ailines_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
+function isSecureRequest(request?: NextRequest) {
+  if (!request) return process.env.NODE_ENV === 'production';
+
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+  if (forwardedProto) return forwardedProto === 'https';
+
+  return request.nextUrl.protocol === 'https:';
+}
+
 export function hashSessionToken(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -34,22 +43,22 @@ export async function deleteSession(token?: string | null) {
   await prisma.userSession.deleteMany({ where: { tokenHash: hashSessionToken(token) } });
 }
 
-export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date) {
+export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date, request?: NextRequest) {
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecureRequest(request),
     path: '/',
     expires: expiresAt,
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
 
-export function clearSessionCookie(response: NextResponse) {
+export function clearSessionCookie(response: NextResponse, request?: NextRequest) {
   response.cookies.set(SESSION_COOKIE_NAME, '', {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecureRequest(request),
     path: '/',
     maxAge: 0,
   });
