@@ -1,3 +1,4 @@
+import { normalizeCourseMindMap } from '@/lib/courseKnowledgeMap';
 import type { MockPlan, RoadmapStage, CourseStep } from '@/lib/mockPlan';
 
 type StepContext = {
@@ -243,7 +244,7 @@ function normalizeSteps(goal: string, stage: RoadmapStage): CourseStep[] | undef
 }
 
 export function normalizeCoursePlanContent(plan: MockPlan, goal: string): MockPlan {
-  return {
+  const normalizedPlan = {
     ...plan,
     roadmap: Array.isArray(plan.roadmap)
       ? plan.roadmap.map((stage) => ({
@@ -251,6 +252,11 @@ export function normalizeCoursePlanContent(plan: MockPlan, goal: string): MockPl
           steps: normalizeSteps(goal, stage),
         }))
       : plan.roadmap,
+  };
+
+  return {
+    ...normalizedPlan,
+    mindMap: normalizeCourseMindMap(normalizedPlan, goal),
   };
 }
 
