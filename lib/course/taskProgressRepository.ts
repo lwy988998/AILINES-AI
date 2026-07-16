@@ -24,7 +24,7 @@ type UpsertTaskProgressInput = ListTaskProgressInput & {
 };
 
 export class TaskProgressRepositoryError extends Error {
-  constructor(message = '任务进度暂时不可用') {
+  constructor(message = '任务进度加载失败，请稍后重试') {
     super(message);
     this.name = 'TaskProgressRepositoryError';
   }

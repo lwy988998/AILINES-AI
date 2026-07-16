@@ -51,7 +51,7 @@ function isValidAskAnswer(value: unknown): value is GeneratedAskAnswer {
 function toAskError(error: unknown) {
   const safeError = toSafeAIError(error);
   const status = safeError.type === 'missing_config' || safeError.type === 'auth_error' ? 503 : 502;
-  return new GenerateAskAnswerError('AILINES AI 问答暂时不可用，已展示基础示例回答。', status, safeError.type);
+  return new GenerateAskAnswerError('本次回答未完成，已为你准备了一份可参考的学习提示。', status, safeError.type);
 }
 
 export async function generateAskAnswerWithAI(goal: string, question: string, mode: PlanMode = 'deep'): Promise<GeneratedAskAnswer> {

@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch {
-    return NextResponse.json({ courses: [], error: '课程历史暂时不可用' }, { status: 200 });
+    return NextResponse.json({ courses: [], error: '课程历史加载失败，请稍后重试' }, { status: 200 });
   }
 }
 

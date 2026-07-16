@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       answer: getMockAnswer(question),
       source: 'fallback',
-      message: 'AILINES AI 问答暂时不可用，已展示基础示例回答。',
+      message: '本次回答未完成，已为你准备了一份可参考的学习提示。',
     });
   }
 }

@@ -2,7 +2,7 @@ import { AIClientError, toSafeAIError } from '@/lib/ai/aiClient';
 
 const DEFAULT_IMAGE_TIMEOUT_MS = 45_000;
 const MAX_PROMPT_LENGTH = 2_000;
-const IMAGE_UNAVAILABLE_MESSAGE = '生图暂不可用';
+const IMAGE_UNAVAILABLE_MESSAGE = '图片生成未完成';
 
 type ImageProviderConfig = {
   id: 'grok' | 'gpt';

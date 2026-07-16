@@ -50,11 +50,11 @@ export default async function ImagePage({ searchParams }: ImagePageProps) {
           <div className="mt-8">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800">
               <ImageIcon className="h-4 w-4" />
-              AILINES AI 生图
+              AILINES AI 图片生成
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">AILINES AI 生图</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">AILINES AI 图片生成</h1>
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-              输入图片需求后，AILINES AI 会优先复用当前 AI provider 尝试生成图片。如果当前 provider 暂不支持生图，会友好提示，不影响原学习路线功能。
+              AILINES AI 会根据你的描述生成图片。描述越具体，画面越接近你的预期。
             </p>
           </div>
         </section>

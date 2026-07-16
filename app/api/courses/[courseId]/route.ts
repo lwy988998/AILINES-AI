@@ -37,7 +37,7 @@ export async function GET(
       },
     });
   } catch {
-    return NextResponse.json({ error: '课程历史暂时不可用' }, { status: 500 });
+    return NextResponse.json({ error: '课程历史加载失败，请稍后重试' }, { status: 500 });
   }
 }
 

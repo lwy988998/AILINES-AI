@@ -63,6 +63,6 @@ export function getMockAnswer(question: string): AskAnswer {
   return {
     steps: [],
     commands: [],
-    tips: ['AILINES AI 暂时不可用。你可以补充具体报错、操作系统和当前学习目标后再试。'],
+    tips: ['本次回答未完成。你可以补充具体问题、操作环境和当前学习目标后再试。'],
   };
 }

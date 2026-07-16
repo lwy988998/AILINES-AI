@@ -199,7 +199,7 @@ async function searchLearningResources(query: string) {
     return { resources: [...result.resources].sort((a, b) => b.score - a.score).slice(0, 8), searchNotice: '' };
   } catch (error) {
     console.warn('Learning resource search fallback', error instanceof Error ? error.message : 'unknown error');
-    return { resources: [] as SearchResource[], searchNotice: '暂未获取到可用资料，已先提供基础课程。' };
+    return { resources: [] as SearchResource[], searchNotice: '已为你准备好本节课的学习内容。参考资料稍后可重新获取。' };
   }
 }
 
@@ -297,7 +297,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     }
     restoredFromSession = true;
     notice = savedSession.fallbackUsed
-      ? '已恢复上次生成的基础版本课程；你可以点击“重新生成本课”再次尝试生成更完整内容。'
+      ? '已恢复上次生成的学习内容。你也可以点击“换一版讲解”获取另一版讲解。'
       : '已恢复上次生成的学习内容';
   } else {
     const usage = await checkUsageLimit({ userId: user?.id, anonymousId: sessionAnonymousId, tier: user?.membershipTier, type: 'learn_generate' });
@@ -306,13 +306,13 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
     if (!usage.allowed) {
       answer = getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
-      notice = '今日学习卡片生成次数已用完，升级会员可获得更多额度。已先展示基础版本课程。';
+      notice = '今日学习卡片生成次数已用完。你可以先查看本节课内容，或升级会员获得更多额度。';
     } else {
       const searchResult = await searchLearningResources(searchQuery);
       resources = searchResult.resources;
       searchNotice = searchResult.searchNotice;
       answer = await generateLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources });
-      notice = searchNotice || answer.notice || (shouldRegenerate ? '已按你的要求重新生成本课内容。' : '');
+      notice = searchNotice || answer.notice || (shouldRegenerate ? '已为你换一版讲解内容。' : '');
       await incrementUsage('learn_generate', usage.scope);
     }
 
@@ -370,7 +370,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
             <Link href={progressHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ArrowLeft className="h-4 w-4" />返回进度页</Link>
             <Link href={planHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
             <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><Home className="h-4 w-4" />返回首页</Link>
-            <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"><Sparkles className="h-4 w-4" />重新生成本课</Link>
+            <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"><Sparkles className="h-4 w-4" />换一版讲解</Link>
           </div>
 
           <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">

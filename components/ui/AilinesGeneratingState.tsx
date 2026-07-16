@@ -21,13 +21,13 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
     title: 'AILINES AI 正在准备内容',
     subtitle: '我们正在理解你的需求，并把信息整理成可继续学习的结构。',
     steps: ['理解你的需求', '拆解核心目标', '整理上下文', '生成内容结构', '准备展示结果'],
-    hint: '真实请求完成后会立即进入结果页，不会强制等待固定时间。',
+    hint: '内容准备完成后会自动进入结果页。',
   },
   plan: {
     title: '正在生成你的课程总览',
     subtitle: 'AILINES AI 正在整合学习目标、真实资料和课程结构，生成可持续学习的课堂。',
     steps: ['正在读取学习目标', '正在整合真实搜索资料', '正在构建课程大纲', '正在生成思维导图与课件', '正在保存课程快照'],
-    hint: '搜索资料暂时不可用时，会使用基础课程结构兜底，学习流程不会中断。',
+    hint: '我们会优先整理可用资料，并为你生成清晰的课程结构。',
   },
   'lite-plan': {
     title: 'AILINES AI 正在快速规划你的学习路线',
@@ -39,19 +39,19 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
     title: 'AILINES AI 正在深度设计你的课程',
     subtitle: '我们正在搜索资料、筛选资源、设计课程结构，并准备保存你的课堂。',
     steps: ['正在理解你的学习目标与当前水平', '正在搜索真实学习资料', '正在筛选高质量参考资源', '正在设计课程结构与阶段目标', '正在生成课件、任务与学习路径', '正在保存你的课堂'],
-    hint: '深度规划需要更完整的资料整合；如果外部搜索失败，会自动降级为基础课程结构。',
+    hint: '深度规划会整合更多资料和学习步骤，生成更完整的课程。',
   },
   restore: {
     title: '正在恢复你的课堂',
     subtitle: 'AILINES AI 正在从数据库读取课程快照和学习进度，不会重新生成课程。',
     steps: ['正在读取课程记录', '正在恢复课程快照', '正在加载学习进度', '正在准备继续学习入口'],
-    hint: '这是历史课堂恢复流程，不会重新调用 AI 生成。',
+    hint: '正在恢复你保存过的课程内容。',
   },
   phase: {
     title: '正在生成阶段课程',
     subtitle: 'AILINES AI 正在围绕当前阶段整理知识点、参考资料和任务卡片。',
     steps: ['正在分析当前阶段目标', '正在整理关键知识点', '正在整合参考资料', '正在生成任务卡片', '正在准备阶段课件'],
-    hint: '资料搜索失败时会保留基础阶段课程，不会把原始搜索结果直接丢给你。',
+    hint: '我们会把阶段重点整理成可直接学习的任务和资料。',
   },
   learn: {
     title: '正在准备这节课',
@@ -63,7 +63,7 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
     title: 'AILINES AI 正在生成图像',
     subtitle: '我们正在理解画面需求、优化提示词，并调用图像模型准备结果。',
     steps: ['正在理解你的画面需求', '正在优化图像提示词', '正在调用图像生成模型', '正在处理生成结果', '正在准备展示图片'],
-    hint: '生图会保持 Grok 优先、GPT fallback；失败时会显示友好提示。',
+    hint: '图片生成完成后会在页面中展示，你也可以重新生成。',
   },
   progress: {
     title: '正在加载学习进度',
@@ -75,7 +75,7 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
     title: '正在搜索并整合资料',
     subtitle: 'AILINES AI 正在查找真实资料，并将资料吸收进课程内容。',
     steps: ['查询网络资料', '筛选可用资源', '提炼核心内容', '生成学习说明'],
-    hint: '搜索失败时不会中断学习流程，会先提供基础内容。',
+    hint: '我们会先整理可用内容，帮助你继续学习。',
   },
 };
 

@@ -29,7 +29,7 @@ const courseWithLatestSnapshotInclude = {
 type CourseWithLatestSnapshot = Prisma.CourseGetPayload<{ include: typeof courseWithLatestSnapshotInclude }>;
 
 export class CourseRepositoryError extends Error {
-  constructor(message = '课程历史暂时不可用') {
+  constructor(message = '课程历史加载失败，请稍后重试') {
     super(message);
     this.name = 'CourseRepositoryError';
   }

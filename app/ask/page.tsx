@@ -53,7 +53,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
         id: createMessageId('assistant'),
         role: 'assistant',
         content: '',
-        error: 'AILINES AI 问答暂时不可用，已展示基础示例回答。',
+        error: '本次回答未完成，已为你准备了一份可参考的学习提示。',
         answer: getMockAnswer(question),
       });
     }

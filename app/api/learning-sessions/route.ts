@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const payload = sessionPayload(session);
     return payload ? NextResponse.json({ found: true, session: payload }) : NextResponse.json({ found: false });
   } catch {
-    return NextResponse.json({ found: false, error: '学习内容暂时不可用' }, { status: 200 });
+    return NextResponse.json({ found: false, error: '学习内容加载失败，请稍后重试' }, { status: 200 });
   }
 }
 

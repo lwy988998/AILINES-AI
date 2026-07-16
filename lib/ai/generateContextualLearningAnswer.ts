@@ -116,7 +116,7 @@ function createFallbackAnswer(input: Required<Pick<GenerateContextualLearningAns
     ? `\n\n参考资料入口：我找到了一些可继续查看的资料，例如「${references.map((item) => item.title).join('」「')}」。这些资料只作为延伸阅读，当前回答先以页面上下文为主。`
     : '';
   const deepExtra = mode === 'deep'
-    ? `\n\n举个做法：先用一句话写下「${phaseOrTopic}」要解决的问题，再列出 3 个必须验证的点，最后做一个最小成果，比如一份功能清单、一个小 demo、一道练习或一段可运行代码。`
+    ? `\n\n举个做法：先用一句话写下「${phaseOrTopic}」要解决的问题，再列出 3 个必须验证的点，最后做一个最小成果，比如一份功能清单、一个小作品、一道练习或一段可运行代码。`
     : '';
 
   return {

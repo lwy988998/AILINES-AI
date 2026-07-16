@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch {
-    return NextResponse.json({ items: [], error: '学习步骤进度暂时不可用' }, { status: 200 });
+    return NextResponse.json({ items: [], error: '学习步骤进度加载失败，请稍后重试' }, { status: 200 });
   }
 }
 

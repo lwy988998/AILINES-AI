@@ -16,7 +16,7 @@ const planCopy: Record<MembershipTier, { name: string; description: string; feat
   },
   max: {
     name: 'Max',
-    description: '适合高频学习、团队试用和后续高级能力。',
+    description: '适合高频学习、团队协作和更高额度需求。',
     featured: false,
   },
 };
@@ -26,7 +26,7 @@ export function PricingCards({ currentTier = 'free' }: { currentTier?: Membershi
     <section className="space-y-4">
       <div className="rounded-3xl border border-sky-100 bg-sky-50 px-5 py-4 text-sm leading-6 text-sky-900">
         <p className="font-semibold">会员开通说明</p>
-        <p className="mt-1">会员开通暂由管理员处理，在线支付即将开放。当前页面仅展示 Free / Pro / Max 权益，不提供自助切换会员等级。</p>
+        <p className="mt-1">如需开通 Pro 或 Max，请联系管理员。当前页面展示 Free / Pro / Max 的权益与额度。</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         {planOrder.map((tier) => {
@@ -38,8 +38,8 @@ export function PricingCards({ currentTier = 'free' }: { currentTier?: Membershi
             `每日学习卡片生成 ${limits.learnGeneratePerDay} 次`,
             `每日生图 ${limits.imageGeneratePerDay} 次`,
             '历史课堂和课程进度保存',
-            limits.allowCourseSlides ? '课程课件和思维导图' : '基础课程总览',
-            tier === 'max' ? '所有功能开放，后续高级能力优先接入' : tier === 'pro' ? '浮动 AILINES AI 助手和深度规划' : '基础搜索资料和 Free 权限',
+            limits.allowCourseSlides ? '课程课件和思维导图' : '课程总览',
+            tier === 'max' ? '所有功能开放，后续高级能力优先接入' : tier === 'pro' ? '浮动 AILINES AI 助手和深度规划' : '搜索资料和 Free 权益',
           ];
 
           return (

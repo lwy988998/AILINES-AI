@@ -38,7 +38,7 @@ const featureDetails = [
     id: 'feature-web-search',
     title: '网页搜索整合',
     description: 'AILINES AI 不只生成静态内容，还会结合真实网页搜索资源，为学习路线和阶段详情补充真实可打开的资料，而不是只生成静态文本。',
-    items: ['聚合真实网页资源', '为不同学习阶段匹配相关资料', '推荐教程、文档、课程、项目和练习', 'Bocha 优先，Tavily fallback', '搜索失败时自动使用基础推荐，页面不崩溃'],
+    items: ['聚合真实网页资源', '为不同学习阶段匹配相关资料', '推荐教程、文档、课程、项目和练习', '多来源资料检索', '资料不足时仍提供可学习路径'],
   },
   {
     id: 'feature-progress-tracking',

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       plan: getMockPlanByGoal(goal, mode),
       source: 'fallback',
-      message: '已为你生成基础课程版本。当前深度生成暂时未完成，你可以稍后重新生成获取更完整版本。',
+      message: '已为你生成课程结构。你可以稍后重新生成，获取另一版方案。',
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
     });
   }

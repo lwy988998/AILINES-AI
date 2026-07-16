@@ -24,7 +24,7 @@ type UpsertLearningStepProgressInput = ListLearningStepProgressInput & {
 };
 
 export class LearningStepProgressRepositoryError extends Error {
-  constructor(message = '学习步骤进度暂时不可用') {
+  constructor(message = '学习步骤进度加载失败，请稍后重试') {
     super(message);
     this.name = 'LearningStepProgressRepositoryError';
   }

@@ -73,7 +73,7 @@ export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnon
     const localStatuses = loadLocalStatuses();
     setStatuses(localStatuses);
     setIsLoaded(true);
-    setSyncLabel('正在同步数据库状态...');
+    setSyncLabel('正在同步学习状态...');
     let cancelled = false;
 
     async function loadDb() {
@@ -91,14 +91,14 @@ export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnon
           const dbStatuses = itemsToStatuses(items);
           setStatuses(dbStatuses);
           persistLocal(dbStatuses);
-          setSyncLabel('已从数据库恢复学习卡片状态');
+          setSyncLabel('已恢复学习卡片状态');
         } else {
-          setSyncLabel(Object.keys(localStatuses).length ? '数据库暂无记录，已使用本地缓存' : '学习状态会自动保存到数据库');
+          setSyncLabel(Object.keys(localStatuses).length ? '已恢复本地学习记录' : '学习状态会自动保存');
         }
       } catch (error) {
         if (!cancelled) {
           console.warn('Learning card progress database load failed; using localStorage fallback.', error instanceof Error ? error.message : 'unknown');
-          setSyncLabel('数据库暂不可用，已使用本地缓存');
+          setSyncLabel('已恢复本地学习记录');
         }
       }
     }
@@ -135,17 +135,17 @@ export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnon
     })
       .then((response) => {
         if (!response.ok) throw new Error('learning card progress save failed');
-        setSyncLabel('已保存到数据库');
+        setSyncLabel('已保存学习状态');
       })
       .catch((error) => {
         console.warn('Learning card progress database save failed; localStorage fallback kept.', error instanceof Error ? error.message : 'unknown');
-        setSyncLabel('数据库保存失败，已保留本地缓存');
+        setSyncLabel('已保留本地学习记录');
       });
   }
 
   function setTopicStatus(phaseIndex: number, topicIndex: number, status: LearningCardStatus) {
     setStatuses((current) => ({ ...current, [getLearningCardKey(phaseIndex, topicIndex)]: status }));
-    setSyncLabel('正在保存到数据库...');
+    setSyncLabel('正在保存学习状态...');
     saveToDatabase(phaseIndex, topicIndex, status);
   }
 

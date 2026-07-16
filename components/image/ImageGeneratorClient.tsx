@@ -72,10 +72,10 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         return;
       }
 
-      setState({ status: 'error', message: result.message || '生图暂不可用' });
+      setState({ status: 'error', message: '图片生成未完成' });
     } catch {
       if (requestIdRef.current === requestId) {
-        setState({ status: 'error', message: '生图暂不可用' });
+        setState({ status: 'error', message: '图片生成未完成' });
       }
     }
   }
@@ -91,7 +91,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         <div>
           <p className="text-sm font-semibold text-sky-700">生成需求</p>
           <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{prompt}</h1>
-          <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-slate-600">AILINES AI 会根据你的文字描述尝试生成图片。第一版暂不保存图片，也不上传参考图。</p>
+          <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-slate-600">AILINES AI 会根据你的描述生成图片。当前仅支持根据文字描述生成图片，你可以在生成后自行保存。</p>
         </div>
         <button
           type="button"
@@ -119,8 +119,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
             </div>
             <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 break-words text-sm leading-6 text-slate-600">
-                {state.provider ? <p>Provider：{state.provider}</p> : null}
-                {state.revisedPrompt ? <p>优化提示词：{state.revisedPrompt}</p> : null}
+                {state.revisedPrompt ? <p>优化描述：{state.revisedPrompt}</p> : null}
               </div>
               <a
                 href={imageSrc}
@@ -142,8 +141,8 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
               <ImageIcon className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-slate-950">{state.message || '生图暂不可用'}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">当前图片生成服务暂时不可用，请稍后重试。学习路线、课程和资料搜索功能不受影响。</p>
+              <p className="text-lg font-semibold text-slate-950">{state.message || '图片生成未完成'}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">这次图片没有成功生成。你可以稍后重试，或调整描述后再次生成。</p>
             </div>
             <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
               <button
@@ -154,6 +153,9 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
                 <RefreshCw className="h-4 w-4" />
                 重新生成
               </button>
+              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                修改描述
+              </Link>
               <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 返回首页
               </Link>

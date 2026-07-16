@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const progress = await getCourseProgress(courseId);
     return NextResponse.json({ progress: serializeProgress(progress || createEmptyCourseProgress(courseId)) });
   } catch {
-    return NextResponse.json({ progress: serializeProgress(createEmptyCourseProgress(courseId)), error: '课程总进度暂时不可用' }, { status: 200 });
+    return NextResponse.json({ progress: serializeProgress(createEmptyCourseProgress(courseId)), error: '课程总进度加载失败，请稍后重试' }, { status: 200 });
   }
 }
 

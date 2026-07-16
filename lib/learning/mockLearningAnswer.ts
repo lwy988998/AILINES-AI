@@ -61,9 +61,9 @@ export type LearningAnswerInput = {
   notice?: string;
 };
 
-function cleanText(value: string, fallback: string) {
+function cleanText(value: string, 备用方案: string) {
   const trimmed = value.trim();
-  return trimmed || fallback;
+  return trimmed || 备用方案;
 }
 
 export function referencesFromResources(resources: SearchResource[] = []): LearningReference[] {
@@ -144,7 +144,7 @@ function buildMathAnswer(goal: string, phaseName: string, topic: string, mode: P
     ],
     commonMistakes: ['把 pi/6 和 pi/3 对应角度记反。', '度数和弧度混用，题目要求弧度却写成度。', '换算时忘记约分，导致结果不清晰。', '只背公式，不会在单位圆或图像上定位。'],
     checkpoint: ['能完成角度和弧度双向换算。', '能在单位圆上标出常见特殊角。', '能解释弧度制为什么适合三角函数图像。', '能独立完成基础换算和图像标注题。'],
-    resourceSummary: references.length ? 'AILINES AI 已参考联网资料摘要，并将其整理为上面的课程、例题和练习。' : '暂未获取到可用资料，已先提供基础课程。',
+    resourceSummary: references.length ? 'AILINES AI 已参考联网资料摘要，并将其整理为上面的课程、例题和练习。' : '已为你准备好本节课的学习内容。参考资料稍后可重新获取。',
     references,
     notice,
   };
@@ -221,7 +221,7 @@ function buildAiToolAnswer(goal: string, phaseName: string, topic: string, mode:
   const lessonSteps: LearningLessonStep[] = [
     {
       title: `第 1 步：定义「${topic}」的用户任务`,
-      explanation: `开发 AI 工具时，第一步不是选模型，而是确定用户要完成什么任务。你需要写清楚用户输入什么、希望得到什么、结果要多详细、失败时如何提示。任务越清楚，Prompt、API、页面和 fallback 才越容易设计。`,
+      explanation: `开发 AI 工具时，第一步不是选模型，而是确定用户要完成什么任务。你需要写清楚用户输入什么、希望得到什么、结果要多详细、失败时如何提示。任务越清楚，Prompt、接口、页面和异常提示才越容易设计。`,
       example: '学习计划工具的输入是目标和模式，输出是阶段路线、课程、资源和练习。',
       action: '写出本工具的输入字段、输出结构和最小可用功能。',
       check: '能判断哪些功能必须做，哪些可以后续迭代。',
@@ -231,13 +231,13 @@ function buildAiToolAnswer(goal: string, phaseName: string, topic: string, mode:
       explanation: `Prompt 要把角色、任务、约束、输出格式写清楚。后端应要求模型返回结构化 JSON，再做解析和校验。不要让前端直接拿一段不可控文本硬展示；稳定的 AI 工具需要可验证的数据结构。`,
       example: '要求返回 title、summary、lessonSteps、practice、references 等字段。',
       action: '为当前主题写一个系统提示词和 JSON 输出 schema。',
-      check: '能说明每个字段为什么需要，以及失败时如何 fallback。',
+      check: '能说明每个字段为什么需要，以及异常时如何给出清晰提示。',
     },
     {
-      title: '第 3 步：服务端调用模型 API',
-      explanation: `API Key 必须放在服务端环境变量里，前端只调用自己的后端接口。后端负责 timeout、retry、错误分类、日志和降级。这样即使 provider 超时，用户也能看到基础课程或可操作提示，而不是暴露内部错误。`,
-      example: '页面请求 /api/generate-plan，服务端调用 provider，失败后返回 fallback plan。',
-      action: '画出前端、后端、provider、fallback 的调用链路。',
+      title: '第 3 步：服务端调用模型接口',
+      explanation: `访问密钥必须放在服务端环境变量里，前端只调用自己的后端接口。后端负责超时处理、重试、错误分类和日志记录。这样即使外部服务响应较慢，用户也能看到课程内容或可操作提示，而不是暴露内部错误。`,
+      example: '页面请求 /api/generate-plan，服务端调用模型服务，异常时返回可继续学习的内容。',
+      action: '画出前端、后端、模型服务和异常提示的调用链路。',
       check: '能指出密钥在哪里、错误在哪里处理、用户看到什么。',
     },
   ];
@@ -254,7 +254,7 @@ function buildAiToolAnswer(goal: string, phaseName: string, topic: string, mode:
       {
         title: '第 5 步：测试、部署和迭代',
         explanation: `AI 工具要测试成功、超时、空输入、JSON 解析失败、搜索失败和重试按钮等场景。部署后还要关注成本、日志、用户反馈和缓存策略。先把主链路稳定，再逐步增加更复杂功能。`,
-        example: '对同一个学习点测试 provider 成功和失败两种结果，确认页面都可用。',
+        example: '对同一个学习点测试模型服务成功和异常两种结果，确认页面都可用。',
         action: '列出 6 个测试用例，并至少手动验证 3 个。',
         check: '失败时用户仍能继续学习，且不会看到密钥或内部错误。',
       },
@@ -263,8 +263,8 @@ function buildAiToolAnswer(goal: string, phaseName: string, topic: string, mode:
 
   return {
     title: `${topic}：AILINES AI 工具开发课`,
-    summary: `这节课围绕「${goal}」中的「${phaseName}」，把 ${topic} 拆成产品需求、Prompt、API、搜索/RAG、fallback 和部署验证。`,
-    keyConcepts: ['用户任务', 'Prompt', '模型 API', '结构化输出', '搜索/RAG', 'fallback'],
+    summary: `这节课围绕「${goal}」中的「${phaseName}」，把 ${topic} 拆成产品需求、Prompt、服务接口、资料整合、异常提示和部署验证。`,
+    keyConcepts: ['用户任务', 'Prompt', '模型调用', '结构化输出', '资料整合', '异常提示'],
     lessonSteps,
     examples: [
       { title: '案例：学习卡片生成课程', content: '用户点击一个学习点后，系统先搜索资料，再由 AI 整合成课程。', solution: ['构造搜索 query。', '裁剪资源摘要。', '调用 generateLearningAnswer。', '展示课程主体。', '最后展示参考资料入口。'] },
@@ -274,9 +274,9 @@ function buildAiToolAnswer(goal: string, phaseName: string, topic: string, mode:
       { title: 'Prompt 练习', difficulty: '中级', task: '写一个要求 JSON 输出的 Prompt。', check: '包含角色、任务、约束和字段说明。' },
       { title: '链路练习', difficulty: '进阶', task: '画出搜索 -> 整合 -> 展示 -> 引用的流程图。', check: '能解释每一步的输入和输出。' },
     ],
-    commonMistakes: ['直接把 API Key 放到前端。', '把搜索结果当课程主体。', 'Prompt 没有约束输出结构。', '没有 timeout 和 fallback。'],
-    checkpoint: ['能设计 AI 工具的最小链路。', '能写出结构化 Prompt。', '能说明搜索资料如何被整合。', '能设计失败降级体验。'],
-    resourceSummary: references.length ? 'AILINES AI 已将联网资料摘要整理为 AI 工具开发课程。' : '暂未获取到可用资料，已先提供基础 AI 工具课程。',
+    commonMistakes: ['直接把访问密钥放到前端。', '把搜索结果当课程主体。', 'Prompt 没有约束输出结构。', '没有处理超时和异常提示。'],
+    checkpoint: ['能设计 AI 工具的最小链路。', '能写出结构化 Prompt。', '能说明搜索资料如何被整合。', '能设计清晰的异常提示。'],
+    resourceSummary: references.length ? 'AILINES AI 已将联网资料摘要整理为 AI 工具开发课程。' : '已为你准备好本节课的学习内容。参考资料稍后可重新获取。',
     references,
     notice,
   };
@@ -341,7 +341,7 @@ function buildGeneralAnswer(goal: string, phaseName: string, topic: string, mode
     ],
     commonMistakes: ['只看资料不做练习。', '直接复制资料，没有转成自己的理解。', '目标太大，无法检查。', '学完不复盘，后续容易遗忘。'],
     checkpoint: ['能解释本主题。', '能完成一个小练习。', '能说出常见错误。', '能整理一页笔记。'],
-    resourceSummary: references.length ? 'AILINES AI 已根据联网资料摘要整理成本课内容。' : '暂未获取到可用资料，已先提供基础课程。',
+    resourceSummary: references.length ? 'AILINES AI 已根据联网资料摘要整理成本课内容。' : '已为你准备好本节课的学习内容。参考资料稍后可重新获取。',
     references,
     notice,
   };

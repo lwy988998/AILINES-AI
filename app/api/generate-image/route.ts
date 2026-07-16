@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: false,
-      message: '生图暂不可用',
+      message: '图片生成未完成',
     }, { status: 200 });
   }
 }

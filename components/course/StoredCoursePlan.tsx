@@ -11,8 +11,8 @@ import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 
 function getModeText(mode: PlanMode) {
   return mode === 'lite'
-    ? { label: '快速规划', description: '从数据库快照恢复的轻量学习课程，不会重新生成。' }
-    : { label: '深度 AILINES AI 规划', description: '从数据库快照恢复的系统学习课程，不会重新调用 AI 生成。' };
+    ? { label: '快速规划', description: '已恢复保存过的快速规划课程。' }
+    : { label: '深度 AILINES AI 规划', description: '已恢复保存过的系统学习课程。' };
 }
 
 function isPlanMode(value: string): value is PlanMode {
@@ -31,7 +31,7 @@ function MissingCourseState() {
       <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
         <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">历史课堂不存在或已失效</h1>
-        <p className="mt-3 text-base leading-7 text-slate-600">数据库没有找到这个 courseId 对应的课程快照。历史课堂不会悄悄重新生成；如果你需要继续学习，请返回首页重新生成课程。</p>
+        <p className="mt-3 text-base leading-7 text-slate-600">没有找到这门历史课堂。你可以返回首页重新生成课程。</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">
             <Home className="h-4 w-4" />
@@ -71,7 +71,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
     <section className="flex flex-col gap-3 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="flex items-center gap-2 font-semibold text-emerald-900"><CheckCircle2 className="h-4 w-4" />已恢复历史课堂</p>
-        <p className="mt-1 font-medium">本页来自数据库中保存的课程快照，没有重新调用 AI provider 生成课程。</p>
+        <p className="mt-1 font-medium">已为你恢复保存过的课程内容。</p>
       </div>
       <Link href={`/progress?goal=${encodeURIComponent(goal)}&mode=${result.course.mode}&courseId=${encodeURIComponent(result.course.id)}${anonymousQuery}`} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100">
         进入进度追踪
@@ -85,7 +85,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
         goal={goal}
         mode={result.course.mode}
         plan={plan}
-        resourceSourceMessage="已从数据库历史课堂快照恢复资料，不会重新搜索或重新生成。"
+        resourceSourceMessage="已恢复历史课堂中的学习资料。"
         courseId={result.course.id}
         anonymousId={ownedAnonymousId}
         courseProgress={courseProgress}
@@ -101,7 +101,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
       plan={plan}
       modeLabel={modeText.label}
       modeDescription={modeText.description}
-      resourceSourceMessage="已从数据库历史课堂快照恢复资料，不会重新搜索或重新生成。"
+      resourceSourceMessage="已恢复历史课堂中的学习资料。"
       courseId={result.course.id}
       anonymousId={ownedAnonymousId}
       courseProgress={courseProgress}

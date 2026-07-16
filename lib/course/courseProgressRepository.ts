@@ -31,7 +31,7 @@ export type CourseProgressSummary = {
 };
 
 export class CourseProgressRepositoryError extends Error {
-  constructor(message = '课程总进度暂时不可用') {
+  constructor(message = '课程总进度加载失败，请稍后重试') {
     super(message);
     this.name = 'CourseProgressRepositoryError';
   }

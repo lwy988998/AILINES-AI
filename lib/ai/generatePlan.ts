@@ -21,7 +21,7 @@ export class GeneratePlanError extends Error {
 function toGeneratePlanError(error: unknown) {
   const safeError = toSafeAIError(error);
   const status = safeError.type === 'missing_config' ? 503 : safeError.type === 'auth_error' ? 503 : 502;
-  return new GeneratePlanError('AILINES AI 生成暂时不可用，已为你展示基础课程版本。', status, safeError.type);
+  return new GeneratePlanError('生成未完成，已为你准备可继续学习的课程结构。', status, safeError.type);
 }
 
 export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'): Promise<GeneratedPlan> {

@@ -27,7 +27,7 @@ export type UpsertLearningSessionInput = LearningSessionLookupInput & {
 };
 
 export class LearningSessionRepositoryError extends Error {
-  constructor(message = '学习内容暂时不可用') {
+  constructor(message = '学习内容加载失败，请稍后重试') {
     super(message);
     this.name = 'LearningSessionRepositoryError';
   }

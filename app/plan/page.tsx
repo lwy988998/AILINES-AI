@@ -110,7 +110,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
 
     if (!usage.allowed) {
       fallbackNotice = true;
-      quotaNotice = '今日课程生成次数已用完，升级会员可获得更多额度。已先展示基础课程版本。';
+      quotaNotice = '今日课程生成次数已用完。你可以先查看当前课程结构，或升级会员获得更多额度。';
     } else {
       try {
         const generatedPlan = await generatePlanWithAI(rawGoal, mode);
@@ -166,9 +166,9 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
     >
       <div className="space-y-1">
         <p className="font-semibold text-slate-900">
-          {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成基础课程版本'}
+          {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成课程结构'}
         </p>
-        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || (mode === 'lite' ? '当前快速生成暂时未完成，AILINES AI 已先展示贴合目标的基础步骤。你可以稍后点击“重新生成”获取更新版本。' : '当前深度生成暂时未完成，AILINES AI 已先展示可学习的基础课程。你可以稍后点击“重新生成”获取更完整版本。')}</p> : null}
+        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || (mode === 'lite' ? '已根据当前学习目标生成可执行的学习步骤。你也可以点击“重新生成”获取另一版方案。' : '已根据当前学习目标生成课程结构。你也可以点击“重新生成”获取更详细的方案。')}</p> : null}
       </div>
       {!isAIPlan ? (
         <Link
