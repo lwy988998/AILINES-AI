@@ -40,7 +40,7 @@ export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, r
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
         {courseProgress ? <CourseProgressBanner progress={courseProgress} /> : null}
         {notice}
-        {slidesAccess.allowed ? <CourseSlides slides={plan.slides} phases={plan.roadmap} /> : <LockedFeatureCard feature="course_slides" title="课程课件是 Pro 功能" requiredTier={slidesAccess.requiredTier || 'pro'} />}
+        {slidesAccess.allowed ? <CourseSlides slides={plan.slides} phases={plan.roadmap} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} /> : <LockedFeatureCard feature="course_slides" title="课程课件是 Pro 功能" requiredTier={slidesAccess.requiredTier || 'pro'} />}
         {mindMapAccess.allowed ? <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} /> : <LockedFeatureCard feature="mind_map" title="思维导图是 Pro 功能" requiredTier={mindMapAccess.requiredTier || 'pro'} />}
         <RoadmapSection goal={goal} stages={plan.roadmap} mode={mode} courseId={courseId} anonymousId={anonymousId} />
         <CourseStructureSection stages={plan.courseStructure} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} />
