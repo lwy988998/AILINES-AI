@@ -11,12 +11,12 @@ const benefitRows = [
 
 export function BenefitsTable() {
   return (
-    <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+    <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
         <p className="text-sm font-semibold text-sky-700">权益对比</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Free / Pro / Max 权限与额度</h2>
+        <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">Free / Pro / Max 权限与额度</h2>
       </div>
-      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      <div className="max-w-full overflow-x-auto rounded-2xl border border-slate-200">
         <table className="min-w-[720px] w-full border-collapse text-left text-sm">
           <thead className="bg-sky-50 text-sky-900">
             <tr>

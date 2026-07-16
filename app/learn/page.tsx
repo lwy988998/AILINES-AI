@@ -206,7 +206,7 @@ async function searchLearningResources(query: string) {
 function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-sky-700">{eyebrow}</p>
+      <p className="break-words text-sm font-semibold text-sky-700">{eyebrow}</p>
       <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
     </div>
   );
@@ -365,56 +365,56 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} goal={courseGoal} mode={mode} lastPageType="learn" lastPhaseIndex={location.phaseIndex} lastPhaseName={location.phaseName} lastTopicIndex={location.topicIndex} lastTopicTitle={location.topic} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-          <div className="flex flex-wrap gap-3">
+        <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-4 shadow-sm shadow-sky-900/5 sm:p-8">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Link href={progressHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ArrowLeft className="h-4 w-4" />返回进度页</Link>
             <Link href={planHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
             <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><Home className="h-4 w-4" />返回首页</Link>
             <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"><Sparkles className="h-4 w-4" />重新生成本课</Link>
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
+          <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-sm font-medium text-sky-800"><GraduationCap className="h-4 w-4" />AILINES AI 微课程</div>
-              <p className="text-sm font-semibold text-sky-700">{courseTitle} · {location.phaseName}</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{safeAnswer.title}</h1>
-              <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">{safeAnswer.summary}</p>
+              <p className="break-words text-sm font-semibold text-sky-700">{courseTitle} · {location.phaseName}</p>
+              <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{safeAnswer.title}</h1>
+              <p className="mt-4 max-w-3xl break-words text-base leading-8 text-slate-700 sm:text-lg">{safeAnswer.summary}</p>
               {notice ? <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-medium leading-6 text-amber-800">{notice}</p> : null}
               {restoredFromSession ? <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800">已恢复上次生成的学习内容，本次没有重新搜索或调用 AI。</p> : null}
             </div>
-            <aside className="rounded-3xl border border-white/80 bg-white/80 p-5">
+            <aside className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-4 sm:p-5">
               <p className="text-sm font-semibold text-sky-800">当前完成状态</p>
               <div className="mt-4 grid gap-3 text-sm">
-                <div className="flex items-center gap-2 text-slate-700"><BookOpen className="h-4 w-4 text-sky-700" />主题：{location.topic}</div>
-                <div className="flex items-center gap-2 text-slate-700"><Clock3 className="h-4 w-4 text-sky-700" />预计 {estimatedMinutes} 分钟</div>
-                <div className="flex items-center gap-2 text-slate-700"><Layers3 className="h-4 w-4 text-sky-700" />难度：{getDifficulty(mode)}</div>
+                <div className="flex min-w-0 items-center gap-2 break-words text-slate-700"><BookOpen className="h-4 w-4 text-sky-700" />主题：{location.topic}</div>
+                <div className="flex min-w-0 items-center gap-2 break-words text-slate-700"><Clock3 className="h-4 w-4 text-sky-700" />预计 {estimatedMinutes} 分钟</div>
+                <div className="flex min-w-0 items-center gap-2 break-words text-slate-700"><Layers3 className="h-4 w-4 text-sky-700" />难度：{getDifficulty(mode)}</div>
                 <div className="rounded-2xl bg-sky-50 p-3 text-sky-800"><span className="font-semibold">{modeText.label}</span><p className="mt-1 leading-6 text-slate-600">{modeText.description}</p></div>
               </div>
             </aside>
           </div>
         </section>
 
-        <section id="objectives" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section id="objectives" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="你将学会" title="这节课的学习目标" />
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {safeAnswer.checkpoint.slice(0, 5).map((item) => <div key={item} className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{item}</div>)}
           </div>
         </section>
 
-        <section id="concepts" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section id="concepts" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="核心概念" title="先把关键概念放到脑子里" />
           <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {safeAnswer.keyConcepts.slice(0, 6).map((concept, index) => (
               <article key={`${concept}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <h3 className="font-semibold text-slate-950">{concept}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">它是理解「{location.topic}」的关键抓手。学习时请同时记住含义、使用场景和一个自己的例子。</p>
+                <h3 className="break-words font-semibold text-slate-950">{concept}</h3>
+                <p className="mt-2 break-words text-sm leading-6 text-slate-600">它是理解「{location.topic}」的关键抓手。学习时请同时记住含义、使用场景和一个自己的例子。</p>
                 <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">提示：</span>不要只背名词，至少完成一次解释和练习。</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section id="lesson" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section id="lesson" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="课程讲解" title="按老师讲课的节奏理解它" />
           <div className="mt-6 space-y-4">
             {safeAnswer.lessonSteps.map((step, index) => (
@@ -422,12 +422,12 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-sky-700 text-sm font-bold text-white">{index + 1}</span>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-950">{step.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-700 sm:text-base">{step.explanation}</p>
+                    <h3 className="break-words text-lg font-semibold text-slate-950">{step.title}</h3>
+                    <p className="mt-3 break-words text-sm leading-7 text-slate-700 sm:text-base">{step.explanation}</p>
                     <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                      <div className="rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">例子：</span>{step.example}</div>
-                      <div className="rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">行动：</span>{step.action}</div>
-                      <div className="rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">检查：</span>{step.check}</div>
+                      <div className="min-w-0 break-words rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="break-words font-semibold text-slate-950">例子：</span>{step.example}</div>
+                      <div className="min-w-0 break-words rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="break-words font-semibold text-slate-950">行动：</span>{step.action}</div>
+                      <div className="min-w-0 break-words rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700"><span className="break-words font-semibold text-slate-950">检查：</span>{step.check}</div>
                     </div>
                   </div>
                 </div>
@@ -436,13 +436,13 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
           </div>
         </section>
 
-        <section id="examples" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section id="examples" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="示例" title="看一遍完整案例或解法" />
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {safeAnswer.examples.map((example, index) => (
-              <article key={`${example.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="font-semibold text-slate-950">{example.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{example.content}</p>
+              <article key={`${example.title}-${index}`} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                <h3 className="break-words font-semibold text-slate-950">{example.title}</h3>
+                <p className="mt-2 break-words text-sm leading-6 text-slate-700">{example.content}</p>
                 <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm leading-6 text-slate-700">
                   {example.solution.map((item) => <li key={item}>{item}</li>)}
                 </ol>
@@ -454,29 +454,29 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
         <LearnInteractiveLesson answer={safeAnswer} completion={{ goal: courseGoal, mode, courseId, taskId, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex - 1, topic: location.topic, progressHref }} nextHref={nextHref} planHref={planHref} />
 
         <section id="summary" className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
             <SectionTitle eyebrow="课堂总结" title="本节课重点回顾" />
             <ul className="mt-5 space-y-3">
               {safeAnswer.checkpoint.slice(0, 5).map((item) => <li key={item} className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{item}</li>)}
             </ul>
           </div>
-          <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
             <SectionTitle eyebrow="下一步推荐" title="学完后怎么继续" />
-            <p className="mt-4 text-sm leading-7 text-slate-700">先确认你能完成本节练习和小测验。如果得分不稳定，建议回到“课程讲解”和“示例”重做一遍；如果已经掌握，就点击继续下一节。</p>
+            <p className="mt-4 break-words text-sm leading-7 text-slate-700">先确认你能完成本节练习和小测验。如果得分不稳定，建议回到“课程讲解”和“示例”重做一遍；如果已经掌握，就点击继续下一节。</p>
             {safeAnswer.commonMistakes.length ? <ul className="mt-4 space-y-2 text-sm leading-6 text-amber-900">{safeAnswer.commonMistakes.slice(0, 4).map((mistake) => <li key={mistake} className="rounded-2xl border border-amber-100 bg-amber-50 p-3">常见误区：{mistake}</li>)}</ul> : null}
           </div>
         </section>
 
         {safeAnswer.references.length ? (
-          <section id="references" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+          <section id="references" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
             <SectionTitle eyebrow="参考资料" title="继续深入阅读" />
             <p className="mt-4 text-sm leading-6 text-slate-600">以下资料已被 AILINES AI 用于整理本课内容，你可以继续深入阅读。</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{safeAnswer.resourceSummary}</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">{safeAnswer.resourceSummary}</p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {safeAnswer.references.map((resource) => (
-                <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
                   <div className="flex items-start justify-between gap-3">
-                    <div><p className="text-xs font-semibold text-sky-700">{resource.source} · {resource.type}</p><h3 className="mt-2 text-sm font-semibold leading-6 text-slate-950">{resource.title}</h3></div>
+                    <div><p className="break-words text-xs font-semibold text-sky-700">{resource.source} · {resource.type}</p><h3 className="mt-2 break-words text-sm font-semibold leading-6 text-slate-950">{resource.title}</h3></div>
                     <ExternalLink className="h-4 w-4 shrink-0 text-sky-700" />
                   </div>
                 </a>

@@ -14,7 +14,7 @@ export function ResourcesSection({ resources }: ResourcesSectionProps) {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {resources.map((resource) => (
-          <article key={resource.name} className="flex flex-col rounded-2xl border border-slate-200 p-5">
+          <article key={resource.name} className="min-w-0 flex flex-col rounded-2xl border border-slate-200 p-4 sm:p-5">
             <div className="flex flex-wrap gap-2 text-xs font-semibold">
               <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-800">{resource.type}</span>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{resource.difficulty}</span>
@@ -22,13 +22,13 @@ export function ResourcesSection({ resources }: ResourcesSectionProps) {
                 {resource.free ? '免费' : '付费'}
               </span>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-slate-950">{resource.name}</h3>
-            <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{resource.description}</p>
+            <h3 className="mt-4 break-words text-lg font-semibold text-slate-950">{resource.name}</h3>
+            <p className="mt-2 flex-1 break-words text-sm leading-6 text-slate-600">{resource.description}</p>
             <a
               href={resource.href}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
             >
               查看资源
               <ExternalLink className="h-4 w-4" />

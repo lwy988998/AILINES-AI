@@ -106,12 +106,12 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
 
   return (
     <>
-      <section id="practice-steps" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+      <section id="practice-steps" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-sky-700">分步练习</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">跟着做，而不是只看懂</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">勾选状态保存在当前页面；点击“标记本节已完成”后会把本学习点整体进度写入数据库。</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">勾选状态保存在当前页面；点击“标记本节已完成”后会把本学习点整体进度写入数据库。</p>
           </div>
           <span className="w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-800">{checkedCount} / {answer.lessonSteps.length} 步</span>
         </div>
@@ -123,16 +123,16 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
                 key={`${step.title}-${index}`}
                 type="button"
                 onClick={() => setCheckedSteps((current) => ({ ...current, [index]: !current[index] }))}
-                className={`w-full rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-4 ${checked ? 'border-emerald-200 bg-emerald-50 focus:ring-emerald-100' : 'border-slate-200 bg-slate-50 hover:border-sky-200 hover:bg-sky-50 focus:ring-sky-100'}`}
+                className={`w-full min-w-0 rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-4 ${checked ? 'border-emerald-200 bg-emerald-50 focus:ring-emerald-100' : 'border-slate-200 bg-slate-50 hover:border-sky-200 hover:bg-sky-50 focus:ring-sky-100'}`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 items-start gap-3">
                   <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${checked ? 'bg-emerald-600 text-white' : 'bg-white text-sky-700'}`}>
                     <CheckCircle2 className="h-4 w-4" />
                   </span>
                   <div>
-                    <h3 className="font-semibold text-slate-950">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{step.action}</p>
-                    <p className="mt-2 rounded-xl bg-white/80 p-3 text-sm leading-6 text-slate-700"><span className="font-semibold text-slate-950">完成标准：</span>{step.check}</p>
+                    <h3 className="break-words font-semibold text-slate-950">{step.title}</h3>
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-600">{step.action}</p>
+                    <p className="mt-2 break-words rounded-xl bg-white/80 p-3 text-sm leading-6 text-slate-700"><span className="break-words font-semibold text-slate-950">完成标准：</span>{step.check}</p>
                   </div>
                 </div>
               </button>
@@ -141,19 +141,19 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
         </div>
       </section>
 
-      <section id="exercises" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+      <section id="exercises" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800"><ClipboardCheck className="h-5 w-5" /></div>
           <div>
             <p className="text-sm font-semibold text-emerald-700">练习题</p>
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">用题目把知识变成能力</h2>
+            <h2 className="break-words text-2xl font-semibold tracking-tight text-slate-950">用题目把知识变成能力</h2>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {answer.practice.map((item, index) => (
-            <article key={`${item.title}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <article key={`${item.title}-${index}`} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold text-slate-950">{index + 1}. {item.title}</h3>
+                <h3 className="break-words font-semibold text-slate-950">{index + 1}. {item.title}</h3>
                 <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-sky-700">{item.difficulty}</span>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-700">{item.task}</p>
@@ -166,7 +166,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
         </div>
       </section>
 
-      <section id="quiz" className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+      <section id="quiz" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-sky-700">小测验</p>
@@ -180,11 +180,11 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             const answered = selected !== undefined;
             const correct = selected === item.answerIndex;
             return (
-              <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex items-start gap-3">
+              <article key={item.question} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                <div className="flex min-w-0 items-start gap-3">
                   <HelpCircle className="mt-1 h-5 w-5 shrink-0 text-sky-700" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-950">{questionIndex + 1}. {item.question}</h3>
+                    <h3 className="break-words font-semibold text-slate-950">{questionIndex + 1}. {item.question}</h3>
                     <div className="mt-4 grid gap-2">
                       {item.options.map((option, optionIndex) => {
                         const isSelected = selected === optionIndex;
@@ -194,7 +194,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
                             key={`${option}-${optionIndex}`}
                             type="button"
                             onClick={() => setSelectedAnswers((current) => ({ ...current, [questionIndex]: optionIndex }))}
-                            className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition focus:outline-none focus:ring-4 ${
+                            className={`min-w-0 rounded-xl border px-4 py-3 text-left text-sm font-medium transition focus:outline-none focus:ring-4 ${
                               answered && isAnswer
                                 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 focus:ring-emerald-100'
                                 : answered && isSelected && !isAnswer
@@ -226,12 +226,12 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
         ) : null}
       </section>
 
-      <section id="actions" className="rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-center">
-          <div>
+      <section id="actions" className="min-w-0 rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-4 shadow-sm shadow-sky-900/5 sm:p-8">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-sky-700">底部操作区</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">完成本节课后，继续推进路线</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">建议先完成分步练习和小测验，再标记完成。完成后课程总进度会重新计算。</p>
+            <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">完成本节课后，继续推进路线</h2>
+            <p className="mt-3 break-words text-sm leading-6 text-slate-600">建议先完成分步练习和小测验，再标记完成。完成后课程总进度会重新计算。</p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href={nextHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
                 继续下一节
@@ -246,7 +246,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
               </Link>
             </div>
           </div>
-          <div className="rounded-3xl border border-white/80 bg-white/80 p-5">
+          <div className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-4 sm:p-5">
             <LearnCompletionButton {...completion} />
           </div>
         </div>

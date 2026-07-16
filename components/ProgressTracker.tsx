@@ -169,19 +169,19 @@ export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnon
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
       <ProgressHeader goal={goal} mode={mode} courseId={courseId} title={title} />
       {courseProgress ? (
-        <section className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-semibold text-emerald-700">课程总进度</p>
               <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
-                <p className="text-5xl font-semibold tracking-tight text-slate-950">{courseProgress.overallPercent}%</p>
+                <p className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">{courseProgress.overallPercent}%</p>
                 <p className="pb-1 text-base font-medium text-slate-600">已完成 {courseProgress.completedCount} / {courseProgress.totalCount} 项</p>
               </div>
-              <p className="mt-3 text-sm font-medium text-slate-600">
+              <p className="mt-3 break-words text-sm font-medium text-slate-600">
                 {courseProgress.lastTopicTitle ? `最近学习：${courseProgress.lastTopicTitle}` : courseProgress.lastPhaseName ? `最近学习：${courseProgress.lastPhaseName}` : '最近学习位置会在访问课程页面时自动记录'}
               </p>
             </div>
-            <div className="h-3 overflow-hidden rounded-full bg-slate-100 lg:w-64">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 lg:w-64">
               <div className="h-full rounded-full bg-emerald-600" style={{ width: `${courseProgress.overallPercent}%` }} />
             </div>
           </div>

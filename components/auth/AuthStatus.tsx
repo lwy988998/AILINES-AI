@@ -22,7 +22,7 @@ export function AuthStatus({ user }: { user: SafeUser | null }) {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-2">
         <a href="/login" className="rounded-md px-2.5 py-2 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
           登录
         </a>
@@ -34,7 +34,7 @@ export function AuthStatus({ user }: { user: SafeUser | null }) {
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 sm:flex-nowrap sm:gap-2">
+    <div className="flex min-w-0 flex-wrap items-center justify-start gap-1 sm:flex-nowrap sm:justify-end sm:gap-2">
       <span className="max-w-[8rem] truncate rounded-full bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-800 sm:max-w-[11rem]" title={user.email}>
         {user.name || user.email}
       </span>

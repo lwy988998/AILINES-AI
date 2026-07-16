@@ -72,7 +72,7 @@ function LoadingState() {
       />
       <section className="grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5">
+        <div key={index} className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
           <div className="h-4 w-24 animate-pulse rounded-full bg-sky-100" />
           <div className="mt-4 h-7 w-3/4 animate-pulse rounded-full bg-slate-100" />
           <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-slate-100" />
@@ -236,15 +236,15 @@ export function MyCoursesClient() {
               const meta = statusMeta[course.status] || statusMeta.not_started;
               const modeLabel = getModeLabel(course.mode);
               return (
-                <article key={course.id} className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5">
-                  <div className="flex items-start justify-between gap-4">
+                <article key={course.id} className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
+                  <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {modeLabel ? <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">{modeLabel}</span> : null}
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.className}`}>{meta.label}</span>
                       </div>
-                      <h2 className="mt-3 line-clamp-2 text-2xl font-semibold tracking-tight text-slate-950">{course.title || course.goal}</h2>
-                      <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{course.summary || course.goal}</p>
+                      <h2 className="mt-3 line-clamp-3 break-words text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">{course.title || course.goal}</h2>
+                      <p className="mt-3 line-clamp-3 break-words text-sm leading-6 text-slate-600">{course.summary || course.goal}</p>
                     </div>
                     <button
                       type="button"
@@ -267,10 +267,10 @@ export function MyCoursesClient() {
                         <div className="h-full rounded-full bg-sky-600 transition-all" style={{ width: `${percent}%` }} />
                       </div>
                     </div>
-                    <div className="grid gap-2 text-sm text-slate-500 sm:grid-cols-2">
-                      <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />完成卡片：{course.completedCards} / {course.totalCards}</p>
-                      <p className="flex items-center gap-2"><Clock3 className="h-4 w-4 text-sky-600" />创建：{formatDateTime(course.createdAt)}</p>
-                      <p className="sm:col-span-2">最近学习：{formatDateTime(course.lastStudiedAt || course.updatedAt)}</p>
+                    <div className="grid min-w-0 gap-2 text-sm text-slate-500 sm:grid-cols-2">
+                      <p className="flex min-w-0 items-center gap-2 break-words"><CheckCircle2 className="h-4 w-4 text-emerald-600" />完成卡片：{course.completedCards} / {course.totalCards}</p>
+                      <p className="flex min-w-0 items-center gap-2 break-words"><Clock3 className="h-4 w-4 text-sky-600" />创建：{formatDateTime(course.createdAt)}</p>
+                      <p className="break-words sm:col-span-2">最近学习：{formatDateTime(course.lastStudiedAt || course.updatedAt)}</p>
                     </div>
                   </div>
 

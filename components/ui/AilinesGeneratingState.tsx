@@ -117,12 +117,12 @@ export function AilinesGeneratingState({
   }, [estimatedSeconds, visibleSteps.length]);
 
   return (
-    <section className={`relative overflow-hidden rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5 sm:p-8 ${className}`}>
+    <section className={`relative max-w-full overflow-hidden rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8 ${className}`}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(56,189,248,0.22),transparent_30%),radial-gradient(circle_at_85%_20%,rgba(14,165,233,0.16),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.94),rgba(240,249,255,0.8))]" />
       <div className="pointer-events-none absolute left-[-20%] top-0 h-full w-1/2 rotate-12 bg-gradient-to-r from-transparent via-white/60 to-transparent ailines-shimmer" />
 
-      <div className={`relative grid gap-7 ${compact || !showSkeleton ? '' : 'lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch'}`}>
-        <div className="space-y-6">
+      <div className={`relative grid min-w-0 gap-5 sm:gap-7 ${compact || !showSkeleton ? '' : 'lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch'}`}>
+        <div className="min-w-0 space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/80 px-3 py-2 text-sm font-semibold text-sky-800 shadow-sm shadow-sky-900/5">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 motion-safe:animate-ping" />
@@ -132,11 +132,11 @@ export function AilinesGeneratingState({
           </div>
 
           <div>
-            <h1 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl lg:text-5xl'} font-semibold tracking-tight text-slate-950`}>{title || preset.title}</h1>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">{subtitle || preset.subtitle}</p>
+            <h1 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-2xl sm:text-4xl lg:text-5xl'} break-words font-semibold tracking-tight text-slate-950`}>{title || preset.title}</h1>
+            <p className="mt-4 max-w-3xl break-words text-sm leading-7 text-slate-600 sm:text-lg sm:leading-8">{subtitle || preset.subtitle}</p>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-sky-100 bg-white/75 shadow-sm shadow-sky-900/5">
+          <div className="max-w-full overflow-hidden rounded-2xl border border-sky-100 bg-white/75 shadow-sm shadow-sky-900/5">
             <div className="h-2 overflow-hidden bg-sky-50">
               <div className="h-full rounded-full bg-gradient-to-r from-sky-300 via-sky-600 to-cyan-300 transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
             </div>
@@ -145,29 +145,29 @@ export function AilinesGeneratingState({
                 const done = index < activeIndex;
                 const active = index === activeIndex;
                 return (
-                  <li key={`${step}-${index}`} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? 'bg-sky-50 text-sky-950' : done ? 'text-emerald-700' : 'text-slate-500'}`}>
+                  <li key={`${step}-${index}`} className={`flex min-w-0 items-start gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? 'bg-sky-50 text-sky-950' : done ? 'text-emerald-700' : 'text-slate-500'}`}>
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${done ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : active ? 'bg-sky-700 text-white ring-sky-200' : 'bg-white text-slate-400 ring-slate-200'}`}>
                       {done ? <CheckCircle2 className="h-4 w-4" /> : active ? index + 1 : <Circle className="h-3.5 w-3.5" />}
                     </span>
-                    <span className={active ? 'font-semibold' : ''}>{step}</span>
+                    <span className={`${active ? 'font-semibold ' : ''}min-w-0 break-words`}>{step}</span>
                   </li>
                 );
               })}
             </ol>
           </div>
 
-          <p className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm leading-6 text-slate-600">{preset.hint}</p>
+          <p className="break-words rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm leading-6 text-slate-600">{preset.hint}</p>
         </div>
 
         {showSkeleton ? (
-          <div className={`grid gap-4 sm:grid-cols-2 ${compact ? '' : 'lg:grid-cols-1'}`}>
+          <div className={`grid min-w-0 gap-4 sm:grid-cols-2 ${compact ? '' : 'lg:grid-cols-1'}`}>
             {[0, 1, 2].map((item) => (
               <div key={item} className="rounded-3xl border border-sky-100 bg-white/80 p-5 shadow-sm shadow-sky-900/5 backdrop-blur ailines-soft-float" style={{ animationDelay: `${item * 120}ms` }}>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-50 text-sky-700">
                     <Sparkles className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 space-y-2">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="h-3 w-3/5 rounded-full bg-slate-100 ailines-skeleton" />
                     <div className="h-2.5 w-2/5 rounded-full bg-slate-100 ailines-skeleton" />
                   </div>

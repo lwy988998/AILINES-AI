@@ -35,8 +35,8 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {stages.map((stage, phaseIndex) => (
-          <article key={stage.stage} className="rounded-2xl border border-slate-200 p-5">
-            <h3 className="text-lg font-semibold text-slate-950">{stage.stage}</h3>
+          <article key={stage.stage} className="min-w-0 rounded-2xl border border-slate-200 p-4 sm:p-5">
+            <h3 className="break-words text-lg font-semibold text-slate-950">{stage.stage}</h3>
             <ul className="mt-4 space-y-3">
               {stage.topics.map((topic, topicIndex) => {
                 const href = canLinkToLearn
@@ -45,7 +45,7 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
                 const content = (
                   <>
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
-                    <span className="min-w-0 flex-1">{topic}</span>
+                    <span className="min-w-0 flex-1 break-words">{topic}</span>
                     {canLinkToLearn ? <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-sky-700 opacity-70" /> : null}
                   </>
                 );
@@ -53,11 +53,11 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
                 return (
                   <li key={topic} className="text-sm leading-6 text-slate-600">
                     {canLinkToLearn ? (
-                      <Link href={href} className="flex gap-3 rounded-xl px-2 py-1 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                      <Link href={href} className="flex min-w-0 gap-3 rounded-xl px-2 py-1 transition hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
                         {content}
                       </Link>
                     ) : (
-                      <div className="flex gap-3">{content}</div>
+                      <div className="flex min-w-0 gap-3">{content}</div>
                     )}
                   </li>
                 );

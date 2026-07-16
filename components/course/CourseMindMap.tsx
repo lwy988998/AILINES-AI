@@ -110,15 +110,15 @@ export function CourseMindMap({ mindMap, phases, title = '课程思维导图', d
   const nodes = prepared.nodes.length > 0 ? prepared.nodes : mindMapFromPhases(phases).nodes;
 
   return (
-    <section className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5 sm:p-8">
+    <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
         <p className="flex items-center gap-2 text-sm font-semibold text-sky-700"><Network className="h-4 w-4" />知识结构图</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+        <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
+        <p className="mt-3 break-words text-sm leading-6 text-slate-600">{description}</p>
       </div>
-      <div className="rounded-3xl border border-slate-100 bg-gradient-to-br from-slate-50 to-sky-50 p-4 sm:p-6">
+      <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-100 bg-gradient-to-br from-slate-50 to-sky-50 p-4 sm:p-6">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-slate-500">{prepared.title}</p>
+          <p className="break-words text-sm font-semibold text-slate-500">{prepared.title}</p>
           <div className="flex flex-wrap gap-2 text-xs font-semibold">
             <span className="rounded-full bg-sky-700 px-3 py-1 text-white">课程</span>
             <span className="rounded-full bg-white px-3 py-1 text-sky-800">阶段</span>

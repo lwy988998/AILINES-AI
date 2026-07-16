@@ -32,12 +32,12 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-40 w-auto object-contain drop-shadow-sm sm:h-48 lg:h-56"
+            className="h-32 w-auto max-w-full object-contain drop-shadow-sm sm:h-48 lg:h-56"
           />
-          <p className="mt-2 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+          <p className="mt-2 max-w-2xl break-words text-base leading-8 text-slate-600 sm:text-lg">
             把学习目标变成可以一步步完成的课程。
           </p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
+          <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-slate-500 sm:text-base">
             输入你想学习的内容，AILINES AI 会生成课程路线、学习任务、微课程和进度记录。
           </p>
         </div>
@@ -63,12 +63,12 @@ export default async function HomePage() {
 
         <div className="mt-6 grid w-full max-w-4xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
           {capabilityNotes.map(([title, description]) => (
-            <div key={title} className="rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
+            <div key={title} className="min-w-0 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-sky-700" />
                 {title}
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+              <p className="mt-2 break-words text-sm leading-6 text-slate-500">{description}</p>
             </div>
           ))}
         </div>

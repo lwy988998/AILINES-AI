@@ -266,7 +266,7 @@ export function GoalForm() {
   const submitLabel = modeValue === 'image' ? '生成图片' : modeValue === 'lite' ? '开始快速规划' : '生成深度课程';
 
   return (
-    <div className="w-full rounded-[28px] border border-slate-200/80 bg-white/90 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
+    <div className="w-full max-w-full rounded-[28px] border border-slate-200/80 bg-white/90 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
       <form onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
@@ -293,9 +293,9 @@ export function GoalForm() {
               }}
               placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
               rows={4}
-              className="block min-h-[110px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[120px] sm:text-lg lg:min-h-[130px]"
+              className="block min-h-[100px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[120px] sm:text-lg lg:min-h-[130px]"
             />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="mt-2 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <button
                 type="button"
                 aria-label="上传图片"
@@ -355,7 +355,7 @@ export function GoalForm() {
               className="h-16 w-16 shrink-0 rounded-xl border border-white object-cover shadow-sm"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">{selectedImageFile.name}</p>
+              <p className="break-words text-sm font-semibold text-slate-900">{selectedImageFile.name}</p>
               <p className="mt-1 text-xs text-slate-500">{formatFileSize(selectedImageFile.size)} · {modeValue === 'image' ? '当前生图模式暂只支持文字描述' : '将结合图片内容生成学习目标'}</p>
             </div>
             <button
@@ -394,7 +394,7 @@ export function GoalForm() {
             key={example}
             type="button"
             onClick={() => setGoalValue(example)}
-            className="rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="min-w-0 break-words rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300"
           >
             {example}
           </button>

@@ -59,11 +59,11 @@ export function ProgressStageCard({ stage, goal, mode, courseId, anonymousId, ph
   const completedInStage = stage.tasks.filter((_task, topicIndex) => statuses[getLearningCardKey(phaseIndex, topicIndex)] === 'completed').length;
 
   return (
-    <article className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-7">
+    <article className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-7">
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">学习阶段</p>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">{stage.title}</h2>
+          <h2 className="mt-1 break-words text-xl font-semibold tracking-tight text-slate-950">{stage.title}</h2>
         </div>
         <span className="w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-800">
           {completedInStage} / {stage.tasks.length}
@@ -81,7 +81,7 @@ export function ProgressStageCard({ stage, goal, mode, courseId, anonymousId, ph
           return (
             <li key={task.id}>
               <div
-                className={`group rounded-2xl border p-4 transition hover:border-sky-200 hover:bg-sky-50/80 hover:shadow-sm ${checked ? 'border-emerald-200 bg-emerald-50/60' : isLearning ? 'border-sky-200 bg-sky-50/60' : 'border-slate-200 bg-slate-50'}`}
+                className={`group min-w-0 rounded-2xl border p-4 transition hover:border-sky-200 hover:bg-sky-50/80 hover:shadow-sm ${checked ? 'border-emerald-200 bg-emerald-50/60' : isLearning ? 'border-sky-200 bg-sky-50/60' : 'border-slate-200 bg-slate-50'}`}
                 data-topic-storage-key={topicStorageKey}
               >
                 <Link
@@ -91,18 +91,18 @@ export function ProgressStageCard({ stage, goal, mode, courseId, anonymousId, ph
                     if (!checked) onSetTopicStatus(phaseIndex, topicIndex, 'in_progress');
                   }}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
                     <span className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${checked ? 'bg-emerald-100 text-emerald-700' : isLearning ? 'bg-sky-100 text-sky-700' : 'bg-white text-sky-700'}`}>
                       {checked ? <CheckCircle2 className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={`text-base font-semibold leading-6 ${checked ? 'text-slate-600' : 'text-slate-950'}`}>{task.title}</h3>
+                        <h3 className={`min-w-0 break-words text-base font-semibold leading-6 ${checked ? 'text-slate-600' : 'text-slate-950'}`}>{task.title}</h3>
                         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${checked ? 'bg-emerald-100 text-emerald-700' : isLearning ? 'bg-sky-100 text-sky-800' : 'bg-white text-slate-600'}`}>
                           {statusLabel[status]}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                      <p className="mt-2 break-words text-sm leading-6 text-slate-600">
                         AILINES AI 会先联网搜索资料，再整合成围绕这一学习点的课程、例题和练习。
                       </p>
                       <div className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition group-hover:text-sky-800">
@@ -112,8 +112,8 @@ export function ProgressStageCard({ stage, goal, mode, courseId, anonymousId, ph
                     </div>
                   </div>
                 </Link>
-                <div className="mt-4 flex items-center justify-between gap-3 border-t border-white pt-3">
-                  <p className="text-xs font-medium text-slate-500">所属阶段：{stage.title}</p>
+                <div className="mt-4 flex flex-col items-stretch gap-3 border-t border-white pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="break-words text-xs font-medium text-slate-500">所属阶段：{stage.title}</p>
                   <button
                     type="button"
                     onClick={() => onSetTopicStatus(phaseIndex, topicIndex, checked ? 'not_started' : 'completed')}

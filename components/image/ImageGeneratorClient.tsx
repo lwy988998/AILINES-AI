@@ -86,12 +86,12 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
   }, [prompt]);
 
   return (
-    <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+    <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-sky-700">生成需求</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{prompt}</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">AILINES AI 会根据你的文字描述尝试生成图片。第一版暂不保存图片，也不上传参考图。</p>
+          <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{prompt}</h1>
+          <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-slate-600">AILINES AI 会根据你的文字描述尝试生成图片。第一版暂不保存图片，也不上传参考图。</p>
         </div>
         <button
           type="button"
@@ -104,9 +104,9 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         </button>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+      <div className="mt-6 max-w-full overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
         {state.status === 'loading' ? (
-          <div className="bg-[#f5f9ff] p-4 sm:p-6">
+          <div className="max-w-full bg-[#f5f9ff] p-3 sm:p-6">
             <AilinesGeneratingState type="image" />
           </div>
         ) : null}
@@ -117,8 +117,8 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imageSrc} alt={prompt} className="max-h-[720px] w-auto max-w-full rounded-2xl object-contain shadow-sm" />
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="text-sm leading-6 text-slate-600">
+            <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 break-words text-sm leading-6 text-slate-600">
                 {state.provider ? <p>Provider：{state.provider}</p> : null}
                 {state.revisedPrompt ? <p>优化提示词：{state.revisedPrompt}</p> : null}
               </div>
@@ -137,7 +137,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         ) : null}
 
         {state.status === 'error' ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-4 text-center sm:min-h-[420px] sm:p-8">
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
               <ImageIcon className="h-7 w-7" />
             </div>
@@ -145,7 +145,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
               <p className="text-lg font-semibold text-slate-950">{state.message || '生图暂不可用'}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">当前图片生成服务暂时不可用，请稍后重试。学习路线、课程和资料搜索功能不受影响。</p>
             </div>
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={generate}

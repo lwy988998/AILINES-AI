@@ -32,15 +32,15 @@ export function RoadmapSection({ goal, stages, mode = 'deep', courseId, anonymou
             <Link
               key={stage.name}
               href={phaseHref}
-              className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition sm:p-5 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-100"
             >
               <article>
-                <div className="flex items-start gap-4">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white transition group-hover:bg-sky-800">
                     {index + 1}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-950 transition group-hover:text-sky-900">{stage.name}</h3>
+                    <h3 className="break-words text-lg font-semibold text-slate-950 transition group-hover:text-sky-900">{stage.name}</h3>
                     <div className="mt-3 flex flex-wrap gap-2 text-sm">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
                         <Clock3 className="h-3.5 w-3.5 text-sky-700" />
@@ -51,10 +51,10 @@ export function RoadmapSection({ goal, stages, mode = 'deep', courseId, anonymou
                         学习目标
                       </span>
                     </div>
-                    <p className="mt-4 font-medium leading-7 text-slate-800">{stage.goal}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{stage.description || '暂无说明'}</p>
-                    {stage.output ? <p className="mt-3 rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">阶段产出：{stage.output}</p> : null}
-                    {stage.checkpoint ? <p className="mt-2 text-sm leading-6 text-slate-600">检查点：{stage.checkpoint}</p> : null}
+                    <p className="mt-4 break-words font-medium leading-7 text-slate-800">{stage.goal}</p>
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-600">{stage.description || '暂无说明'}</p>
+                    {stage.output ? <p className="mt-3 break-words rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">阶段产出：{stage.output}</p> : null}
+                    {stage.checkpoint ? <p className="mt-2 break-words text-sm leading-6 text-slate-600">检查点：{stage.checkpoint}</p> : null}
                     <p className="mt-4 text-sm font-semibold text-sky-700 transition group-hover:text-sky-900">查看阶段详情 →</p>
                   </div>
                 </div>

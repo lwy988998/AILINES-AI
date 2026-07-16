@@ -218,7 +218,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
       {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="phase" lastPhaseIndex={phaseIndex} lastPhaseName={phaseName} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <Link
             href={planHref}
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"
@@ -226,20 +226,20 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             <ArrowLeft className="h-4 w-4" />
             返回学习方案
           </Link>
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_300px] lg:items-end">
+          <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800">
                 <Route className="h-4 w-4" />
                 第 {phaseIndex} 阶段详情
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{detail.phaseName}</h1>
-              <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">针对「{goal}」的阶段学习计划</p>
-              <div className="mt-5 w-fit rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm shadow-sm">
+              <h1 className="break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{detail.phaseName}</h1>
+              <p className="mt-4 max-w-3xl break-words text-base leading-8 text-slate-600 sm:text-lg">针对「{goal}」的阶段学习计划</p>
+              <div className="mt-5 max-w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm shadow-sm sm:w-fit">
                 <p className="font-semibold text-sky-800">当前模式：{modeLabel}</p>
                 <p className="mt-1 leading-6 text-slate-600">{modeDescription}</p>
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
                 href={progressHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
@@ -259,34 +259,34 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-4">
-          <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-5">
             <p className="text-sm font-semibold text-sky-700">阶段名称</p>
-            <p className="mt-2 text-lg font-semibold text-slate-950">{detail.phaseName}</p>
+            <p className="mt-2 break-words text-lg font-semibold text-slate-950">{detail.phaseName}</p>
           </div>
-          <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-5">
             <p className="text-sm font-semibold text-sky-700">当前学习目标</p>
-            <p className="mt-2 text-lg font-semibold text-slate-950">{detail.goal}</p>
+            <p className="mt-2 break-words text-lg font-semibold text-slate-950">{detail.goal}</p>
           </div>
-          <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-5">
             <p className="text-sm font-semibold text-sky-700">推荐学习周期</p>
-            <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-950">
+            <p className="mt-2 flex min-w-0 items-center gap-2 break-words text-lg font-semibold text-slate-950">
               <Clock3 className="h-4 w-4 text-sky-700" />
               {detail.duration}
             </p>
           </div>
-          <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+          <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-5">
             <p className="text-sm font-semibold text-sky-700">适合人群</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{detail.audience}</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">{detail.audience}</p>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">阶段概览</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">阶段目标</h2>
-            <p className="mt-3 leading-7 text-slate-600">{detail.objective || '暂无说明'}</p>
-            <p className="mt-4 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">为什么先学：{stageWhy || '这个阶段用于建立后续学习所需的基础。'}</p>
-            <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">阶段产出：{stageOutput || '一份可检查的阶段成果。'}</p>
+            <p className="mt-3 break-words leading-7 text-slate-600">{detail.objective || '暂无说明'}</p>
+            <p className="mt-4 break-words rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">为什么先学：{stageWhy || '这个阶段用于建立后续学习所需的基础。'}</p>
+            <p className="mt-3 break-words rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">阶段产出：{stageOutput || '一份可检查的阶段成果。'}</p>
           </div>
         </section>
 
@@ -298,25 +298,25 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
         <CourseMindMap mindMap={phaseMindMap} phases={planStage ? [planStage] : []} title="当前阶段知识结构" description="从步骤层级理解当前阶段的学习顺序。" />
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">阶段相关资料</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">先整合，再作为参考资料使用</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">这些资料只作为本阶段的补充入口。正文学习仍以阶段导学、分步讲解、任务练习和验收标准为主，避免把链接列表当课程内容。</p>
+            <p className="mt-3 break-words text-sm leading-6 text-slate-600">这些资料只作为本阶段的补充入口。正文学习仍以阶段导学、分步讲解、任务练习和验收标准为主，避免把链接列表当课程内容。</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             {resources.map((resource) => (
-              <article key={resource.url} className="flex flex-col rounded-2xl border border-slate-200 p-5">
+              <article key={resource.url} className="min-w-0 flex flex-col rounded-2xl border border-slate-200 p-4 sm:p-5">
                 <div className="flex flex-wrap gap-2 text-xs font-semibold">
                   <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-800">{resource.type}</span>
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{resource.difficulty}</span>
                   <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-indigo-700">{resource.language}</span>
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">{resource.free ? '免费' : '付费'}</span>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-950">{resource.title}</h3>
-                <p className="mt-2 text-sm font-medium text-slate-500">来源：{resource.source}</p>
-                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{resource.description}</p>
-                <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-700">推荐理由：{resource.reason}</p>
+                <h3 className="mt-4 break-words text-lg font-semibold text-slate-950">{resource.title}</h3>
+                <p className="mt-2 break-words text-sm font-medium text-slate-500">来源：{resource.source}</p>
+                <p className="mt-2 flex-1 break-words text-sm leading-6 text-slate-600">{resource.description}</p>
+                <p className="mt-3 break-words rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-700">推荐理由：{resource.reason}</p>
                 <a
                   href={resource.url}
                   target="_blank"
@@ -331,34 +331,34 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">实战练习</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">用练习验证阶段能力</h2>
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             {detail.practices.map((practice) => (
-              <article key={practice.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <article key={practice.name} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                 <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-semibold">
                   <span className="rounded-full bg-white px-3 py-1 text-sky-800">{practice.difficulty}</span>
                   <span className="rounded-full bg-white px-3 py-1 text-slate-600">{practice.duration}</span>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-950">{practice.name}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">练习目标：{practice.goal}</p>
-                <p className="mt-3 rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">验收标准：{practice.acceptance}</p>
+                <h3 className="break-words text-lg font-semibold text-slate-950">{practice.name}</h3>
+                <p className="mt-3 break-words text-sm leading-6 text-slate-600">练习目标：{practice.goal}</p>
+                <p className="mt-3 break-words rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">验收标准：{practice.acceptance}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">
             <p className="text-sm font-semibold text-sky-700">阶段验收 checklist</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">完成这些再进入下一阶段</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {detail.checklist.map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium leading-6 text-slate-700">
+              <div key={item} className="flex min-w-0 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium leading-6 text-slate-700">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
                 <span>{item}</span>
               </div>
@@ -366,13 +366,13 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <section className="flex flex-col gap-3 rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="flex min-w-0 flex-col gap-3 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
             <p className="flex items-center gap-2 text-sm font-semibold text-sky-700">
               <Trophy className="h-4 w-4" />
               阶段完成后
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AILINES AI 追问本阶段卡点。</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AILINES AI 追问本阶段卡点。</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href={progressHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
