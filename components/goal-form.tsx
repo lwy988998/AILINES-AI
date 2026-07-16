@@ -4,9 +4,8 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, Sparkles, X } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
+import { defaultImagePromptExamples, defaultStudyPromptExamples, getRandomPromptExamples } from '@/lib/homepagePromptExamples';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
-
-const homepageExamples = ['中考英语阅读理解提分', 'Python 零基础入门', '学习摄影构图', '高中数学函数专题', '30 天入门 AI 绘画', '产品经理入门'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type PlanningMode = 'lite' | 'deep' | 'image';
@@ -39,8 +38,6 @@ const planningModes: Array<{
   },
 ];
 
-const imageExamples = ['高中数学知识图谱插画', '赛博朋克机器人老师', '水彩风学习计划海报', 'AI 绘画提示词入门视觉图'];
-
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
     return `${Math.max(1, Math.round(size / 1024))} KB`;
@@ -65,6 +62,7 @@ export function GoalForm() {
   const [submittingMode, setSubmittingMode] = useState<PlanningMode>('deep');
   const [canUseDeepPlan, setCanUseDeepPlan] = useState(true);
   const [membershipLoaded, setMembershipLoaded] = useState(false);
+  const [promptExamples, setPromptExamples] = useState(defaultStudyPromptExamples);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +91,10 @@ export function GoalForm() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setPromptExamples(getRandomPromptExamples(modeValue, 5));
+  }, [modeValue]);
 
   useEffect(() => {
     return () => {
@@ -389,7 +391,7 @@ export function GoalForm() {
       ) : null}
 
       <div className="mt-3 flex flex-wrap justify-center gap-2">
-        {(modeValue === 'image' ? imageExamples : homepageExamples).map((example) => (
+        {(promptExamples.length > 0 ? promptExamples : modeValue === 'image' ? defaultImagePromptExamples : defaultStudyPromptExamples).map((example) => (
           <button
             key={example}
             type="button"
