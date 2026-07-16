@@ -45,10 +45,10 @@ function slidesFromPhases(phases?: RoadmapStage[]): CourseSlide[] {
   if (!safePhases.length) {
     return [
       {
-        title: '课程导入',
+        title: '目标学习路径',
         subtitle: 'AILINES AI 互动课件',
-        content: '这组课件会把学习目标拆成课程导入、阶段重点、行动建议和完成检查，帮助你边看边练、逐步推进学习。',
-        bullets: ['先理解整体结构', '再逐步学习阶段内容', '最后用练习和检查点确认掌握'],
+        content: '这组课件会把当前目标拆成具体阶段、学习点、练习动作和检查标准，帮助你边看边做。',
+        bullets: ['确认当前学习目标', '进入具体阶段内容', '用练习结果判断是否达标'],
         speakerNote: '先浏览课程结构，再选择当前最重要的阶段开始学习。',
       },
     ];
@@ -57,8 +57,8 @@ function slidesFromPhases(phases?: RoadmapStage[]): CourseSlide[] {
   return safePhases.flatMap((phase, index) => {
     const baseSlide: CourseSlide = {
       title: phase.name || `阶段 ${index + 1}`,
-      subtitle: phase.goal || '阶段目标',
-      content: phase.description || phase.why || '理解本阶段重点，并通过练习形成可检查的能力。',
+      subtitle: phase.goal || phase.output || `第 ${index + 1} 阶段`,
+      content: phase.description || phase.why || `围绕「${phase.name || `阶段 ${index + 1}`}」完成具体学习点和练习产出。`,
       bullets: [phase.duration, phase.output, phase.checkpoint].filter(isNonEmptyText),
       speakerNote: phase.why || '讲解本阶段为什么重要，以及用户完成后应该获得什么能力。',
       relatedPhase: phase.name,
@@ -91,7 +91,7 @@ function getSlideConcepts(slide: CourseSlide | undefined, bullets: string[]): In
     return [{ title: '本页核心理解', detail: slide.content }];
   }
 
-  return [{ title: '学习重点', detail: '先理解本页目标，再完成对应练习，并用检查标准确认掌握。' }];
+  return [{ title: '本页学习点', detail: '先看本页对应的具体知识点，再完成页面给出的行动和检查标准。' }];
 }
 
 function getPhaseIndex(slide: CourseSlide | undefined, phases?: RoadmapStage[]) {

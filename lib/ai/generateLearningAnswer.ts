@@ -1,7 +1,8 @@
 import { AIClientError, createChatCompletion, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import type { PlanMode } from '@/lib/ai/types';
-import { getMockLearningAnswer, referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
+import { getMockLearningAnswer, referencesFromResources, sanitizeLearningAnswer, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
+import { isGenericCourseText } from '@/lib/courseDomainQuality';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
 const DEFAULT_LEARNING_TIMEOUT_MS = 35_000;
@@ -28,7 +29,9 @@ function getLearningTimeoutMs() {
 }
 
 function sanitizeText(value: unknown, fallback = '') {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+  if (typeof value !== 'string') return fallback;
+  const text = value.trim();
+  return text && !isGenericCourseText(text) ? text : fallback;
 }
 
 function sanitizeStringArray(value: unknown, fallback: string[]) {
@@ -158,7 +161,7 @@ function createLearningPromptMessages(input: GenerateLearningAnswerInput, resour
       content: JSON.stringify({
         task: '根据学习目标、阶段和学习点，生成资料整合后的高质量微课程。',
         teachingStyle: ['通俗、具体、像老师在讲课', '围绕 topic，不跑题', '适合目标人群，不拔高到不相关层级', '每段都要能帮助用户真正学会或完成练习'],
-        avoid: ['深入学习相关知识', '掌握基本概念', '多加练习', '参考相关资料', '提升综合能力', '只给链接', '只列大纲'],
+        avoid: ['深入学习相关知识', '掌握基本概念', '多加练习', '参考相关资料', '提升综合能力', '只给链接', '只列大纲', '课程导入', '关键抓手', '不要只背名词', '至少完成一次解释和练习', '理解阶段目标', '用练习把知识变成能力', '复盘并形成阶段产出', 'fallback', 'mock', 'demo', 'debug'],
         requirements: {
           summary: '说明这节课解决什么问题、适合谁、学完能做什么。',
           keyConcepts: '3-6 个核心概念；每个概念名称要具体，不要空泛。',
@@ -239,7 +242,7 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       maxAttempts: 1,
     });
 
-    return adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources);
+    return sanitizeLearningAnswer(adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources), safeInput);
   } catch (error) {
     const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
     console.warn('AI learning fallback', {

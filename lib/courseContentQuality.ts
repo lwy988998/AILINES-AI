@@ -1,4 +1,5 @@
 import { normalizeCourseMindMap } from '@/lib/courseKnowledgeMap';
+import { buildDomainSpecificFallbackStep, buildDomainSpecificText, dedupeCourseItems, isGenericCourseText, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
 import type { MockPlan, RoadmapStage, CourseStep } from '@/lib/mockPlan';
 
 type StepContext = {
@@ -76,10 +77,10 @@ function pickByTitle(title: string, candidates: Array<[RegExp, number]>, fallbac
 function genericStepContent(context: StepContext) {
   const title = stripPrefix(context.title) || `步骤 ${context.index + 1}`;
   return {
-    explanation: `围绕「${context.goal}」完成「${title}」时，先确认本步骤要处理的对象和资料来源，再做一次能留下证据的小任务。不要只停留在理解标题：要把关键材料、操作过程、输出结果和遇到的问题写下来，方便下一步接着修正。`,
-    example: `例如把「${title}」整理成一张小清单：需要看的材料、要完成的动作、产出的文件或记录、判断合格的标准。`,
-    action: `完成「${title}」对应的小任务，保留过程记录和最终产出。`,
-    check: `能说明「${title}」解决了什么问题，并拿出一个可检查的结果。`,
+    explanation: buildDomainSpecificText({ goal: context.goal, phaseName: context.phaseName, taskTitle: title, index: context.index }),
+    example: `例如围绕「${title}」完成一次 30-60 分钟练习，保留过程、结果和卡点记录。`,
+    action: `完成「${title}」对应练习，保留过程记录和最终产出。`,
+    check: `能说明「${title}」解决了什么问题，并拿出一个可检查结果。`,
   };
 }
 
@@ -193,6 +194,9 @@ function pythonBeginnerStepContent(context: StepContext) {
 }
 
 export function createSpecificStepContent(context: StepContext): CourseStep {
+  const domainStep = buildDomainSpecificFallbackStep(context);
+  if (domainStep) return domainStep;
+
   const base = isHardwarePcGoal(context.goal)
     ? hardwarePcStepContent(context)
     : isExamEnglishGoal(context.goal)
@@ -212,7 +216,7 @@ export function createSpecificStepContent(context: StepContext): CourseStep {
 
 function shouldReplace(value: string, seen: string[]) {
   if (!value.trim()) return true;
-  if (isRepeatedTemplate(value)) return true;
+  if (isRepeatedTemplate(value) || isGenericCourseText(value)) return true;
   return seen.some((existing) => normalizeForCompare(existing) === normalizeForCompare(value) || similarity(existing, value) >= 0.86);
 }
 
@@ -244,14 +248,16 @@ function normalizeSteps(goal: string, stage: RoadmapStage): CourseStep[] | undef
 }
 
 export function normalizeCoursePlanContent(plan: MockPlan, goal: string): MockPlan {
+  const specificPlan = normalizeSpecificCoursePlan(plan, goal);
   const normalizedPlan = {
-    ...plan,
-    roadmap: Array.isArray(plan.roadmap)
-      ? plan.roadmap.map((stage) => ({
+    ...specificPlan,
+    roadmap: Array.isArray(specificPlan.roadmap)
+      ? specificPlan.roadmap.map((stage) => ({
           ...stage,
+          tasks: Array.isArray(stage.tasks) ? dedupeCourseItems(stage.tasks).filter((task) => !isGenericCourseText(task)).slice(0, 8) : stage.tasks,
           steps: normalizeSteps(goal, stage),
         }))
-      : plan.roadmap,
+      : specificPlan.roadmap,
   };
 
   return {

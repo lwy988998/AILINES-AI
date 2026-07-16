@@ -260,7 +260,7 @@ function createTeachingSteps(goal: string, phaseName: string, domain: LearningDo
   const safeGoal = goal || '当前学习目标';
   const safePhase = phaseName || '当前阶段';
   const baseTasks = Array.isArray(tasks) && tasks.length > 0 ? tasks.slice(0, 4) : [
-    { title: '理解阶段目标', duration: '1 小时', description: `明确「${safePhase}」要解决的问题。`, output: '目标拆解清单' },
+    { title: `拆清「${safePhase}」学习场景`, duration: '1 小时', description: `明确「${safePhase}」在「${safeGoal}」里要解决的具体问题、使用场景和验收标准。`, output: '一份场景与验收清单' },
     { title: '学习核心方法', duration: '2 小时', description: '掌握本阶段最高频的方法。', output: '方法笔记' },
     { title: '完成练习复盘', duration: '2 小时', description: '用练习检查理解程度。', output: '练习记录' },
   ];

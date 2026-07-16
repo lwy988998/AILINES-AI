@@ -11,7 +11,7 @@ export type ProgressStage = {
   tasks: ProgressTask[];
 };
 
-const progressTemplates: Record<LearningDomain, ProgressStage[]> = {
+const progressTemplates: Partial<Record<LearningDomain, ProgressStage[]>> = {
   programming: [
     {
       id: 'foundation',
@@ -309,7 +309,7 @@ const progressTemplates: Record<LearningDomain, ProgressStage[]> = {
 };
 
 export function getProgressStagesByGoal(goal: string): ProgressStage[] {
-  return progressTemplates[detectLearningDomain(goal)];
+  return progressTemplates[detectLearningDomain(goal)] || progressTemplates.general || [];
 }
 
-export const progressStages: ProgressStage[] = progressTemplates.general;
+export const progressStages: ProgressStage[] = progressTemplates.general || [];

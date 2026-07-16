@@ -63,11 +63,11 @@ function adaptSlide(slide: GeneratedCourseSlide, index: number): CourseSlide {
 function slidesFromPhases(plan: GeneratedPlan, phases: GeneratedPlanPhase[]): CourseSlide[] {
   const slides: CourseSlide[] = [
     {
-      title: '课程导入',
+      title: safeText(plan.title, '目标学习路径'),
       subtitle: safeText(plan.goal, '学习目标'),
-      content: safeText(plan.courseIntro, safeText(plan.overview, safeText(plan.summary, '本课程会把目标拆成阶段、步骤、练习和检查点。'))),
+      content: safeText(plan.courseIntro, safeText(plan.overview, safeText(plan.summary, '本课程会把目标拆成具体阶段、步骤、练习和检查标准。'))),
       bullets: ensureArray(plan.learningOutcomes).slice(0, 4).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
-      speakerNote: '先建立课程全局认知，再进入阶段学习；每一阶段都要完成练习和检查点。',
+      speakerNote: '先建立课程全局认知，再进入阶段学习；每一阶段都要完成具体练习和检查标准。',
     },
   ];
 
@@ -75,8 +75,8 @@ function slidesFromPhases(plan: GeneratedPlan, phases: GeneratedPlanPhase[]): Co
     const phaseName = safeText(phase.name, `阶段 ${phaseIndex + 1}`);
     slides.push({
       title: phaseName,
-      subtitle: safeText(phase.objective, '阶段目标'),
-      content: safeText(phase.overview, safeText(phase.description, '理解本阶段关键知识，并完成可检查的练习。')),
+      subtitle: safeText(phase.objective, safeText(phase.output, `第 ${phaseIndex + 1} 阶段`)),
+      content: safeText(phase.overview, safeText(phase.description, `围绕「${phaseName}」完成具体学习点和可检查练习。`)),
       bullets: [safeText(phase.duration, ''), safeText(phase.output, ''), safeText(phase.checkpoint, '')].filter(Boolean),
       speakerNote: safeText(phase.why, '说明这一阶段为什么重要，并提醒用户做完检查点再进入下一阶段。'),
       relatedPhase: phaseName,
@@ -87,7 +87,7 @@ function slidesFromPhases(plan: GeneratedPlan, phases: GeneratedPlanPhase[]): Co
         title: safeText(step.title, `第 ${stepIndex + 1} 步`),
         subtitle: phaseName,
         content: safeText(step.explanation, safeText(phase.description, '先理解本步骤，再完成行动建议。')),
-        bullets: [safeText(step.example, ''), `现在你要做：${safeText(step.action, '完成一个小练习')}`, `完成检查：${safeText(step.check, '能独立复现并解释')}`].filter(Boolean),
+        bullets: [safeText(step.example, ''), `行动：${safeText(step.action, `完成「${safeText(step.title, phaseName)}」对应练习`)}`, `检查：${safeText(step.check, '能拿出练习结果并说明关键步骤')}`].filter(Boolean),
         speakerNote: '这一页按“讲解—例子—行动—检查”的顺序带用户学习。',
         relatedPhase: phaseName,
       });

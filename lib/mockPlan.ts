@@ -290,10 +290,10 @@ function buildSlidesFromPlan(plan: MockPlan, goal: string): CourseSlide[] {
   const roadmap = Array.isArray(plan.roadmap) ? plan.roadmap : [];
   const slides: CourseSlide[] = [
     {
-      title: '课程导入',
+      title: '目标学习路径',
       subtitle: `为什么要学 ${safeGoal}`,
       content: plan.courseIntro || plan.overview || plan.summary || `这门课程会把「${safeGoal}」拆成可学习、可练习、可检查的阶段。`,
-      bullets: ['理解学习目标', '把路线变成课程', '通过练习和检查点确认掌握'],
+      bullets: [`确认「${safeGoal}」要解决的问题`, '拆成可学习的阶段和任务', '用练习结果和检查点判断是否达标'],
       speakerNote: `AILINES AI 会先帮你建立整体认知，再带你逐阶段学习。不要只看路线，要跟着每一阶段的行动建议做出成果。`,
     },
   ];
@@ -301,8 +301,8 @@ function buildSlidesFromPlan(plan: MockPlan, goal: string): CourseSlide[] {
   roadmap.forEach((stage, index) => {
     slides.push({
       title: stage.name || `阶段 ${index + 1}`,
-      subtitle: stage.goal || '阶段目标',
-      content: stage.description || stage.why || '理解本阶段关键知识，并通过练习形成可检查的能力。',
+      subtitle: stage.goal || stage.output || `第 ${index + 1} 阶段`,
+      content: stage.description || stage.why || `围绕「${stage.name || `阶段 ${index + 1}`}」完成具体学习点和可检查练习。`,
       bullets: [stage.duration, stage.output || stage.goal, stage.checkpoint || '完成阶段检查点'].filter(Boolean),
       speakerNote: stage.why || `这一阶段的重点是把「${safeGoal}」中的关键能力落到具体练习和产出。`,
       relatedPhase: stage.name,
@@ -313,9 +313,9 @@ function buildSlidesFromPlan(plan: MockPlan, goal: string): CourseSlide[] {
       slides.push({
         title: step.title || `第 ${stepIndex + 1} 步`,
         subtitle: stage.name,
-        content: step.explanation || stage.description || '先理解，再练习，最后检查掌握程度。',
-        bullets: [step.example ? `例子：${step.example}` : '', `现在你要做：${step.action || '完成一个小练习'}`, `完成检查：${step.check || '能独立复现并解释'}`].filter(Boolean),
-        speakerNote: `讲解这一页时，先说明概念和用途，再让用户完成行动建议，最后按检查标准判断是否掌握。`,
+        content: step.explanation || stage.description || `围绕「${step.title || stage.name || safeGoal}」完成具体学习动作。`,
+        bullets: [step.example ? `例子：${step.example}` : '', `行动：${step.action || `完成「${step.title || stage.name || safeGoal}」对应练习`}`, `检查：${step.check || '能拿出练习结果并说明关键步骤'}`].filter(Boolean),
+        speakerNote: `讲解这一页时，先说明具体场景和用途，再让用户完成行动建议，最后按检查标准判断是否达标。`,
         relatedPhase: stage.name,
       });
     });
@@ -432,21 +432,21 @@ function createFallbackSteps(goal: string, stage: RoadmapStage, domain: 'python'
 
   return [
     {
-      title: `第 1 步：理解「${stageName}」的核心目标`,
+      title: `第 1 步：拆清「${stageName}」的具体场景`,
       explanation: `学习「${safeGoal}」不能只看任务列表。你需要先明确本阶段要解决什么问题、为什么现在学它、完成后应该能做出什么。把目标说清楚后，后面的资料选择、练习安排和验收标准才不会散。建议用“我现在不会什么—这一阶段要学会什么—我用什么成果证明”来写一段目标说明。`,
       example: '例子：如果目标是学习一个工具，就写清楚要用于哪个工作场景、最终做出什么模板或成果。',
       action: '写下本阶段目标、应用场景和阶段产出。',
       check: '能用 1 分钟向别人解释本阶段为什么值得学。',
     },
     {
-      title: `第 2 步：用练习把知识变成能力`,
+      title: `第 2 步：完成「${stageName}」专项练习`,
       explanation: `看资料只是输入，练习才会暴露真正的理解程度。每学一个知识点，都要立刻安排一个小任务：操作一次、解一道题、写一段代码、做一个表格、输出一段表达或整理一个案例。练习要足够小，能在 30-60 分钟内完成，这样你可以快速获得反馈并调整学习方向。`,
       example: '练习格式：目标 → 步骤 → 结果 → 遇到的问题 → 下一次怎么改。',
       action: '完成 2-3 个小练习，并保留过程记录。',
       check: '能指出练习中的一个问题，并知道如何改进。',
     },
     {
-      title: `第 3 步：复盘并形成阶段产出`,
+      title: `第 3 步：整理「${stageName}」可检查成果`,
       explanation: `阶段学习结束时，不要只打勾完成，要整理一个可展示的成果。这个成果可以是笔记、错题集、小项目、模板、演示稿或练习报告。复盘时重点回答三个问题：我已经掌握了什么，哪里还不稳定，下一阶段应该优先补什么。这样每个阶段都会留下积累，而不是学完就忘。`,
       example: '阶段产出可以是一页总结：核心概念、3 个例子、2 个常见错误、1 个下一步计划。',
       action: '整理阶段成果，并写一段 100 字复盘。',

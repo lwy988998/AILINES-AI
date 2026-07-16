@@ -9,7 +9,7 @@ import { getCurrentUser } from '@/lib/auth/currentUser';
 import type { PlanMode } from '@/lib/ai/types';
 import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getLearningSession, upsertLearningSession } from '@/lib/course/learningSessionRepository';
-import { getMockLearningAnswer, type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
+import { getMockLearningAnswer, sanitizeLearningAnswer, type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import type { CourseStage, MockPlan } from '@/lib/mockPlan';
 import { ResourceSearchError, searchResources } from '@/lib/search/searchResources';
@@ -291,7 +291,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     : null;
 
   if (savedSession?.content && typeof savedSession.content === 'object') {
-    answer = savedSession.content as unknown as LearningAnswer;
+    answer = sanitizeLearningAnswer(savedSession.content as unknown as LearningAnswer, { goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
     if ((!answer.references || answer.references.length === 0) && Array.isArray(savedSession.references)) {
       answer = { ...answer, references: savedSession.references as LearningAnswer['references'] };
     }
@@ -341,7 +341,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     }
   }
 
-  const safeAnswer: LearningAnswer = {
+  const safeAnswer: LearningAnswer = sanitizeLearningAnswer({
     ...answer,
     keyConcepts: Array.isArray(answer.keyConcepts) && answer.keyConcepts.length ? answer.keyConcepts : [location.topic, location.phaseName, courseGoal],
     lessonSteps: Array.isArray(answer.lessonSteps) && answer.lessonSteps.length ? answer.lessonSteps : getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode }).lessonSteps,
@@ -350,7 +350,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     commonMistakes: Array.isArray(answer.commonMistakes) ? answer.commonMistakes : [],
     checkpoint: Array.isArray(answer.checkpoint) && answer.checkpoint.length ? answer.checkpoint : ['能解释核心概念', '能完成基础练习', '知道下一步怎么学'],
     references: Array.isArray(answer.references) ? answer.references : [],
-  };
+  }, { goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
 
   const taskId = findTaskId(courseGoal, location.phaseName, location.topic, String(location.phaseIndex), String(location.topicIndex));
   const estimatedMinutes = getEstimatedMinutes(mode, safeAnswer);
@@ -402,13 +402,13 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
         </section>
 
         <section id="concepts" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
-          <SectionTitle eyebrow="核心概念" title="先把关键概念放到脑子里" />
+          <SectionTitle eyebrow="核心概念" title={`围绕「${location.topic}」先理解这些关键点`} />
           <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {safeAnswer.keyConcepts.slice(0, 6).map((concept, index) => (
               <article key={`${concept}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="break-words font-semibold text-slate-950">{concept}</h3>
-                <p className="mt-2 break-words text-sm leading-6 text-slate-600">它是理解「{location.topic}」的关键抓手。学习时请同时记住含义、使用场景和一个自己的例子。</p>
-                <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">提示：</span>不要只背名词，至少完成一次解释和练习。</p>
+                <p className="mt-2 break-words text-sm leading-6 text-slate-600">围绕「{location.topic}」理解「{concept}」：先看它解决的问题，再结合本节示例完成一次可检查的小练习。</p>
+                <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">练习建议：</span>把「{concept}」写进一个具体步骤、题目、代码、作品或操作记录里。</p>
               </article>
             ))}
           </div>

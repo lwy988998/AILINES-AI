@@ -1,3 +1,4 @@
+import { isGenericCourseText, modulesForGoal } from '@/lib/courseDomainQuality';
 import { detectLearningDomain } from '@/lib/learningDomain';
 import type { PlanMode } from '@/lib/ai/types';
 import type { SearchResource } from '@/lib/search/resourceTypes';
@@ -347,15 +348,91 @@ function buildGeneralAnswer(goal: string, phaseName: string, topic: string, mode
   };
 }
 
+function buildSpecificDomainAnswer(goal: string, phaseName: string, topic: string, mode: PlanMode, references: LearningReference[], notice?: string): LearningAnswer | null {
+  const modules = modulesForGoal(goal);
+  if (modules.length === 0) return null;
+  const selectedModule = modules.find((module) => module.name === phaseName || module.topics.includes(topic)) || modules[0];
+  const topics = selectedModule.topics;
+  const deep = mode === 'deep';
+  const lessonTopics = deep ? topics.slice(0, 5) : topics.slice(0, 3);
+  const lessonSteps: LearningLessonStep[] = lessonTopics.map((item, index) => ({
+    title: `第 ${index + 1} 步：${item}`,
+    explanation: `围绕「${goal}」学习「${item}」时，要把它放回「${selectedModule.name}」这一部分里理解。先弄清它解决什么具体问题，再做一个能留下结果的练习；练习后记录参数、动作、代码、题目依据或作品变化，避免只看一遍就进入下一节。`,
+    example: `例如当前主题是「${topic}」，可以选取「${item}」做一次小练习：写下目标、执行过程、结果和一个需要改进的点。`,
+    action: `完成一次「${item}」专项练习，并把过程和结果保存下来。`,
+    check: `能说明「${item}」在「${goal}」中的作用，并拿出一个可检查成果。`,
+  }));
+
+  return {
+    title: `${topic}：${selectedModule.name}`,
+    summary: `这节课围绕「${goal}」中的「${phaseName}」，聚焦 ${topic}，把相关知识点拆成讲解、示例、练习和检查标准。`,
+    keyConcepts: topics.slice(0, 6),
+    lessonSteps,
+    examples: [{
+      title: `${topic} 场景案例`,
+      content: `把「${topic}」放到「${goal}」的真实学习场景里完成一次小任务。`,
+      solution: ['明确本节要解决的问题。', `选择 ${topics.slice(0, 3).join('、')} 中最相关的知识点。`, '完成练习并保存结果。', '根据检查标准写出下一步改进。'],
+    }],
+    practice: [
+      { title: `${topic} 基础练习`, difficulty: '入门', task: `围绕「${topic}」完成一个 20-40 分钟的基础练习。`, check: selectedModule.checkpoint },
+      { title: `${selectedModule.name} 综合练习`, difficulty: '中级', task: `串联 ${topics.slice(0, 3).join('、')} 完成一个阶段小成果。`, check: selectedModule.output },
+      ...(deep ? [{ title: '复盘优化练习', difficulty: '进阶', task: '根据练习结果记录 2 个问题和 2 个改进动作。', check: '能说明下一次练习要调整什么，以及为什么这样调整。' }] : []),
+    ],
+    commonMistakes: ['跳过基础动作直接追求结果。', '没有记录练习过程，导致无法复盘。', '只看资料或示例，没有完成自己的产出。'],
+    checkpoint: [selectedModule.checkpoint, `能解释 ${topics.slice(0, 3).join('、')} 的关系。`, '能完成一个可检查的本节成果。'],
+    quiz: [
+      { question: `学习「${topic}」时，最应该先确认什么？`, options: [`它在「${goal}」里解决的具体问题`, '先收藏更多资料', '跳过练习直接下一节', '只记住标题'], answerIndex: 0, explanation: '先明确用途，再进入练习，才能避免泛泛学习。' },
+      { question: `哪项最适合作为「${topic}」的完成标准？`, options: [selectedModule.checkpoint, '看完页面即可', '记住几个名词即可', '不需要保存结果'], answerIndex: 0, explanation: '完成标准应该是可观察、可检查的结果。' },
+      { question: '练习后最应该记录什么？', options: ['过程、结果、卡点和下一步改进', '只记录学习时长', '只写“已完成”', '什么都不用记录'], answerIndex: 0, explanation: '记录过程和卡点，后续才能针对性改进。' },
+    ],
+    resourceSummary: references.length ? 'AILINES AI 已将参考资料整理成本节课的讲解、练习和检查标准。' : '已为你准备好本节课的学习内容。参考资料稍后可重新获取。',
+    references,
+    notice,
+  };
+}
+
+export function sanitizeLearningAnswer(answer: LearningAnswer, input: LearningAnswerInput): LearningAnswer {
+  const fallback = getMockLearningAnswer({ ...input, notice: input.notice });
+  const cleanArray = (items: string[], fallbackItems: string[]) => {
+    const filtered = items.map((item) => item.trim()).filter((item) => item && !isGenericCourseText(item));
+    return filtered.length ? filtered : fallbackItems;
+  };
+
+  return {
+    ...answer,
+    title: answer.title && !isGenericCourseText(answer.title) ? answer.title : fallback.title,
+    summary: answer.summary && !isGenericCourseText(answer.summary) ? answer.summary : fallback.summary,
+    keyConcepts: cleanArray(answer.keyConcepts || [], fallback.keyConcepts),
+    lessonSteps: (answer.lessonSteps || []).map((step, index) => {
+      const fallbackStep = fallback.lessonSteps[index % fallback.lessonSteps.length];
+      return {
+        title: step.title && !isGenericCourseText(step.title) ? step.title : fallbackStep.title,
+        explanation: step.explanation && !isGenericCourseText(step.explanation) ? step.explanation : fallbackStep.explanation,
+        example: step.example && !isGenericCourseText(step.example) ? step.example : fallbackStep.example,
+        action: step.action && !isGenericCourseText(step.action) ? step.action : fallbackStep.action,
+        check: step.check && !isGenericCourseText(step.check) ? step.check : fallbackStep.check,
+      };
+    }).filter((step) => step.title && step.explanation).slice(0, input.mode === 'lite' ? 4 : 6) || fallback.lessonSteps,
+    examples: (answer.examples || []).filter((item) => !isGenericCourseText(item.title) && !isGenericCourseText(item.content)).length ? answer.examples : fallback.examples,
+    practice: (answer.practice || []).filter((item) => !isGenericCourseText(item.title) && !isGenericCourseText(item.task)).length ? answer.practice : fallback.practice,
+    commonMistakes: cleanArray(answer.commonMistakes || [], fallback.commonMistakes),
+    checkpoint: cleanArray(answer.checkpoint || [], fallback.checkpoint),
+    quiz: answer.quiz && answer.quiz.length >= 3 ? answer.quiz : fallback.quiz,
+    resourceSummary: answer.resourceSummary && !isGenericCourseText(answer.resourceSummary) ? answer.resourceSummary : fallback.resourceSummary,
+  };
+}
+
 export function getMockLearningAnswer({ goal, phaseName, topic, mode, resources = [], notice }: LearningAnswerInput): LearningAnswer {
   const safeGoal = cleanText(goal, '学习');
   const safePhaseName = cleanText(phaseName, '当前阶段');
   const safeTopic = cleanText(topic, safeGoal);
   const references = referencesFromResources(resources);
+  const specific = buildSpecificDomainAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
+  if (specific) return specific;
   const domain = detectLearningDomain(`${safeGoal} ${safePhaseName} ${safeTopic}`);
 
   if (domain === 'math') return buildMathAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
-  if (domain === 'programming') return buildProgrammingAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
+  if (domain === 'programming' || domain === 'nextjs') return buildProgrammingAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
   if (domain === 'ai') return buildAiToolAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
   return buildGeneralAnswer(safeGoal, safePhaseName, safeTopic, mode, references, notice);
 }

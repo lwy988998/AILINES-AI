@@ -75,10 +75,10 @@ function normalizeStep(step: unknown, index: number, fallbackTitle: string): Pha
     explanation:
       typeof candidate.explanation === 'string' && candidate.explanation.trim()
         ? candidate.explanation
-        : '先理解本步骤的核心概念和使用场景，再通过一个小练习把它转化为可检查的能力。学习时要记录输入、过程、输出和卡点，避免只看摘要。',
+        : `围绕「${fallbackTitle}」完成一个具体学习动作：先看它解决的问题，再做练习，并记录过程、输出和卡点。`,
     example: typeof candidate.example === 'string' ? candidate.example : '',
-    action: typeof candidate.action === 'string' && candidate.action.trim() ? candidate.action : '完成一个小练习，并记录关键过程。',
-    check: typeof candidate.check === 'string' && candidate.check.trim() ? candidate.check : '能用自己的话解释本步骤，并独立完成同类任务。',
+    action: typeof candidate.action === 'string' && candidate.action.trim() ? candidate.action : `完成「${fallbackTitle}」对应练习，并记录关键过程。`,
+    check: typeof candidate.check === 'string' && candidate.check.trim() ? candidate.check : `能拿出「${fallbackTitle}」练习结果，并说明关键步骤。`,
   };
 }
 

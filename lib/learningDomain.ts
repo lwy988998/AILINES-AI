@@ -1,10 +1,34 @@
-export type LearningDomain = 'programming' | 'math' | 'language' | 'office' | 'design' | 'ai' | 'general';
+export type LearningDomain = 'programming' | 'math' | 'language' | 'office' | 'design' | 'ai' | 'guitar' | 'nextjs' | 'aiDrawing' | 'pcBuild' | 'examEnglish' | 'photography' | 'general';
 
 export function detectLearningDomain(goal: string): LearningDomain {
   const text = goal.trim().toLowerCase();
 
   if (!text) {
     return 'general';
+  }
+
+  if (/(吉他|尤克里里|弹唱|和弦|拨弦|扫弦|乐器)/i.test(text)) {
+    return 'guitar';
+  }
+
+  if (/(next\.js|nextjs|全栈|app router|server actions|vercel)/i.test(text)) {
+    return 'nextjs';
+  }
+
+  if (/(AI\s*绘画|AI绘画|文生图|图生图|Midjourney|Stable Diffusion|绘画|提示词)/i.test(text)) {
+    return 'aiDrawing';
+  }
+
+  if (/(配电脑|装机|电脑配置|攒机|组装电脑|选电脑|台式机配置)/i.test(text)) {
+    return 'pcBuild';
+  }
+
+  if (/(中考.*英语|英语.*中考|阅读理解|英语阅读)/i.test(text)) {
+    return 'examEnglish';
+  }
+
+  if (/(摄影|拍照|相机|人像|风景|后期|光圈|快门|iso)/i.test(text)) {
+    return 'photography';
   }
 
   if (/(数学|三角函数|代数|几何|微积分|概率|统计|线性代数|高等数学|导数|积分|方程|不等式)/i.test(text)) {
