@@ -10,16 +10,33 @@ import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPla
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import { generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
-import { getMockPlanByGoal, type MockPlan } from '@/lib/mockPlan';
+import { type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
-import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
+import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 import { canUseFeature } from '@/lib/membership/permissions';
 import { UpgradeRequiredCard } from '@/components/membership/UpgradeRequiredCard';
 
 export const dynamic = 'force-dynamic';
 
 const RESOURCE_SEARCH_TIMEOUT_MS = 8_000;
+
+
+function CourseGenerationPendingState({ goal, mode, message }: { goal: string; mode: PlanMode; message?: string }) {
+  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}`;
+  return (
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
+      <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">课程内容暂未生成完成</h1>
+        <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这门课程')}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">为避免展示模板化课程，本次没有用固定内容伪装成课程。请点击重新生成，AILINES AI 会再次根据「{goal}」生成具体学习路径。</p>
+        <div className="mt-6 flex justify-center">
+          <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成</Link>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 type PlanPageProps = {
   searchParams: Promise<{
@@ -79,12 +96,9 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
   const modeLabel = mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
   const modeDescription = mode === 'lite' ? '轻量学习课程：保留讲解与练习，但阶段和资源更精简。' : '系统学习课程：更完整的阶段、分步讲解、课件、知识结构和练习。';
 
-  const fallbackPlan = getMockPlanByGoal(goal, mode);
-  let plan = fallbackPlan;
+  let plan: MockPlan | null = null;
   let isAIPlan = false;
-  let fallbackNotice = false;
   let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
-  let quotaNotice = '';
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
 
   const user = await getCurrentUser();
@@ -109,8 +123,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
     const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'course_generate' });
 
     if (!usage.allowed) {
-      fallbackNotice = true;
-      quotaNotice = '今日课程生成次数已用完。你可以先查看当前课程结构，或升级会员获得更多额度。';
+      return <CourseGenerationPendingState goal={goal} mode={mode} message="今日课程生成次数已用完。这门课程暂未生成完成，你可以升级会员或明天重新生成。" />;
     } else {
       try {
         const generatedPlan = await generatePlanWithAI(rawGoal, mode);
@@ -124,8 +137,8 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         isAIPlan = true;
         await incrementUsage('course_generate', usage.scope);
       } catch {
-        fallbackNotice = true;
         await incrementUsage('course_generate', usage.scope);
+        return <CourseGenerationPendingState goal={goal} mode={mode} />;
       }
     }
 
@@ -158,6 +171,10 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
     }
   }
 
+  if (!plan) {
+    return <CourseGenerationPendingState goal={goal} mode={mode} />;
+  }
+
   const notice = rawGoal ? (
     <section
       className={`flex flex-col gap-3 rounded-3xl border p-4 text-sm shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-between ${
@@ -168,7 +185,6 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         <p className="font-semibold text-slate-900">
           {isAIPlan ? (mode === 'lite' ? '已生成快速 AILINES AI 学习方案' : '已生成深度 AILINES AI 学习方案') : '已为你生成课程结构'}
         </p>
-        {fallbackNotice ? <p className="font-medium text-slate-600">{quotaNotice || (mode === 'lite' ? '已根据当前学习目标生成可执行的学习步骤。你也可以点击“重新生成”获取另一版方案。' : '已根据当前学习目标生成课程结构。你也可以点击“重新生成”获取更详细的方案。')}</p> : null}
       </div>
       {!isAIPlan ? (
         <Link
@@ -183,7 +199,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
 
   return (
     <>
-      {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} summary={plan.summary} source={isAIPlan ? 'ai' : 'fallback'} plan={plan} /> : null}
+      {rawGoal ? <CourseHistoryRecorder goal={rawGoal} mode={mode} title={plan.title || rawGoal} summary={plan.summary} source={isAIPlan ? 'ai' : 'ai-derived'} plan={plan} /> : null}
       {mode === 'lite' ? (
         <LitePlanView goal={goal} mode={mode} plan={plan} resourceSourceMessage={resourceSourceMessage} notice={notice} />
       ) : (

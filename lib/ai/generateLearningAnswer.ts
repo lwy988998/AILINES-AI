@@ -1,8 +1,9 @@
 import { AIClientError, createChatCompletion, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import type { PlanMode } from '@/lib/ai/types';
-import { getMockLearningAnswer, referencesFromResources, sanitizeLearningAnswer, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
+import { referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
 import { isGenericCourseText } from '@/lib/courseDomainQuality';
+import { buildUnavailableCourseContentNotice, createRegenerationPromptSuffix, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
 const DEFAULT_LEARNING_TIMEOUT_MS = 35_000;
@@ -47,10 +48,10 @@ function sanitizeLessonSteps(value: unknown, fallback: LearningLessonStep[]) {
     const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     return {
       title: sanitizeText(record.title, `第 ${index + 1} 步：理解并练习`),
-      explanation: sanitizeText(record.explanation, fallback[index % fallback.length]?.explanation || '先理解概念，再通过练习检查掌握程度。'),
-      example: sanitizeText(record.example, fallback[index % fallback.length]?.example || '结合一个简单例子理解本步骤。'),
-      action: sanitizeText(record.action, fallback[index % fallback.length]?.action || '完成一个小练习。'),
-      check: sanitizeText(record.check, fallback[index % fallback.length]?.check || '能用自己的话解释并独立完成同类任务。'),
+      explanation: sanitizeText(record.explanation, fallback[index % fallback.length]?.explanation || ''),
+      example: sanitizeText(record.example, fallback[index % fallback.length]?.example || ''),
+      action: sanitizeText(record.action, fallback[index % fallback.length]?.action || ''),
+      check: sanitizeText(record.check, fallback[index % fallback.length]?.check || ''),
     };
   }).filter((step) => step.title && step.explanation);
 
@@ -63,9 +64,9 @@ function sanitizeExamples(value: unknown, fallback: LearningExample[]) {
   const examples = value.map((item, index) => {
     const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     return {
-      title: sanitizeText(record.title, fallback[index % fallback.length]?.title || '例题/案例'),
-      content: sanitizeText(record.content, fallback[index % fallback.length]?.content || '围绕本主题完成一个案例。'),
-      solution: sanitizeStringArray(record.solution, fallback[index % fallback.length]?.solution || ['分析题目或场景。', '分步骤完成。', '检查结果。']),
+      title: sanitizeText(record.title, fallback[index % fallback.length]?.title || ''),
+      content: sanitizeText(record.content, fallback[index % fallback.length]?.content || ''),
+      solution: sanitizeStringArray(record.solution, fallback[index % fallback.length]?.solution || []),
     };
   }).filter((example) => example.title && example.content);
 
@@ -78,10 +79,10 @@ function sanitizePractice(value: unknown, fallback: LearningPractice[]) {
   const practice = value.map((item, index) => {
     const record = item && typeof item === 'object' ? item as Record<string, unknown> : {};
     return {
-      title: sanitizeText(record.title, fallback[index % fallback.length]?.title || '练习'),
+      title: sanitizeText(record.title, fallback[index % fallback.length]?.title || ''),
       difficulty: sanitizeText(record.difficulty, fallback[index % fallback.length]?.difficulty || '入门'),
-      task: sanitizeText(record.task, fallback[index % fallback.length]?.task || '完成一个围绕本主题的小练习。'),
-      check: sanitizeText(record.check, fallback[index % fallback.length]?.check || '能说明过程和结果。'),
+      task: sanitizeText(record.task, fallback[index % fallback.length]?.task || ''),
+      check: sanitizeText(record.check, fallback[index % fallback.length]?.check || ''),
     };
   }).filter((item) => item.title && item.task);
 
@@ -104,7 +105,7 @@ function sanitizeQuiz(value: unknown, fallback: LearningQuizItem[] = []): Learni
       question: sanitizeText(record.question),
       options,
       answerIndex,
-      explanation: sanitizeText(record.explanation, '这道题用于检查你是否理解了本节课的关键概念和应用方式。'),
+      explanation: sanitizeText(record.explanation),
     };
   }).filter((item): item is LearningQuizItem => Boolean(item && item.question && item.explanation));
 
@@ -228,7 +229,19 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
     mode: input.mode === 'lite' ? 'lite' as const : 'deep' as const,
     resources: input.resources.slice(0, 8),
   };
-  const fallback = getMockLearningAnswer(safeInput);
+  const fallback: LearningAnswer = {
+    title: safeInput.topic,
+    summary: '',
+    keyConcepts: [],
+    lessonSteps: [],
+    examples: [],
+    practice: [],
+    commonMistakes: [],
+    checkpoint: [],
+    quiz: [],
+    resourceSummary: '',
+    references: referencesFromResources(safeInput.resources),
+  };
   const resourceBriefs = normalizeResources(safeInput.resources, safeInput.mode);
 
   try {
@@ -242,7 +255,25 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       maxAttempts: 1,
     });
 
-    return sanitizeLearningAnswer(adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources), safeInput);
+    let answer = adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources);
+    let validation = validateUserVisibleCourseContent(answer, { goal: safeInput.goal, mode: safeInput.mode, phaseName: safeInput.phaseName, topic: safeInput.topic, availableTopics: answer.keyConcepts, availableTasks: answer.practice.map((item) => item.title) });
+    if (!validation.valid && safeInput.mode === 'deep') {
+      const retryContent = await createChatCompletion({
+        purpose: 'ask',
+        messages: createLearningPromptMessages({ ...safeInput, topic: `${safeInput.topic}${createRegenerationPromptSuffix(validation)}` }, resourceBriefs),
+        temperature: 0.25,
+        maxTokens: 4200,
+        responseFormat: 'json_object',
+        timeoutMs: getLearningTimeoutMs(),
+        maxAttempts: 1,
+      });
+      answer = adaptLearningAnswer(parseAIJson<unknown>(retryContent), fallback, safeInput.resources);
+      validation = validateUserVisibleCourseContent(answer, { goal: safeInput.goal, mode: safeInput.mode, phaseName: safeInput.phaseName, topic: safeInput.topic, availableTopics: answer.keyConcepts, availableTasks: answer.practice.map((item) => item.title) });
+    }
+    if (!validation.valid) {
+      throw new AIClientError('invalid_response', 'Learning answer quality gate failed');
+    }
+    return answer;
   } catch (error) {
     const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
     console.warn('AI learning fallback', {
@@ -253,11 +284,19 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       resourceCount: safeInput.resources.length,
     });
 
-    return getMockLearningAnswer({
-      ...safeInput,
-      notice: safeInput.resources.length
-        ? '这节课已先生成基础版本，并附上可用参考资料；点击“重新生成本课”可再次尝试生成更完整内容。'
-        : '这节课已先生成基础版本；点击“重新生成本课”可再次尝试生成更完整内容。',
-    });
+    return {
+      title: `${safeInput.topic}：内容生成未完成`,
+      summary: buildUnavailableCourseContentNotice('这节微课程'),
+      keyConcepts: [safeInput.topic, safeInput.phaseName].filter(Boolean),
+      lessonSteps: [],
+      examples: [],
+      practice: [],
+      commonMistakes: [],
+      checkpoint: [],
+      quiz: [],
+      resourceSummary: safeInput.resources.length ? '参考资料已获取，但本节正文暂未生成完成。' : '参考资料和正文暂未生成完成。',
+      references: referencesFromResources(safeInput.resources),
+      notice: buildUnavailableCourseContentNotice('这节微课程'),
+    };
   }
 }

@@ -5,11 +5,12 @@ import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { LearnInteractiveLesson } from '@/components/LearnInteractiveLesson';
 import { SiteHeader } from '@/components/site-header';
 import { generateLearningAnswer } from '@/lib/ai/generateLearningAnswer';
+import { buildUnavailableCourseContentNotice, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import type { PlanMode } from '@/lib/ai/types';
 import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getLearningSession, upsertLearningSession } from '@/lib/course/learningSessionRepository';
-import { getMockLearningAnswer, sanitizeLearningAnswer, type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
+import { type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
 import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import type { CourseStage, MockPlan } from '@/lib/mockPlan';
 import { ResourceSearchError, searchResources } from '@/lib/search/searchResources';
@@ -212,6 +213,27 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   );
 }
 
+
+function LearningGenerationPendingState({ regenerateHref, planHref, message }: { regenerateHref: string; planHref: string; message?: string }) {
+  return (
+    <main className="min-h-screen bg-[#f5f9ff]">
+      <SiteHeader />
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
+        <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
+          <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">这节课暂未生成完成</h1>
+          <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这节微课程')}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">为避免展示模板化内容，这里不会用固定讲义伪装成课程。你可以重新生成本课，或先回到课程大纲选择其它学习点。</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link href={regenerateHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成本课</Link>
+            <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function FriendlyMissingState({ courseId }: { courseId?: string }) {
   return (
     <main className="min-h-screen bg-[#f5f9ff]">
@@ -291,7 +313,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     : null;
 
   if (savedSession?.content && typeof savedSession.content === 'object') {
-    answer = sanitizeLearningAnswer(savedSession.content as unknown as LearningAnswer, { goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
+    answer = savedSession.content as unknown as LearningAnswer;
     if ((!answer.references || answer.references.length === 0) && Array.isArray(savedSession.references)) {
       answer = { ...answer, references: savedSession.references as LearningAnswer['references'] };
     }
@@ -305,8 +327,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     let searchNotice = '';
 
     if (!usage.allowed) {
-      answer = getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
-      notice = '今日学习卡片生成次数已用完。你可以先查看本节课内容，或升级会员获得更多额度。';
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message="今日学习卡片生成次数已用完。这节课暂未生成完成，你可以升级会员或明天重新生成。" />;
     } else {
       const searchResult = await searchLearningResources(searchQuery);
       resources = searchResult.resources;
@@ -314,6 +335,11 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
       answer = await generateLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources });
       notice = searchNotice || answer.notice || (shouldRegenerate ? '已为你换一版讲解内容。' : '');
       await incrementUsage('learn_generate', usage.scope);
+    }
+
+    const generatedValidation = validateUserVisibleCourseContent(answer, { goal: courseGoal, mode, phaseName: location.phaseName, topic: location.topic, availableTopics: Array.isArray(answer.keyConcepts) ? answer.keyConcepts : [], availableTasks: Array.isArray(answer.practice) ? answer.practice.map((item) => item.title) : [] });
+    if (!generatedValidation.valid || !answer.lessonSteps.length || !answer.practice.length || !answer.checkpoint.length) {
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
     }
 
     const fallbackUsed = Boolean(answer.notice) || !usage.allowed;
@@ -341,16 +367,21 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     }
   }
 
-  const safeAnswer: LearningAnswer = sanitizeLearningAnswer({
+  const answerValidation = validateUserVisibleCourseContent(answer, { goal: courseGoal, mode, phaseName: location.phaseName, topic: location.topic, availableTopics: Array.isArray(answer.keyConcepts) ? answer.keyConcepts : [], availableTasks: Array.isArray(answer.practice) ? answer.practice.map((item) => item.title) : [] });
+  if (!answerValidation.valid || !Array.isArray(answer.lessonSteps) || !answer.lessonSteps.length || !Array.isArray(answer.practice) || !answer.practice.length || !Array.isArray(answer.checkpoint) || !answer.checkpoint.length) {
+    return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
+  }
+
+  const safeAnswer: LearningAnswer = {
     ...answer,
-    keyConcepts: Array.isArray(answer.keyConcepts) && answer.keyConcepts.length ? answer.keyConcepts : [location.topic, location.phaseName, courseGoal],
-    lessonSteps: Array.isArray(answer.lessonSteps) && answer.lessonSteps.length ? answer.lessonSteps : getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode }).lessonSteps,
+    keyConcepts: Array.isArray(answer.keyConcepts) ? answer.keyConcepts : [],
+    lessonSteps: Array.isArray(answer.lessonSteps) ? answer.lessonSteps : [],
     examples: Array.isArray(answer.examples) ? answer.examples : [],
-    practice: Array.isArray(answer.practice) && answer.practice.length ? answer.practice : getMockLearningAnswer({ goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode }).practice,
+    practice: Array.isArray(answer.practice) ? answer.practice : [],
     commonMistakes: Array.isArray(answer.commonMistakes) ? answer.commonMistakes : [],
-    checkpoint: Array.isArray(answer.checkpoint) && answer.checkpoint.length ? answer.checkpoint : ['能解释核心概念', '能完成基础练习', '知道下一步怎么学'],
+    checkpoint: Array.isArray(answer.checkpoint) ? answer.checkpoint : [],
     references: Array.isArray(answer.references) ? answer.references : [],
-  }, { goal: courseGoal, phaseName: location.phaseName, topic: location.topic, mode, resources: [] });
+  };
 
   const taskId = findTaskId(courseGoal, location.phaseName, location.topic, String(location.phaseIndex), String(location.topicIndex));
   const estimatedMinutes = getEstimatedMinutes(mode, safeAnswer);

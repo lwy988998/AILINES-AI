@@ -1,6 +1,48 @@
 import { normalizeCourseMindMap } from '@/lib/courseKnowledgeMap';
-import { buildDomainSpecificFallbackStep, buildDomainSpecificText, dedupeCourseItems, isGenericCourseText, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
+import { buildDomainSpecificFallbackStep, buildDomainSpecificText, dedupeCourseItems, isGenericCourseText, modulesForGoal, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
 import type { MockPlan, RoadmapStage, CourseStep } from '@/lib/mockPlan';
+
+export type ContentSource = 'ai' | 'ai-derived' | 'domain-derived' | 'empty' | 'invalid';
+
+export const GENERIC_COURSE_PHRASES = [
+  '关键抓手',
+  '不要只背名词',
+  '至少完成一次解释和练习',
+  '理解核心目标',
+  '理解阶段目标',
+  '用练习把知识变成能力',
+  '复盘并形成阶段产出',
+  '掌握基本概念',
+  '提升综合能力',
+  '建立学习节奏',
+  '完成一次输出',
+  '课程导入',
+  '基础课程',
+  '深度整合暂时未完成',
+  'fallback',
+  'mock',
+  'demo',
+  'debug',
+  '第一版',
+];
+
+export type CourseContentValidationContext = {
+  goal: string;
+  mode?: string;
+  phaseName?: string;
+  topic?: string;
+  taskTitle?: string;
+  courseTitle?: string;
+  availableTopics?: string[];
+  availableTasks?: string[];
+};
+
+export type CourseContentValidationResult = {
+  valid: boolean;
+  source: ContentSource;
+  reasons: string[];
+  score: number;
+};
 
 type StepContext = {
   goal: string;
@@ -287,4 +329,69 @@ export function createTaskOutput(input: { goal: string; stageName: string; taskT
   if (isExamEnglishGoal(input.goal)) return `一份「${stripPrefix(input.taskTitle)}」阅读训练记录和错因复盘`;
   if (isPythonBeginnerGoal(input.goal)) return `一个「${stripPrefix(input.taskTitle)}」小脚本、运行结果和调试记录`;
   return content.action;
+}
+
+function collectValidationTexts(content: unknown): string[] {
+  if (typeof content === 'string') return [content];
+  if (!content || typeof content !== 'object') return [];
+  if (Array.isArray(content)) return content.flatMap(collectValidationTexts);
+  const record = content as Record<string, unknown>;
+  return Object.entries(record)
+    .filter(([key]) => !['id', 'href', 'url', 'createdAt', 'updatedAt'].includes(key))
+    .flatMap(([, value]) => collectValidationTexts(value));
+}
+
+function contextKeywords(context: CourseContentValidationContext) {
+  const moduleKeywords = modulesForGoal(context.goal).flatMap((module) => [module.name, module.goal, ...module.topics]);
+  return dedupeCourseItems([
+    context.goal,
+    context.courseTitle || '',
+    context.phaseName || '',
+    context.topic || '',
+    context.taskTitle || '',
+    ...(context.availableTopics || []),
+    ...(context.availableTasks || []),
+    ...moduleKeywords,
+  ].filter(Boolean));
+}
+
+function keywordHitCount(text: string, keywords: string[]) {
+  const normalizedText = normalizeForCompare(text);
+  return keywords.filter((keyword) => {
+    const value = normalizeForCompare(keyword);
+    return value.length >= 2 && normalizedText.includes(value.slice(0, Math.min(value.length, 16)));
+  }).length;
+}
+
+export function validateUserVisibleCourseContent(content: unknown, context: CourseContentValidationContext): CourseContentValidationResult {
+  const texts = collectValidationTexts(content).map((item) => item.trim()).filter(Boolean);
+  const reasons: string[] = [];
+  if (texts.length === 0) {
+    return { valid: false, source: 'empty', reasons: ['empty'], score: 0 };
+  }
+
+  const joined = texts.join('\n');
+  const keywords = contextKeywords(context);
+  const visibleTextCount = texts.length;
+  const genericCount = texts.filter((text) => isGenericCourseText(text) || GENERIC_COURSE_PHRASES.some((phrase) => text.toLowerCase().includes(phrase.toLowerCase()))).length;
+  const keywordHits = keywordHitCount(joined, keywords);
+  const uniqueCount = new Set(texts.map(normalizeForCompare).filter(Boolean)).size;
+
+  if (genericCount > 0) reasons.push('generic_or_forbidden_phrase');
+  if (keywordHits < Math.min(3, Math.max(1, keywords.length))) reasons.push('weak_goal_relevance');
+  if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) reasons.push('repeated_content');
+  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题)/i.test(joined)) reasons.push('missing_specific_action');
+  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准)/i.test(joined)) reasons.push('missing_output_or_acceptance');
+
+  const score = Math.max(0, 100 - genericCount * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 20 : 0) - (reasons.includes('missing_specific_action') ? 15 : 0) - (reasons.includes('missing_output_or_acceptance') ? 15 : 0));
+  const source: ContentSource = reasons.includes('generic_or_forbidden_phrase') ? 'invalid' : keywordHits >= 3 ? 'ai' : modulesForGoal(context.goal).length ? 'domain-derived' : 'ai-derived';
+  return { valid: reasons.length === 0 || score >= 70, source, reasons, score };
+}
+
+export function createRegenerationPromptSuffix(result: CourseContentValidationResult) {
+  return `\n\n质量门禁未通过：${result.reasons.join('、') || '内容过于泛化'}。上一次内容过于泛化，请重新生成具体课程：必须围绕用户目标拆成领域知识点、任务、产出和验收标准；不要输出固定模板或通用学习动作。`;
+}
+
+export function buildUnavailableCourseContentNotice(kind = '这部分内容') {
+  return `${kind}暂未生成完成，你可以点击重新生成。`;
 }

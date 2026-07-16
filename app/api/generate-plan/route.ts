@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GeneratePlanError, generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
-import { getMockPlanByGoal } from '@/lib/mockPlan';
 import { canUseFeature } from '@/lib/membership/permissions';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
@@ -47,13 +46,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ plan, source: 'ai', usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     const type = error instanceof GeneratePlanError ? error.type : 'unknown';
-    console.warn('Generate plan API fallback', { errorType: type, mode, goalLength: goal.length });
+    console.warn('Generate plan API unavailable', { errorType: type, mode, goalLength: goal.length });
     await incrementUsage('course_generate', usage.scope);
     return NextResponse.json({
-      plan: getMockPlanByGoal(goal, mode),
-      source: 'fallback',
-      message: '已为你生成课程结构。你可以稍后重新生成，获取另一版方案。',
+      error: '课程内容暂未生成完成，你可以点击重新生成。',
+      source: 'invalid',
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
-    });
+    }, { status: error instanceof GeneratePlanError ? error.status : 502 });
   }
 }
