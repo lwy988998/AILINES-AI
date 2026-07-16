@@ -6,7 +6,7 @@ import { ArrowRight, Plus, Sparkles, X } from 'lucide-react';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 
-const homepageExamples = ['中考英语阅读理解提分', 'Python 零基础入门', '学习摄影构图', 'AI 绘画提示词入门', '产品经理入门', '高中数学函数专题'];
+const homepageExamples = ['中考英语阅读理解提分', 'Python 零基础入门', '学习摄影构图', '高中数学函数专题', '30 天入门 AI 绘画', '产品经理入门'];
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type PlanningMode = 'lite' | 'deep' | 'image';
@@ -39,7 +39,7 @@ const planningModes: Array<{
   },
 ];
 
-const imageExamples = ['AI 学习助手海报', '赛博朋克风格机器人老师', '高中数学知识图谱插画', '极简蓝色科技 Logo 背景'];
+const imageExamples = ['高中数学知识图谱插画', '赛博朋克机器人老师', '水彩风学习计划海报', 'AI 绘画提示词入门视觉图'];
 
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
