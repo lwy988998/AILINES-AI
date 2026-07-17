@@ -314,9 +314,9 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
         <InteractivePhaseTasks tasks={phaseTasks} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} />
 
-        <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" />
+        <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} />
 
-        <CourseMindMap mindMap={phaseMindMap} phases={planStage ? [planStage] : []} title="当前阶段知识结构" description="从步骤层级理解当前阶段的学习顺序。" />
+        <CourseMindMap mindMap={phaseMindMap} phases={planStage ? [planStage] : []} title="当前阶段知识结构" description="从步骤层级理解当前阶段的学习顺序。" goal={goal} mode={mode} />
 
         <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <div className="mb-6">

@@ -7,7 +7,7 @@ import { ProgressOverview } from '@/components/ProgressOverview';
 import { getLearningCardKey, ProgressStageCard, type LearningCardStatusByKey } from '@/components/ProgressStageCard';
 import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
 import type { LearningCardProgressItem, LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
-import { getProgressStagesByGoal } from '@/lib/mockProgress';
+import { getProgressStagesByGoal, type ProgressStage } from '@/lib/mockProgress';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/progressStorage';
 
@@ -18,6 +18,7 @@ type ProgressTrackerProps = {
   anonymousId?: string;
   title: string;
   courseProgress?: CourseProgressSummary | null;
+  initialStages?: ProgressStage[];
 };
 
 function topicStorageKey(goal: string, phaseName: string, topic: string) {
@@ -31,13 +32,13 @@ function itemsToStatuses(items: LearningCardProgressItem[]) {
   }, {});
 }
 
-export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnonymousId, title, courseProgress }: ProgressTrackerProps) {
+export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnonymousId, title, courseProgress, initialStages }: ProgressTrackerProps) {
   const [statuses, setStatuses] = useState<LearningCardStatusByKey>({});
   const [anonymousId, setAnonymousId] = useState(initialAnonymousId || '');
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
 
-  const progressStages = useMemo(() => getProgressStagesByGoal(goal), [goal]);
+  const progressStages = useMemo(() => (Array.isArray(initialStages) && initialStages.length > 0 ? initialStages : getProgressStagesByGoal(goal)), [goal, initialStages]);
   const allTopics = useMemo(() => progressStages.flatMap((stage, phaseIndex) => stage.tasks.map((task, topicIndex) => ({ stage, task, phaseIndex, topicIndex }))), [progressStages]);
   const totalCount = allTopics.length;
   const completedCount = allTopics.filter(({ phaseIndex, topicIndex }) => statuses[getLearningCardKey(phaseIndex, topicIndex)] === 'completed').length;

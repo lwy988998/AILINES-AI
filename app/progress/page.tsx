@@ -5,7 +5,8 @@ import { SiteHeader } from '@/components/site-header';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
-import { getProgressStagesByGoal } from '@/lib/mockProgress';
+import { getProgressStagesByGoal, progressStagesFromCoursePlan } from '@/lib/mockProgress';
+import type { MockPlan } from '@/lib/mockPlan';
 
 type ProgressPageProps = {
   searchParams: Promise<{
@@ -44,7 +45,8 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
   const goal = ownedCourse?.goal || params.goal?.trim() || '我的';
   const mode = normalizeMode(ownedCourse?.mode || params.mode);
   const title = params.goal?.trim() || ownedCourse?.title ? `${goal} 学习进度` : '我的学习进度';
-  const progressStages = getProgressStagesByGoal(goal);
+  const snapshotPlan = ownedCourse?.snapshots[0]?.payload as MockPlan | undefined;
+  const progressStages = snapshotPlan ? progressStagesFromCoursePlan(snapshotPlan, goal) : getProgressStagesByGoal(goal);
   let courseProgress = courseId ? await getCourseProgress(courseId) : null;
   if (courseId && !courseProgress) {
     courseProgress = await recomputeCourseProgress({ courseId, anonymousId: ownedCourse?.anonymousId || anonymousId });
@@ -59,7 +61,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
     <main className="min-h-screen bg-[#f5f9ff]">
       {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="progress" /> : null}
       <SiteHeader />
-      <ProgressTracker goal={goal} mode={mode} courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} title={title} courseProgress={courseProgress} />
+      <ProgressTracker goal={goal} mode={mode} courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} title={title} courseProgress={courseProgress} initialStages={progressStages} />
       <FloatingAilinesChat
         pageType="progress"
         goal={goal}

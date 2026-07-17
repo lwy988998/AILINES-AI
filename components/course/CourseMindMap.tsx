@@ -1,4 +1,7 @@
+import Link from 'next/link';
 import { Network } from 'lucide-react';
+import { isGenericCourseText } from '@/lib/courseDomainQuality';
+import { buildUnavailableCourseContentNotice } from '@/lib/courseContentQuality';
 import type { CourseMindMap, MindMapNode, RoadmapStage } from '@/lib/mockPlan';
 
 type CourseMindMapProps = {
@@ -6,6 +9,8 @@ type CourseMindMapProps = {
   phases?: RoadmapStage[];
   title?: string;
   description?: string;
+  goal?: string;
+  mode?: 'lite' | 'deep';
 };
 
 function slug(value: string, fallback: string) {
@@ -21,41 +26,44 @@ function mindMapFromPhases(phases?: RoadmapStage[]): CourseMindMap {
   const safePhases = Array.isArray(phases) ? phases : [];
   return {
     title: '课程知识结构',
-    nodes: [
-      {
-        id: 'root',
-        label: 'AILINES AI 课程',
-        children: safePhases.length
-          ? safePhases.slice(0, 6).map((phase, index) => {
+    nodes: safePhases.length
+      ? [
+          {
+            id: 'root',
+            label: '课程知识结构',
+            children: safePhases.slice(0, 6).map((phase, index) => {
               const phaseId = slug(phase.name || '', `phase-${index + 1}`);
               const sourceChildren = Array.isArray(phase.steps) && phase.steps.length > 0
                 ? phase.steps.map((step) => step.title.replace(/^第\s*\d+\s*步[:：]?\s*/, ''))
-                : [phase.goal, phase.output, phase.checkpoint];
+                : [...(Array.isArray(phase.tasks) ? phase.tasks : []), phase.output, phase.checkpoint];
 
               return {
                 id: phaseId,
                 label: phase.name || `阶段 ${index + 1}`,
                 children: sourceChildren
                   .filter(isNonEmptyText)
+                  .filter((label) => !isGenericCourseText(label))
                   .slice(0, 5)
                   .map((label, childIndex) => ({ id: `${phaseId}-${childIndex + 1}`, label })),
               };
-            })
-          : [
-              { id: 'structure', label: '课程结构' },
-              { id: 'steps', label: '分步学习' },
-              { id: 'practice', label: '练习检查' },
-            ],
-      },
-    ],
+            }).filter((node) => isNonEmptyText(node.label) && !isGenericCourseText(node.label) && node.children.length > 0),
+          },
+        ]
+      : [],
   };
+}
+
+function sanitizeNode(node: MindMapNode): MindMapNode | null {
+  if (!isNonEmptyText(node.label) || isGenericCourseText(node.label)) return null;
+  const children = Array.isArray(node.children) ? node.children.map(sanitizeNode).filter((item): item is MindMapNode => Boolean(item)) : undefined;
+  return { ...node, children };
 }
 
 function normalizeNodes(mindMap?: CourseMindMap, phases?: RoadmapStage[]) {
   const source = mindMap && Array.isArray(mindMap.nodes) && mindMap.nodes.length > 0 ? mindMap : mindMapFromPhases(phases);
   return {
     title: source.title || '课程知识结构',
-    nodes: source.nodes.filter((node) => isNonEmptyText(node.label)),
+    nodes: source.nodes.map(sanitizeNode).filter((node): node is MindMapNode => Boolean(node)),
   };
 }
 
@@ -105,9 +113,21 @@ function NodeCard({ node, depth = 0 }: { node: MindMapNode; depth?: number }) {
   );
 }
 
-export function CourseMindMap({ mindMap, phases, title = '课程思维导图', description = '从整体结构理解知识点之间的关系。' }: CourseMindMapProps) {
+export function CourseMindMap({ mindMap, phases, title = '课程思维导图', description = '从整体结构理解知识点之间的关系。', goal, mode = 'deep' }: CourseMindMapProps) {
   const prepared = normalizeNodes(mindMap, phases);
   const nodes = prepared.nodes.length > 0 ? prepared.nodes : mindMapFromPhases(phases).nodes;
+
+  if (nodes.length === 0) {
+    const retryHref = goal ? `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}` : '/';
+    return (
+      <section className="min-w-0 rounded-3xl border border-amber-100 bg-white p-6 text-center shadow-sm shadow-sky-900/5 sm:p-8">
+        <p className="text-sm font-semibold text-amber-700">知识结构图</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">知识结构暂未生成完成</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">{buildUnavailableCourseContentNotice('这张知识结构图')}</p>
+        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
+      </section>
+    );
+  }
 
   return (
     <section className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">

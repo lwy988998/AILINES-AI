@@ -37,12 +37,15 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
   const cachedPlan = await readCachedPlan(safeGoal, safeMode);
 
   if (cachedPlan) {
-    const cachedValidation = validateUserVisibleCourseContent(adaptGeneratedPlan(cachedPlan, safeMode), { goal: safeGoal, mode: safeMode });
-    if (cachedValidation.valid) {
+    const rawCachedValidation = validateUserVisibleCourseContent(cachedPlan, { goal: safeGoal, mode: safeMode });
+    const adaptedCachedValidation = rawCachedValidation.valid
+      ? validateUserVisibleCourseContent(adaptGeneratedPlan(cachedPlan, safeMode), { goal: safeGoal, mode: safeMode })
+      : rawCachedValidation;
+    if (rawCachedValidation.valid && adaptedCachedValidation.valid) {
       console.log(`AI plan cache hit (${safeMode})`);
       return cachedPlan;
     }
-    console.log(`AI plan cache rejected by quality gate (${safeMode})`, cachedValidation.reasons);
+    console.log(`AI plan cache rejected by quality gate (${safeMode})`, adaptedCachedValidation.reasons);
   }
 
   console.log(`AI plan cache miss (${safeMode})`);
@@ -63,13 +66,16 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
       });
 
       const plan = parseAIJson<GeneratedPlan>(content);
-      const validation = validateUserVisibleCourseContent(adaptGeneratedPlan(plan, safeMode), { goal: safeGoal, mode: safeMode });
-      if (validation.valid) {
+      const rawValidation = validateUserVisibleCourseContent(plan, { goal: safeGoal, mode: safeMode });
+      const adaptedValidation = rawValidation.valid
+        ? validateUserVisibleCourseContent(adaptGeneratedPlan(plan, safeMode), { goal: safeGoal, mode: safeMode })
+        : rawValidation;
+      if (rawValidation.valid && adaptedValidation.valid) {
         await writeCachedPlan(safeGoal, safeMode, plan);
         return plan;
       }
-      lastValidation = validation;
-      console.warn('AI plan quality retry', { mode: safeMode, attempt: attempt + 1, reasons: validation.reasons, score: validation.score });
+      lastValidation = adaptedValidation.valid ? rawValidation : adaptedValidation;
+      console.warn('AI plan quality retry', { mode: safeMode, attempt: attempt + 1, reasons: lastValidation.reasons, score: lastValidation.score });
     }
     throw new AIClientError('invalid_response', 'AI plan quality gate failed');
   } catch (error) {

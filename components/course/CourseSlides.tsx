@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Eye, EyeOff, Layers3, Lightbulb, Presentation, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { PlanMode } from '@/lib/ai/types';
+import { isGenericCourseText } from '@/lib/courseDomainQuality';
+import { buildUnavailableCourseContentNotice } from '@/lib/courseContentQuality';
 import type { CourseSlide, RoadmapStage } from '@/lib/mockPlan';
 
 type CourseSlidesProps = {
@@ -40,40 +42,40 @@ function compactText(value: string, maxLength = 52) {
   return `${text.slice(0, maxLength)}...`;
 }
 
+function hasSpecificSlideContent(slide: CourseSlide) {
+  const visibleTexts = [slide.title, slide.subtitle || '', slide.content, slide.speakerNote || '', ...(slide.bullets || [])].filter(isNonEmptyText);
+  return visibleTexts.length > 0 && visibleTexts.every((text) => !isGenericCourseText(text));
+}
+
 function slidesFromPhases(phases?: RoadmapStage[]): CourseSlide[] {
   const safePhases = Array.isArray(phases) ? phases : [];
-  if (!safePhases.length) {
-    return [
-      {
-        title: '目标学习路径',
-        subtitle: 'AILINES AI 互动课件',
-        content: '这组课件会把当前目标拆成具体阶段、学习点、练习动作和检查标准，帮助你边看边做。',
-        bullets: ['确认当前学习目标', '进入具体阶段内容', '用练习结果判断是否达标'],
-        speakerNote: '先浏览课程结构，再选择当前最重要的阶段开始学习。',
-      },
-    ];
-  }
+  if (!safePhases.length) return [];
 
   return safePhases.flatMap((phase, index) => {
-    const baseSlide: CourseSlide = {
-      title: phase.name || `阶段 ${index + 1}`,
-      subtitle: phase.goal || phase.output || `第 ${index + 1} 阶段`,
-      content: phase.description || phase.why || `围绕「${phase.name || `阶段 ${index + 1}`}」完成具体学习点和练习产出。`,
-      bullets: [phase.duration, phase.output, phase.checkpoint].filter(isNonEmptyText),
-      speakerNote: phase.why || '讲解本阶段为什么重要，以及用户完成后应该获得什么能力。',
-      relatedPhase: phase.name,
-    };
+    const sourceSteps = Array.isArray(phase.steps) ? phase.steps : [];
+    const sourceTasks = Array.isArray(phase.tasks) ? phase.tasks : [];
+    const phaseName = phase.name || `阶段 ${index + 1}`;
+    const baseSlide: CourseSlide | null = phase.description && !isGenericCourseText(phase.description)
+      ? {
+          title: phaseName,
+          subtitle: phase.goal && !isGenericCourseText(phase.goal) ? phase.goal : phase.output || '',
+          content: phase.description,
+          bullets: [phase.output, phase.checkpoint, ...sourceTasks.slice(0, 3)].filter(isNonEmptyText).filter((item) => !isGenericCourseText(item)),
+          speakerNote: phase.why && !isGenericCourseText(phase.why) ? phase.why : phase.description,
+          relatedPhase: phase.name,
+        }
+      : null;
 
-    const stepSlides = (Array.isArray(phase.steps) ? phase.steps : []).slice(0, 2).map((step) => ({
+    const stepSlides = sourceSteps.slice(0, 3).map((step) => ({
       title: step.title,
       subtitle: phase.name,
       content: step.explanation,
-      bullets: [step.example ? `例子：${step.example}` : '', `现在你要做：${step.action}`, `完成检查：${step.check}`].filter(isNonEmptyText),
-      speakerNote: '按照“讲解、例子、行动、检查”的顺序完成这一页。',
+      bullets: [step.example ? `例子：${step.example}` : '', step.action ? `行动：${step.action}` : '', step.check ? `检查：${step.check}` : ''].filter(isNonEmptyText).filter((item) => !isGenericCourseText(item)),
+      speakerNote: step.check || step.action || step.explanation,
       relatedPhase: phase.name,
-    }));
+    })).filter(hasSpecificSlideContent);
 
-    return [baseSlide, ...stepSlides];
+    return [baseSlide, ...stepSlides].filter((slide): slide is CourseSlide => Boolean(slide && hasSpecificSlideContent(slide)));
   });
 }
 
@@ -82,16 +84,16 @@ function getSlideConcepts(slide: CourseSlide | undefined, bullets: string[]): In
     ? bullets.slice(0, 5).map((bullet, index) => ({
       title: compactText(stripPrefix(bullet), 34) || `知识点 ${index + 1}`,
       detail: stripPrefix(bullet),
-    }))
+    })).filter((concept) => concept.detail && !isGenericCourseText(concept.detail))
     : [];
 
   if (concepts.length > 0) return concepts;
 
-  if (isNonEmptyText(slide?.content)) {
-    return [{ title: '本页核心理解', detail: slide.content }];
+  if (isNonEmptyText(slide?.content) && !isGenericCourseText(slide.content)) {
+    return [{ title: compactText(slide.title || '本页知识点', 34), detail: slide.content }];
   }
 
-  return [{ title: '本页学习点', detail: '先看本页对应的具体知识点，再完成页面给出的行动和检查标准。' }];
+  return [];
 }
 
 function getPhaseIndex(slide: CourseSlide | undefined, phases?: RoadmapStage[]) {
@@ -116,7 +118,7 @@ function createLearnHref(input: { goal: string; mode: PlanMode; courseId?: strin
 
 export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件', description = '用可点击、可练习的课件卡片快速理解本课程的学习路径和核心知识。', goal, mode = 'deep', courseId, anonymousId }: CourseSlidesProps) {
   const preparedSlides = useMemo(() => {
-    const provided = Array.isArray(slides) ? slides.filter((slide) => isNonEmptyText(slide.title) || isNonEmptyText(slide.content)) : [];
+    const provided = Array.isArray(slides) ? slides.filter((slide) => (isNonEmptyText(slide.title) || isNonEmptyText(slide.content)) && hasSpecificSlideContent(slide)) : [];
     return provided.length > 0 ? provided : slidesFromPhases(phases);
   }, [slides, phases]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -137,6 +139,18 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
   const topic = currentSlide?.title || phaseName;
   const canOpenLearn = Boolean(goal && topic);
   const learnHref = canOpenLearn ? createLearnHref({ goal: goal!, mode, courseId, anonymousId, phaseIndex, phaseName, topic }) : '';
+
+  if (preparedSlides.length === 0) {
+    const retryHref = goal ? `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}` : '/';
+    return (
+      <section className="min-w-0 rounded-3xl border border-amber-100 bg-white p-6 text-center shadow-sm shadow-sky-900/5 sm:p-8">
+        <p className="text-sm font-semibold text-amber-700">互动课程课件</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">课件内容暂未生成完成</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">{buildUnavailableCourseContentNotice('这组课件')}</p>
+        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
+      </section>
+    );
+  }
 
   function setSlide(index: number) {
     setCurrentIndex(Math.max(0, Math.min(total - 1, index)));

@@ -1,4 +1,5 @@
 import { detectLearningDomain, type LearningDomain } from '@/lib/learningDomain';
+import type { MockPlan } from '@/lib/mockPlan';
 
 export type ProgressTask = {
   id: string;
@@ -307,6 +308,42 @@ const progressTemplates: Partial<Record<LearningDomain, ProgressStage[]>> = {
     },
   ],
 };
+
+function slug(value: string, fallback: string) {
+  const ascii = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (ascii) return ascii.slice(0, 48);
+  return fallback;
+}
+
+function stripStepPrefix(value: string) {
+  return value.replace(/^第\s*\d+\s*步[:：]?\s*/, '').trim();
+}
+
+export function progressStagesFromCoursePlan(plan: MockPlan, goal: string): ProgressStage[] {
+  const roadmap = Array.isArray(plan.roadmap) ? plan.roadmap : [];
+  const structure = Array.isArray(plan.courseStructure) ? plan.courseStructure : [];
+
+  const stages = roadmap.map((stage, index) => {
+    const structureTopics = structure.find((item) => item.stage === stage.name)?.topics || [];
+    const taskTitles = [
+      ...(Array.isArray(stage.tasks) ? stage.tasks : []),
+      ...(Array.isArray(stage.steps) ? stage.steps.map((step) => stripStepPrefix(step.title)) : []),
+      ...structureTopics,
+    ]
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const uniqueTitles = Array.from(new Set(taskTitles)).slice(0, 8);
+
+    return {
+      id: slug(stage.name || '', `phase-${index + 1}`),
+      title: stage.name || `阶段 ${index + 1}`,
+      tasks: uniqueTitles.map((title, taskIndex) => ({ id: `${slug(stage.name || '', `phase-${index + 1}`)}-${taskIndex + 1}`, title })),
+    };
+  }).filter((stage) => stage.tasks.length > 0);
+
+  if (stages.length > 0) return stages;
+  return getProgressStagesByGoal(goal);
+}
 
 export function getProgressStagesByGoal(goal: string): ProgressStage[] {
   return progressTemplates[detectLearningDomain(goal)] || progressTemplates.general || [];

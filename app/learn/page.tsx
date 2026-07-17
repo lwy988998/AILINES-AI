@@ -313,14 +313,15 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     : null;
 
   if (savedSession?.content && typeof savedSession.content === 'object') {
+    if (savedSession.fallbackUsed || savedSession.source === 'fallback') {
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={buildUnavailableCourseContentNotice('这节微课程')} />;
+    }
     answer = savedSession.content as unknown as LearningAnswer;
     if ((!answer.references || answer.references.length === 0) && Array.isArray(savedSession.references)) {
       answer = { ...answer, references: savedSession.references as LearningAnswer['references'] };
     }
     restoredFromSession = true;
-    notice = savedSession.fallbackUsed
-      ? '已恢复上次生成的学习内容。你也可以点击“换一版讲解”获取另一版讲解。'
-      : '已恢复上次生成的学习内容';
+    notice = '已恢复上次生成的学习内容';
   } else {
     const usage = await checkUsageLimit({ userId: user?.id, anonymousId: sessionAnonymousId, tier: user?.membershipTier, type: 'learn_generate' });
     let resources: SearchResource[] = [];
@@ -411,7 +412,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
               <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{safeAnswer.title}</h1>
               <p className="mt-4 max-w-3xl break-words text-base leading-8 text-slate-700 sm:text-lg">{safeAnswer.summary}</p>
               {notice ? <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-medium leading-6 text-amber-800">{notice}</p> : null}
-              {restoredFromSession ? <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800">已恢复上次生成的学习内容，本次没有重新搜索或调用 AI。</p> : null}
+              {restoredFromSession ? <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800">已恢复上次通过质量门禁的学习内容。</p> : null}
             </div>
             <aside className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-4 sm:p-5">
               <p className="text-sm font-semibold text-sky-800">当前完成状态</p>
@@ -435,13 +436,17 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
         <section id="concepts" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="核心概念" title={`围绕「${location.topic}」先理解这些关键点`} />
           <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {safeAnswer.keyConcepts.slice(0, 6).map((concept, index) => (
-              <article key={`${concept}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <h3 className="break-words font-semibold text-slate-950">{concept}</h3>
-                <p className="mt-2 break-words text-sm leading-6 text-slate-600">围绕「{location.topic}」理解「{concept}」：先看它解决的问题，再结合本节示例完成一次可检查的小练习。</p>
-                <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">练习建议：</span>把「{concept}」写进一个具体步骤、题目、代码、作品或操作记录里。</p>
-              </article>
-            ))}
+            {safeAnswer.keyConcepts.slice(0, 6).map((concept, index) => {
+              const relatedStep = safeAnswer.lessonSteps[index % Math.max(1, safeAnswer.lessonSteps.length)];
+              const relatedPractice = safeAnswer.practice[index % Math.max(1, safeAnswer.practice.length)];
+              return (
+                <article key={`${concept}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="break-words font-semibold text-slate-950">{concept}</h3>
+                  {relatedStep?.explanation ? <p className="mt-2 break-words text-sm leading-6 text-slate-600">{relatedStep.explanation}</p> : null}
+                  {relatedPractice?.task ? <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">本节练习：</span>{relatedPractice.task}</p> : null}
+                </article>
+              );
+            })}
           </div>
         </section>
 
