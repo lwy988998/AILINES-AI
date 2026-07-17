@@ -139,13 +139,13 @@ export function MyCoursesClient() {
       const response = await fetch(`/api/my-courses/${encodeURIComponent(course.id)}`, { method: 'DELETE' });
       if (!response.ok) {
         const data = await response.json().catch(() => null) as { error?: string } | null;
-        throw new Error(data?.error || 'delete failed');
+        throw new Error(data?.error || '课程删除失败，请稍后重试。');
       }
       setCourses((current) => current.filter((item) => item.id !== course.id));
       window.dispatchEvent(new Event('ailines-course-history-updated'));
     } catch (deleteError) {
       console.warn('Delete course failed', deleteError instanceof Error ? deleteError.message : 'unknown');
-      setError(deleteError instanceof Error && deleteError.message !== 'delete failed' ? deleteError.message : '删除失败，请稍后重试。');
+      setError(deleteError instanceof Error ? deleteError.message : '课程删除失败，请稍后重试。');
     } finally {
       setDeletingId(null);
     }

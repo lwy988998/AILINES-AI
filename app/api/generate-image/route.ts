@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: false,
-      message: '图片生成未完成',
+      message: '图片生成未完成。你可以稍后重试，或调整描述后再次生成。',
     }, { status: 200 });
   }
 }

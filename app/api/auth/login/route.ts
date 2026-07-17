@@ -8,6 +8,10 @@ function safeUser(user: { id: string; email: string; name: string | null }) {
   return { id: user.id, email: user.email, name: user.name };
 }
 
+function safeAttachWarning(warning?: string) {
+  return warning ? '部分临时学习数据未能合并，可稍后在我的课堂查看。' : undefined;
+}
+
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const session = await createSession(user.id);
     const attachResult = await attachAnonymousDataToUser({ anonymousId, userId: user.id });
-    const response = NextResponse.json({ ok: true, user: safeUser(user), warning: attachResult.warning });
+    const response = NextResponse.json({ ok: true, user: safeUser(user), warning: safeAttachWarning(attachResult.warning) });
     setSessionCookie(response, session.token, session.expiresAt, request);
     return response;
   } catch (error) {

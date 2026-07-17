@@ -69,10 +69,10 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         return;
       }
 
-      setState({ status: 'error', message: '图片生成未完成' });
+      setState({ status: 'error', message: '图片生成未完成。你可以稍后重试，或调整描述后再次生成。' });
     } catch {
       if (requestIdRef.current === requestId) {
-        setState({ status: 'error', message: '图片生成未完成' });
+        setState({ status: 'error', message: '图片生成未完成。你可以稍后重试，或调整描述后再次生成。' });
       }
     }
   }
@@ -138,8 +138,8 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
               <ImageIcon className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-slate-950">{state.message || '图片生成未完成'}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">这次图片没有成功生成。你可以稍后重试，或调整描述后再次生成。</p>
+              <p className="text-lg font-semibold text-slate-950">{state.message || '图片生成未完成。你可以稍后重试，或调整描述后再次生成。'}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">请检查描述是否清晰，或稍后再试。</p>
             </div>
             <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
               <button

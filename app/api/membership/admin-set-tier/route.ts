@@ -11,12 +11,12 @@ function getAdminToken() {
 export async function POST(request: NextRequest) {
   const adminToken = getAdminToken();
   if (!adminToken) {
-    return NextResponse.json({ error: 'Membership admin API is disabled.' }, { status: 404 });
+    return NextResponse.json({ error: '当前无法处理该请求，请稍后重试。' }, { status: 404 });
   }
 
   const providedToken = request.headers.get('x-membership-admin-token')?.trim() || '';
   if (!providedToken || providedToken !== adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: '请先登录或确认你有权限操作。' }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({})) as { email?: unknown; tier?: unknown };
@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
   const tier = normalizeMembershipTier(rawTier);
 
   if (!email || !email.includes('@')) {
-    return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
+    return NextResponse.json({ error: '请输入有效邮箱。' }, { status: 400 });
   }
 
   if (rawTier !== 'free' && rawTier !== 'pro' && rawTier !== 'max') {
-    return NextResponse.json({ error: 'tier must be one of: free, pro, max.' }, { status: 400 });
+    return NextResponse.json({ error: '会员等级参数不正确。' }, { status: 400 });
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }).catch(() => null);
 
   if (!existingUser) {
-    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    return NextResponse.json({ error: '未找到该用户。' }, { status: 404 });
   }
 
   const now = new Date();
@@ -60,12 +60,12 @@ export async function POST(request: NextRequest) {
   }).catch(() => null);
 
   if (!user) {
-    return NextResponse.json({ error: 'Could not update membership tier.' }, { status: 500 });
+    return NextResponse.json({ error: '会员信息更新失败，请稍后重试。' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, user });
 }
 
 export async function GET() {
-  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json({ error: '请求方式不支持。' }, { status: 405 });
 }
