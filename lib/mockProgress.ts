@@ -1,3 +1,4 @@
+import { isGenericCourseText } from '@/lib/courseDomainQuality';
 import { detectLearningDomain, type LearningDomain } from '@/lib/learningDomain';
 import type { MockPlan } from '@/lib/mockPlan';
 
@@ -331,7 +332,7 @@ export function progressStagesFromCoursePlan(plan: MockPlan, goal: string): Prog
       ...structureTopics,
     ]
       .map((item) => item.trim())
-      .filter(Boolean);
+      .filter((item) => item && !isGenericCourseText(item));
     const uniqueTitles = Array.from(new Set(taskTitles)).slice(0, 8);
 
     return {

@@ -98,7 +98,7 @@ export function InteractiveLearningSteps({ steps, goal, mode = 'deep', courseId,
     const localStatuses = parseStoredStatus(stored, safeSteps.length);
     setStatuses(localStatuses);
     setHydrated(true);
-    setSyncLabel('正在同步数据库状态...');
+    setSyncLabel('正在同步学习状态…');
 
     let cancelled = false;
 
@@ -124,14 +124,14 @@ export function InteractiveLearningSteps({ steps, goal, mode = 'deep', courseId,
           const databaseStatuses = apiItemsToStatuses(items, safeSteps.length);
           setStatuses(databaseStatuses);
           window.localStorage.setItem(storageKey, JSON.stringify(compactStatuses(databaseStatuses)));
-          setSyncLabel('已从数据库恢复学习状态');
+          setSyncLabel('已恢复学习状态');
         } else {
-          setSyncLabel(hasAnySavedStatus(localStatuses) ? '数据库暂无记录，已使用本地缓存' : '理解状态会自动保存到数据库');
+          setSyncLabel(hasAnySavedStatus(localStatuses) ? '已恢复本地学习状态' : '理解状态会自动保存');
         }
       } catch (error) {
         if (!cancelled) {
           console.warn('Learning step progress database load failed; using localStorage fallback.', error instanceof Error ? error.message : 'unknown');
-          setSyncLabel('数据库暂不可用，已使用本地缓存');
+          setSyncLabel('已保留本地学习状态');
         }
       }
     }
@@ -178,12 +178,12 @@ export function InteractiveLearningSteps({ steps, goal, mode = 'deep', courseId,
     })
       .then((response) => {
         if (!response.ok) throw new Error('learning step progress save failed');
-        if (latestSaveRef.current[index] === version) setSyncLabel('已保存到数据库');
+        if (latestSaveRef.current[index] === version) setSyncLabel('已保存学习状态');
       })
       .catch((error) => {
         if (latestSaveRef.current[index] === version) {
           console.warn('Learning step progress database save failed; localStorage fallback kept.', error instanceof Error ? error.message : 'unknown');
-          setSyncLabel('数据库保存失败，已保留本地缓存');
+          setSyncLabel('已保留本地学习状态');
         }
       });
   }
@@ -199,7 +199,7 @@ export function InteractiveLearningSteps({ steps, goal, mode = 'deep', courseId,
       window.localStorage.setItem(storageKey, JSON.stringify(compactStatuses(next)));
       return next;
     });
-    setSyncLabel('正在保存到数据库...');
+    setSyncLabel('正在保存学习状态…');
     saveStatusToDatabase(index, status);
   }
 

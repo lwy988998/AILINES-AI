@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
       imageBase64: result.imageBase64,
       mimeType: result.mimeType,
       revisedPrompt: result.revisedPrompt,
-      provider: result.provider,
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
     });
   } catch (error) {
@@ -73,5 +72,5 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json({ error: '请求方式不支持。' }, { status: 405 });
 }

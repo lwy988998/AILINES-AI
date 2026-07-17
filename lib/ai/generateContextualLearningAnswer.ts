@@ -105,23 +105,10 @@ function normalizeMessages(messages: ChatHistoryMessage[] = []) {
     .map((message) => ({ role: message.role, content: truncateText(message.content.trim(), 800) }));
 }
 
-function createFallbackAnswer(input: Required<Pick<GenerateContextualLearningAnswerInput, 'question' | 'pageType'>> & GenerateContextualLearningAnswerInput, resources: SearchResource[]): ContextualLearningAnswer {
-  const mode = input.mode === 'lite' ? 'lite' : 'deep';
-  const contextTitle = sanitizeText(input.contextTitle, sanitizeText(input.topic, sanitizeText(input.phaseName, sanitizeText(input.goal, '当前课程'))));
-  const contextSummary = truncateText(sanitizeText(input.contextSummary, '当前页面没有提供更详细摘要。你可以先围绕页面标题、阶段目标和当前任务来判断下一步。'), 800);
-  const goal = sanitizeText(input.goal, '当前学习目标');
-  const phaseOrTopic = sanitizeText(input.topic, sanitizeText(input.phaseName, contextTitle));
-  const references = referencesFromResources(resources);
-  const resourceHint = references.length
-    ? `\n\n参考资料入口：我找到了一些可继续查看的资料，例如「${references.map((item) => item.title).join('」「')}」。这些资料只作为延伸阅读，当前回答先以页面上下文为主。`
-    : '';
-  const deepExtra = mode === 'deep'
-    ? `\n\n举个做法：先用一句话写下「${phaseOrTopic}」要解决的问题，再列出 3 个必须验证的点，最后做一个最小成果，比如一份功能清单、一个小作品、一道练习或一段可运行代码。`
-    : '';
-
+function createUnavailableAnswer(resources: SearchResource[] = []): ContextualLearningAnswer {
   return {
-    answer: `我先基于当前课程上下文给你一个基础解释：\n\n直接回答：围绕「${goal}」，你现在问的「${input.question}」应优先放回当前页面「${contextTitle}」来理解，不要跳出当前学习阶段泛泛查资料。\n\n分步解释：\n1. 先确认当前页面目标：${contextSummary}\n2. 再把问题拆成“我需要理解什么 / 我需要产出什么 / 我如何检查完成”。\n3. 如果你卡在概念上，先用自己的话复述；如果卡在操作或报错上，先记录输入、步骤、输出和错误信息。\n4. 下一步建议：先完成当前阶段最小任务，再把不确定的问题继续追问我，我会按当前课程语境帮你拆解。${deepExtra}${resourceHint}`,
-    references,
+    answer: '回答暂未生成完成。你可以稍后重试，或把问题补充得更具体后再次发送。',
+    references: referencesFromResources(resources),
     fallbackUsed: true,
   };
 }
@@ -204,7 +191,7 @@ export async function generateContextualLearningAnswer(input: GenerateContextual
 
   if (!safeInput.question) {
     return {
-      answer: '请先输入你想问的问题，我会结合当前课程页面帮你解释。',
+      answer: '请先输入你想问的问题。',
       references: [],
       fallbackUsed: true,
     };
@@ -231,6 +218,6 @@ export async function generateContextualLearningAnswer(input: GenerateContextual
       resourceCount: resources.length,
     });
 
-    return createFallbackAnswer(safeInput as Required<Pick<GenerateContextualLearningAnswerInput, 'question' | 'pageType'>> & GenerateContextualLearningAnswerInput, resources);
+    return createUnavailableAnswer(resources);
   }
 }

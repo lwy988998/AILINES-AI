@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     const question = sanitizeText(rawBody.question, 1200);
 
     if (!question) {
-      return NextResponse.json({ answer: '请先输入你想问的问题。', references: [], fallbackUsed: true }, { status: 400 });
+      return NextResponse.json({ answer: '请先输入你想问的问题。', references: [] }, { status: 400 });
     }
 
     const user = await getCurrentUserFromRequest(request);
@@ -94,7 +94,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         answer: access.reason || '浮动 AILINES AI 学习助手是 Pro 功能，升级后可在学习页面随时追问。',
         references: [],
-        fallbackUsed: true,
         upgradeRequired: true,
         requiredTier: access.requiredTier || 'pro',
       }, { status: 200 });
@@ -105,7 +104,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         answer: '今日 AILINES AI 学习助手次数已用完，升级会员可获得更多额度。',
         references: [],
-        fallbackUsed: true,
         usage,
       }, { status: 200 });
     }
@@ -125,14 +123,14 @@ export async function POST(request: NextRequest) {
     const resources = await searchResourcesSafely(buildSearchQuery(context));
     const answer = await generateContextualLearningAnswer({ ...context, resources });
     await incrementUsage('assistant_chat', usage.scope);
+    const { fallbackUsed: _fallbackUsed, ...safeAnswer } = answer;
 
-    return NextResponse.json({ ...answer, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
+    return NextResponse.json({ ...safeAnswer, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     console.warn('Learning chat fallback response', error instanceof Error ? error.message : 'unknown error');
     return NextResponse.json({
-      answer: '当前连接不稳定，我先根据页面上下文给你基础回答：请先回到当前课程目标，确认这一页要求你理解的核心概念、要完成的任务和检查标准。你可以把问题再具体一点，我会继续按当前学习场景帮你拆解。',
+      answer: '回答暂未生成完成。你可以稍后重试，或把问题补充得更具体后再次发送。',
       references: [],
-      fallbackUsed: true,
     });
   }
 }

@@ -111,7 +111,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
           <div>
             <p className="text-sm font-semibold text-sky-700">分步练习</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">跟着做，而不是只看懂</h2>
-            <p className="mt-2 break-words text-sm leading-6 text-slate-600">勾选状态保存在当前页面；点击“标记本节已完成”后会把本学习点整体进度写入数据库。</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">勾选状态保存在当前页面；点击“标记本节已完成”后会同步本学习点整体进度。</p>
           </div>
           <span className="w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-800">{checkedCount} / {answer.lessonSteps.length} 步</span>
         </div>

@@ -151,7 +151,7 @@ function PhaseGenerationPendingState({ goal, mode, planHref }: { goal: string; m
         <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">阶段内容暂未生成完成</h1>
           <p className="mt-3 text-base leading-7 text-slate-600">{buildUnavailableCourseContentNotice('这个阶段')}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">当前没有足够的 AI 课程结构来生成阶段讲解、任务、课件和知识结构，因此不会用通用模板伪装成课程。</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">当前课程结构还不完整，暂时无法生成阶段讲解、任务、课件和知识结构。请回到课程页重新生成或刷新后重试。</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成课程</Link>
             <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>

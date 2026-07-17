@@ -12,7 +12,6 @@ type ImageGenerationState = {
   imageBase64?: string;
   mimeType?: string;
   revisedPrompt?: string;
-  provider?: string;
   message?: string;
 };
 
@@ -54,7 +53,6 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         imageBase64?: string;
         mimeType?: string;
         revisedPrompt?: string;
-        provider?: string;
         message?: string;
       };
 
@@ -67,7 +65,6 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
           imageBase64: result.imageBase64,
           mimeType: result.mimeType || 'image/png',
           revisedPrompt: result.revisedPrompt,
-          provider: result.provider,
         });
         return;
       }
@@ -91,7 +88,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         <div>
           <p className="text-sm font-semibold text-sky-700">生成需求</p>
           <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{prompt}</h1>
-          <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-slate-600">AILINES AI 会根据你的描述生成图片。当前仅支持根据文字描述生成图片，你可以在生成后自行保存。</p>
+          <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-slate-600">AILINES AI 会根据你的描述生成图片。你可以调整描述重新生成，也可以在结果完成后保存图片。</p>
         </div>
         <button
           type="button"

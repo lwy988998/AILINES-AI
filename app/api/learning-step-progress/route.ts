@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const goal = request.nextUrl.searchParams.get('goal')?.trim() || '';
 
   if (!goal || !phaseIndex) {
-    return NextResponse.json({ error: '学习步骤进度参数不完整' }, { status: 400 });
+    return NextResponse.json({ error: '学习步骤进度参数不完整。' }, { status: 400 });
   }
 
   try {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch {
-    return NextResponse.json({ items: [], error: '学习步骤进度加载失败，请稍后重试' }, { status: 200 });
+    return NextResponse.json({ items: [], error: '学习步骤进度加载失败，请稍后重试。' }, { status: 200 });
   }
 }
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请求内容格式不正确' }, { status: 400 });
+    return NextResponse.json({ error: '请求内容格式不正确。' }, { status: 400 });
   }
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   const status = normalizeLearningStepStatus(data.status);
 
   if (!goal || phaseIndex === null || phaseIndex < 1 || stepIndex === null || !stepTitle) {
-    return NextResponse.json({ error: '学习步骤进度参数不完整' }, { status: 400 });
+    return NextResponse.json({ error: '学习步骤进度参数不完整。' }, { status: 400 });
   }
 
   try {
@@ -83,6 +83,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, item });
   } catch {
-    return NextResponse.json({ error: '学习步骤进度保存失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '学习步骤进度保存失败，请稍后重试。' }, { status: 500 });
   }
 }

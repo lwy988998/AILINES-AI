@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请求内容格式不正确' }, { status: 400 });
+    return NextResponse.json({ error: '登录未完成，请检查信息后重试。' }, { status: 400 });
   }
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
   const password = typeof data.password === 'string' ? data.password : '';
   const anonymousId = typeof data.anonymousId === 'string' ? data.anonymousId.trim() : undefined;
 
-  if (!email || !password) return NextResponse.json({ error: '邮箱或密码错误' }, { status: 401 });
+  if (!email || !password) return NextResponse.json({ error: '邮箱或密码不正确，请重新输入。' }, { status: 401 });
 
   try {
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true, passwordHash: true } });
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
-      return NextResponse.json({ error: '邮箱或密码错误' }, { status: 401 });
+      return NextResponse.json({ error: '邮箱或密码不正确，请重新输入。' }, { status: 401 });
     }
 
     const session = await createSession(user.id);
@@ -36,6 +36,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.warn('login failed', error instanceof Error ? error.message : 'unknown');
-    return NextResponse.json({ error: '登录失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '登录未完成，请稍后重试。' }, { status: 500 });
   }
 }

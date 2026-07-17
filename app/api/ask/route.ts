@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GenerateAskAnswerError, generateAskAnswerWithAI } from '@/lib/ai/generateAskAnswer';
 import type { PlanMode } from '@/lib/ai/types';
-import { getMockAnswer } from '@/lib/mockAnswers';
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -9,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请提供问题' }, { status: 400 });
+    return NextResponse.json({ error: '请提供问题。' }, { status: 400 });
   }
 
   const goal = typeof body === 'object' && body !== null && 'goal' in body ? String(body.goal).trim() : '学习';
@@ -18,19 +17,17 @@ export async function POST(request: NextRequest) {
   const mode: PlanMode = rawMode === 'lite' ? 'lite' : 'deep';
 
   if (!question) {
-    return NextResponse.json({ error: '请提供问题' }, { status: 400 });
+    return NextResponse.json({ error: '请提供问题。' }, { status: 400 });
   }
 
   try {
     const answer = await generateAskAnswerWithAI(goal, question, mode);
-    return NextResponse.json({ answer, source: 'ai' });
+    return NextResponse.json({ answer });
   } catch (error) {
     const type = error instanceof GenerateAskAnswerError ? error.type : 'unknown';
     console.warn('Ask API fallback', { errorType: type, mode, questionLength: question.length });
     return NextResponse.json({
-      answer: getMockAnswer(question),
-      source: 'fallback',
-      message: '本次回答未完成，已为你准备了一份可参考的学习提示。',
-    });
+      error: '回答暂未生成完成，请稍后重试。',
+    }, { status: error instanceof GenerateAskAnswerError ? error.status : 502 });
   }
 }

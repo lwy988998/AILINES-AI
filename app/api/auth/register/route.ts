@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请求内容格式不正确' }, { status: 400 });
+    return NextResponse.json({ error: '注册未完成，请检查信息后重试。' }, { status: 400 });
   }
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
   const name = typeof data.name === 'string' && data.name.trim() ? data.name.trim().slice(0, 80) : null;
   const anonymousId = typeof data.anonymousId === 'string' ? data.anonymousId.trim() : undefined;
 
-  if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: '请输入有效邮箱' }, { status: 400 });
-  if (password.length < 6) return NextResponse.json({ error: '密码至少 6 位' }, { status: 400 });
+  if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: '请输入有效邮箱。' }, { status: 400 });
+  if (password.length < 6) return NextResponse.json({ error: '密码至少需要 6 位。' }, { status: 400 });
 
   try {
     const user = await prisma.user.create({
@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return NextResponse.json({ error: '该邮箱已注册，请直接登录' }, { status: 409 });
+      return NextResponse.json({ error: '该邮箱已注册，请直接登录。' }, { status: 409 });
     }
     console.warn('register failed', error instanceof Error ? error.message : 'unknown');
-    return NextResponse.json({ error: '注册失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '注册未完成，请检查信息后重试。' }, { status: 500 });
   }
 }

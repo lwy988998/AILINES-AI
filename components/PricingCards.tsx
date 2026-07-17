@@ -39,7 +39,7 @@ export function PricingCards({ currentTier = 'free' }: { currentTier?: Membershi
             `每日生图 ${limits.imageGeneratePerDay} 次`,
             '历史课堂和课程进度保存',
             limits.allowCourseSlides ? '课程课件和思维导图' : '课程总览',
-            tier === 'max' ? '所有功能开放，后续高级能力优先接入' : tier === 'pro' ? '浮动 AILINES AI 助手和深度规划' : '搜索资料和 Free 权益',
+            tier === 'max' ? '更高额度和完整学习能力' : tier === 'pro' ? '浮动 AILINES AI 助手和深度规划' : '搜索资料和 Free 权益',
           ];
 
           return (

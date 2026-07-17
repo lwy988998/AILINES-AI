@@ -29,7 +29,7 @@ function CourseGenerationPendingState({ goal, mode, message }: { goal: string; m
       <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-950">课程内容暂未生成完成</h1>
         <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这门课程')}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">为避免展示模板化课程，本次没有用固定内容伪装成课程。请点击重新生成，AILINES AI 会再次根据「{goal}」生成具体学习路径。</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">这部分内容暂未生成完整。请点击重新生成，AILINES AI 会再次根据「{goal}」生成具体学习路径。</p>
         <div className="mt-6 flex justify-center">
           <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成</Link>
         </div>
@@ -130,7 +130,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         const adaptedPlan = adaptGeneratedPlan(generatedPlan, mode);
 
         if (!isRenderablePlan(adaptedPlan)) {
-          throw new Error('AILINES AI 返回内容格式异常，请稍后重试');
+          throw new Error('内容暂未生成完成，请稍后重试。');
         }
 
         plan = normalizeCoursePlanContent(adaptedPlan, goal);

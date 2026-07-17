@@ -96,7 +96,7 @@ export function FloatingAilinesChat(props: FloatingAilinesChatProps) {
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-20)));
     } catch {
-      // localStorage 失败不影响聊天功能。
+      // localStorage 失败时仅保留当前会话。
     }
   }, [messages, storageKey]);
 
@@ -136,7 +136,7 @@ export function FloatingAilinesChat(props: FloatingAilinesChatProps) {
       const data = await response.json().catch(() => ({})) as { answer?: unknown; references?: unknown; fallbackUsed?: unknown };
       const answer = typeof data.answer === 'string' && data.answer.trim()
         ? data.answer.trim()
-        : '当前连接不稳定，我先根据页面上下文给你基础回答，请稍后再试。';
+        : '回答暂未生成完成。你可以稍后重试，或把问题补充得更具体后再次发送。';
       const references = Array.isArray(data.references)
         ? data.references.map((item) => {
           const record = item && typeof item === 'object' ? item as Partial<ChatReference> : {};
@@ -151,7 +151,7 @@ export function FloatingAilinesChat(props: FloatingAilinesChatProps) {
     } catch {
       const fallbackMessage: ChatMessage = {
         role: 'assistant',
-        content: '当前连接不稳定，我先根据页面上下文给你基础回答，请稍后再试。你可以先确认当前阶段目标、要完成的任务和验收标准，再把具体卡点告诉我。',
+        content: '回答暂未生成完成。你可以稍后重试，或把问题补充得更具体后再次发送。',
         references: [],
         fallbackUsed: true,
       };

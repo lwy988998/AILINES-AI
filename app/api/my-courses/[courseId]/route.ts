@@ -8,7 +8,7 @@ export async function DELETE(
 ) {
   const { courseId } = await params;
   const safeCourseId = courseId?.trim();
-  if (!safeCourseId) return NextResponse.json({ error: 'courseId 缺失' }, { status: 400 });
+  if (!safeCourseId) return NextResponse.json({ error: '课程参数不完整。' }, { status: 400 });
 
   try {
     const user = await getCurrentUserFromRequest(request);
@@ -26,10 +26,10 @@ export async function DELETE(
       return true;
     });
 
-    if (!deleted) return NextResponse.json({ error: '课程不存在或无权删除。' }, { status: 404 });
+    if (!deleted) return NextResponse.json({ error: '课程不存在，或你没有访问此内容的权限。' }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.warn('delete my course failed', error instanceof Error ? error.message : 'unknown');
-    return NextResponse.json({ error: '课程删除失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程删除失败，请稍后重试。' }, { status: 500 });
   }
 }

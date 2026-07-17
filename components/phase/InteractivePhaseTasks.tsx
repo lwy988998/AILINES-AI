@@ -92,7 +92,7 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
     setStatuses(localStatuses);
     setExpanded({});
     setHydrated(true);
-    setSyncLabel('正在同步数据库状态...');
+    setSyncLabel('正在同步学习状态…');
 
     let cancelled = false;
 
@@ -118,14 +118,14 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
           const databaseStatuses = apiItemsToStatuses(items, tasks.length);
           setStatuses(databaseStatuses);
           window.localStorage.setItem(storageKey, JSON.stringify(databaseStatuses));
-          setSyncLabel('已从数据库恢复任务状态');
+          setSyncLabel('已恢复任务状态');
         } else {
-          setSyncLabel(hasAnySavedStatus(localStatuses) ? '数据库暂无记录，已使用本地缓存' : '状态会自动保存到数据库');
+          setSyncLabel(hasAnySavedStatus(localStatuses) ? '已恢复本地任务状态' : '状态会自动保存');
         }
       } catch (error) {
         if (!cancelled) {
           console.warn('Task progress database load failed; using localStorage fallback.', error instanceof Error ? error.message : 'unknown');
-          setSyncLabel('数据库暂不可用，已使用本地缓存');
+          setSyncLabel('已保留本地任务状态');
         }
       }
     }
@@ -171,12 +171,12 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
     })
       .then((response) => {
         if (!response.ok) throw new Error('task progress save failed');
-        if (latestSaveRef.current[index] === version) setSyncLabel('已保存到数据库');
+        if (latestSaveRef.current[index] === version) setSyncLabel('已保存任务状态');
       })
       .catch((error) => {
         if (latestSaveRef.current[index] === version) {
           console.warn('Task progress database save failed; localStorage fallback kept.', error instanceof Error ? error.message : 'unknown');
-          setSyncLabel('数据库保存失败，已保留本地缓存');
+          setSyncLabel('已保留本地任务状态');
         }
       });
   }
@@ -190,7 +190,7 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
       window.localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-    setSyncLabel('正在保存到数据库...');
+    setSyncLabel('正在保存任务状态…');
     saveStatusToDatabase(index, status);
   }
 

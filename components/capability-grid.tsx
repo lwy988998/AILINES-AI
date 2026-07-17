@@ -8,11 +8,11 @@ export function CapabilityGrid() {
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-sky-700">MVP 能力摘要</p>
+          <p className="text-sm font-semibold text-sky-700">核心能力</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">从目标到行动计划</h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-slate-600">
-          当前版本先完成入口与页面骨架，后续可以逐步接入 AILINES AI 生成、账户、会员和进度数据。
+          AILINES AI 会把学习目标拆成课程路线、阶段任务、学习资料和可记录的进度。
         </p>
       </div>
 

@@ -10,13 +10,13 @@ type Params = { params: Promise<{ userId: string }> };
 export async function POST(request: NextRequest, { params }: Params) {
   const auth = await requireAdminFromRequest(request);
   if (!auth.isAdmin) {
-    return NextResponse.json({ error: auth.user ? 'Forbidden' : 'Unauthorized' }, { status: auth.status });
+    return NextResponse.json({ error: auth.user ? '你没有访问管理员后台的权限。' : '请先登录管理员账号。' }, { status: auth.status });
   }
 
   const body = await request.json().catch(() => ({})) as { tier?: unknown };
   const rawTier = typeof body.tier === 'string' ? body.tier.trim().toLowerCase() : '';
   if (rawTier !== 'free' && rawTier !== 'pro' && rawTier !== 'max') {
-    return NextResponse.json({ error: 'tier must be one of: free, pro, max.' }, { status: 400 });
+    return NextResponse.json({ error: '会员等级参数不正确。' }, { status: 400 });
   }
 
   const { userId } = await params;
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }).catch(() => null);
 
   if (!user) {
-    return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    return NextResponse.json({ error: '未找到该用户。' }, { status: 404 });
   }
 
   return NextResponse.json({

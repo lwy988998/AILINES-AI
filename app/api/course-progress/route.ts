@@ -32,17 +32,17 @@ function serializeProgress(progress: ReturnType<typeof createEmptyCourseProgress
 export async function GET(request: NextRequest) {
   const courseId = request.nextUrl.searchParams.get('courseId')?.trim() || '';
   const anonymousId = request.nextUrl.searchParams.get('anonymousId')?.trim() || undefined;
-  if (!courseId) return NextResponse.json({ error: 'courseId 缺失' }, { status: 400 });
+  if (!courseId) return NextResponse.json({ error: '课程参数不完整。' }, { status: 400 });
 
   try {
     const user = await getCurrentUserFromRequest(request);
     const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
-    if (!course) return NextResponse.json({ error: '无权查看这个课程的学习进度' }, { status: 403 });
+    if (!course) return NextResponse.json({ error: '你没有访问此内容的权限。' }, { status: 403 });
 
     const progress = await getCourseProgress(courseId);
     return NextResponse.json({ progress: serializeProgress(progress || createEmptyCourseProgress(courseId)) });
   } catch {
-    return NextResponse.json({ progress: serializeProgress(createEmptyCourseProgress(courseId)), error: '课程总进度加载失败，请稍后重试' }, { status: 200 });
+    return NextResponse.json({ progress: serializeProgress(createEmptyCourseProgress(courseId)), error: '课程总进度加载失败，请稍后重试。' }, { status: 200 });
   }
 }
 
@@ -51,19 +51,19 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请求内容格式不正确' }, { status: 400 });
+    return NextResponse.json({ error: '请求内容格式不正确。' }, { status: 400 });
   }
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
   const action = optionalString(data.action);
   const courseId = optionalString(data.courseId);
-  if (!courseId) return NextResponse.json({ error: 'courseId 缺失' }, { status: 400 });
+  if (!courseId) return NextResponse.json({ error: '课程参数不完整。' }, { status: 400 });
 
   try {
     const anonymousId = optionalString(data.anonymousId);
     const user = await getCurrentUserFromRequest(request);
     const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
-    if (!course) return NextResponse.json({ error: '无权修改这个课程的学习进度' }, { status: 403 });
+    if (!course) return NextResponse.json({ error: '你没有访问此内容的权限。' }, { status: 403 });
     const ownedAnonymousId = course.anonymousId || anonymousId;
 
     if (action === 'recompute') {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       const lastVisitedUrl = optionalString(data.lastVisitedUrl);
       const lastPageType = optionalString(data.lastPageType);
       if (!goal || !lastVisitedUrl || !lastPageType) {
-        return NextResponse.json({ error: '课程访问位置参数不完整' }, { status: 400 });
+        return NextResponse.json({ error: '课程访问位置参数不完整。' }, { status: 400 });
       }
 
       const progress = await updateLastVisited({
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, progress: serializeProgress(progress || createEmptyCourseProgress(courseId)) });
     }
 
-    return NextResponse.json({ error: 'action 不支持' }, { status: 400 });
+    return NextResponse.json({ error: '请求操作不支持。' }, { status: 400 });
   } catch {
-    return NextResponse.json({ error: '课程总进度保存失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程总进度保存失败，请稍后重试。' }, { status: 500 });
   }
 }

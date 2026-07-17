@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请提供学习目标' }, { status: 400 });
+    return NextResponse.json({ error: '请提供学习目标。' }, { status: 400 });
   }
 
   const goal = typeof body === 'object' && body !== null && 'goal' in body ? String(body.goal).trim() : '';
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const mode: PlanMode = rawMode === 'lite' ? 'lite' : 'deep';
 
   if (!goal) {
-    return NextResponse.json({ error: '请提供学习目标' }, { status: 400 });
+    return NextResponse.json({ error: '请提供学习目标。' }, { status: 400 });
   }
 
   const user = await getCurrentUserFromRequest(request);
@@ -43,14 +43,13 @@ export async function POST(request: NextRequest) {
   try {
     const plan = await generatePlanWithAI(goal, mode);
     await incrementUsage('course_generate', usage.scope);
-    return NextResponse.json({ plan, source: 'ai', usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
+    return NextResponse.json({ plan, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     const type = error instanceof GeneratePlanError ? error.type : 'unknown';
     console.warn('Generate plan API unavailable', { errorType: type, mode, goalLength: goal.length });
     await incrementUsage('course_generate', usage.scope);
     return NextResponse.json({
       error: '课程内容暂未生成完成，你可以点击重新生成。',
-      source: 'invalid',
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
     }, { status: error instanceof GeneratePlanError ? error.status : 502 });
   }

@@ -30,7 +30,7 @@ function fallbackGoal(prompt: string) {
   return prompt.trim();
 }
 
-function createFallbackResponse(prompt: string, mode: PlanMode, message = '图片识别暂不可用，请补充文字描述', status = 200) {
+function createFallbackResponse(prompt: string, mode: PlanMode, message = '图片识别未完成，请补充文字描述后重试', status = 200) {
   return NextResponse.json({
     success: false,
     message,
@@ -149,5 +149,5 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json({ error: '请求方式不支持。' }, { status: 405 });
 }

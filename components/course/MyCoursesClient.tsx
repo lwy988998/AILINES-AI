@@ -112,7 +112,7 @@ export function MyCoursesClient() {
       setState('ready');
     } catch (loadError) {
       console.warn('Load my courses failed', loadError instanceof Error ? loadError.message : 'unknown');
-      setError('课程加载失败，请稍后重试');
+      setError('课程加载失败，请刷新后重试。');
       setState('error');
     }
   }, []);
@@ -145,7 +145,7 @@ export function MyCoursesClient() {
       window.dispatchEvent(new Event('ailines-course-history-updated'));
     } catch (deleteError) {
       console.warn('Delete course failed', deleteError instanceof Error ? deleteError.message : 'unknown');
-      setError(deleteError instanceof Error && deleteError.message !== 'delete failed' ? deleteError.message : '删除失败，请稍后重试');
+      setError(deleteError instanceof Error && deleteError.message !== 'delete failed' ? deleteError.message : '删除失败，请稍后重试。');
     } finally {
       setDeletingId(null);
     }
@@ -186,7 +186,7 @@ export function MyCoursesClient() {
       {state === 'error' ? (
         <section className="rounded-3xl border border-red-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
           <AlertCircle className="mx-auto h-12 w-12 text-red-600" />
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">课程加载失败，请稍后重试</h2>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">课程加载失败，请刷新后重试。</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">{error || '暂时无法读取我的课堂。'}</p>
           <button type="button" onClick={loadCourses} className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
             <RefreshCw className="h-4 w-4" />重试

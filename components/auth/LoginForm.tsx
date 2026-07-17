@@ -30,12 +30,12 @@ export function LoginForm() {
         body: JSON.stringify({ email, password, anonymousId: getOrCreateAnonymousId() }),
       });
       const data = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(data.error || '登录失败');
+      if (!response.ok) throw new Error(data.error || '邮箱或密码不正确，请重新输入。');
       window.dispatchEvent(new Event('ailines-course-history-updated'));
       router.push(getRedirectTarget());
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
+      setError(err instanceof Error ? err.message : '邮箱或密码不正确，请重新输入。');
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +53,7 @@ export function LoginForm() {
       </div>
       {error ? <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</p> : null}
       <button type="submit" disabled={isSubmitting} className="w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60">
-        {isSubmitting ? '登录中...' : '登录'}
+        {isSubmitting ? '登录中…' : '登录'}
       </button>
       <p className="text-center text-sm text-slate-500">
         没有账号？ <Link href="/register" className="font-semibold text-sky-700 hover:text-sky-800">注册</Link>

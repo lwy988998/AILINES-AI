@@ -4,7 +4,7 @@ import { ChatMessageList } from '@/components/ChatMessageList';
 import { QuestionExamples } from '@/components/QuestionExamples';
 import { SiteHeader } from '@/components/site-header';
 import { generateAskAnswerWithAI } from '@/lib/ai/generateAskAnswer';
-import { getMockAnswer, type ChatMessage } from '@/lib/mockAnswers';
+import type { ChatMessage } from '@/lib/mockAnswers';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,8 +53,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
         id: createMessageId('assistant'),
         role: 'assistant',
         content: '',
-        error: '本次回答未完成，已为你准备了一份可参考的学习提示。',
-        answer: getMockAnswer(question),
+        error: '回答暂未生成完成。请稍后重试，或补充更具体的问题后再次发送。',
       });
     }
   }

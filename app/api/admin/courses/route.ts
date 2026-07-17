@@ -13,7 +13,7 @@ function boundedPageSize(value: string | null) {
 export async function GET(request: NextRequest) {
   const auth = await requireAdminFromRequest(request);
   if (!auth.isAdmin) {
-    return NextResponse.json({ error: auth.user ? 'Forbidden' : 'Unauthorized' }, { status: auth.status });
+    return NextResponse.json({ error: auth.user ? '你没有访问管理员后台的权限。' : '请先登录管理员账号。' }, { status: auth.status });
   }
 
   const { searchParams } = new URL(request.url);

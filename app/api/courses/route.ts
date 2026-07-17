@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch {
-    return NextResponse.json({ courses: [], error: '课程历史加载失败，请稍后重试' }, { status: 200 });
+    return NextResponse.json({ courses: [], error: '课程加载失败，请稍后重试。' }, { status: 200 });
   }
 }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: '请求内容格式不正确' }, { status: 400 });
+    return NextResponse.json({ error: '请求内容格式不正确。' }, { status: 400 });
   }
 
   const data = body && typeof body === 'object' ? body as Record<string, unknown> : {};
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   const payload = data.payload;
 
   if (!goal || !title || !payload) {
-    return NextResponse.json({ error: '课程信息不完整' }, { status: 400 });
+    return NextResponse.json({ error: '课程信息不完整。' }, { status: 400 });
   }
 
   try {
@@ -104,6 +104,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ courseId, href: `/plan?courseId=${encodeURIComponent(courseId)}` });
   } catch {
-    return NextResponse.json({ error: '课程保存失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程保存失败，请稍后重试。' }, { status: 500 });
   }
 }

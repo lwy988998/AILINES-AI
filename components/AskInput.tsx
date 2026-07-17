@@ -32,7 +32,7 @@ export function AskInput({ goal, defaultQuestion = '', mode = 'deep' }: AskInput
           发送
         </button>
       </form>
-      <p className="mt-3 text-xs leading-5 text-slate-500">通过原生表单提交，发送后会跳转并生成步骤化解答。</p>
+      <p className="mt-3 text-xs leading-5 text-slate-500">发送后会生成步骤化解答，方便你继续学习。</p>
     </section>
   );
 }

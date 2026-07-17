@@ -30,12 +30,12 @@ export function RegisterForm() {
         body: JSON.stringify({ name, email, password, anonymousId: getOrCreateAnonymousId() }),
       });
       const data = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(data.error || '注册失败');
+      if (!response.ok) throw new Error(data.error || '注册未完成，请检查信息后重试。');
       window.dispatchEvent(new Event('ailines-course-history-updated'));
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '注册失败');
+      setError(err instanceof Error ? err.message : '注册未完成，请检查信息后重试。');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +61,7 @@ export function RegisterForm() {
       </div>
       {error ? <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</p> : null}
       <button type="submit" disabled={isSubmitting} className="w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60">
-        {isSubmitting ? '注册中...' : '注册'}
+        {isSubmitting ? '注册中…' : '注册'}
       </button>
       <p className="text-center text-sm text-slate-500">
         已有账号？ <Link href="/login" className="font-semibold text-sky-700 hover:text-sky-800">去登录</Link>

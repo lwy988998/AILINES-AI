@@ -43,7 +43,7 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
   },
   restore: {
     title: '正在恢复你的课堂',
-    subtitle: 'AILINES AI 正在从数据库读取课程快照和学习进度，不会重新生成课程。',
+    subtitle: 'AILINES AI 正在读取已保存的课堂内容和学习进度，不会重新生成课程。',
     steps: ['正在读取课程记录', '正在恢复课程快照', '正在加载学习进度', '正在准备继续学习入口'],
     hint: '正在恢复你保存过的课程内容。',
   },
@@ -62,7 +62,7 @@ const presets: Record<AilinesGeneratingType, { title: string; subtitle: string; 
   image: {
     title: 'AILINES AI 正在生成图像',
     subtitle: '我们正在理解画面需求、优化提示词，并调用图像模型准备结果。',
-    steps: ['正在理解你的画面需求', '正在优化图像提示词', '正在调用图像生成模型', '正在处理生成结果', '正在准备展示图片'],
+    steps: ['正在理解你的画面需求', '正在优化图像提示词', '正在生成画面细节', '正在处理生成结果', '正在准备展示图片'],
     hint: '图片生成完成后会在页面中展示，你也可以重新生成。',
   },
   progress: {

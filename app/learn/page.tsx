@@ -193,7 +193,7 @@ async function searchLearningResources(query: string) {
     const result = await Promise.race([
       searchResources(query),
       new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new ResourceSearchError('资源搜索暂时失败，请稍后重试', 502)), RESOURCE_SEARCH_TIMEOUT_MS);
+        setTimeout(() => reject(new ResourceSearchError('资料搜索未完成，请稍后重试。', 502)), RESOURCE_SEARCH_TIMEOUT_MS);
       }),
     ]);
 
@@ -223,7 +223,7 @@ function LearningGenerationPendingState({ regenerateHref, planHref, message }: {
           <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">这节课暂未生成完成</h1>
           <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这节微课程')}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">为避免展示模板化内容，这里不会用固定讲义伪装成课程。你可以重新生成本课，或先回到课程大纲选择其它学习点。</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">这节课暂未生成完整。你可以重新生成本课，或先回到课程大纲选择其它学习点。</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href={regenerateHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成本课</Link>
             <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>

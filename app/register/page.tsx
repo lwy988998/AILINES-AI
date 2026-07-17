@@ -9,7 +9,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <p className="text-sm font-semibold text-sky-700">AILINES AI 账号</p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">注册 AILINES AI</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">只需要邮箱和密码。不会影响未登录的匿名学习流程。</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">只需要邮箱和密码。注册后会自动关联当前浏览器里的历史课堂和学习进度。</p>
         </div>
         <RegisterForm />
       </section>

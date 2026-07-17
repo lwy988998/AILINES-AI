@@ -14,7 +14,7 @@ export async function GET(
     const course = await getCourseOwnedByRequester({ courseId, anonymousId, userId: user?.id });
     const snapshot = course?.snapshots[0];
     if (!course || !snapshot) {
-      return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
+      return NextResponse.json({ error: '课程不存在或已失效。' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -37,7 +37,7 @@ export async function GET(
       },
     });
   } catch {
-    return NextResponse.json({ error: '课程历史加载失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程加载失败，请刷新后重试。' }, { status: 500 });
   }
 }
 
@@ -52,10 +52,10 @@ export async function DELETE(
     const user = await getCurrentUserFromRequest(request);
     const deleted = await deleteCourseForRequester({ courseId, anonymousId, userId: user?.id });
     if (!deleted) {
-      return NextResponse.json({ error: '历史课堂不存在或已失效' }, { status: 404 });
+      return NextResponse.json({ error: '课程不存在或已失效。' }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: '课程删除失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程删除失败，请稍后重试。' }, { status: 500 });
   }
 }

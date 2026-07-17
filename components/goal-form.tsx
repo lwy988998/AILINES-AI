@@ -194,7 +194,7 @@ export function GoalForm() {
 
     if (mode === 'image') {
       if (selectedImageFile) {
-        setImageError('当前生图模式暂只支持文字描述，参考图能力后续开放。');
+        setImageError('生图请先使用文字描述。你可以移除图片后继续生成。');
       }
       setSubmittingMode(mode);
       setIsGeneratingImage(true);
@@ -238,22 +238,22 @@ export function GoalForm() {
       }
 
       if (goal) {
-        setImageError(result.message || '图片识别暂不可用，已按文字描述生成学习路线');
+        setImageError(result.message || '图片识别未完成，已按文字描述生成学习路线');
         routeToTarget(goal, mode);
         didNavigate = true;
         return;
       }
 
-      setImageError(result.message || '图片识别暂不可用，请补充文字描述');
+      setImageError(result.message || '图片识别未完成，请补充文字描述后重试');
     } catch {
       if (goal) {
-        setImageError('图片识别暂不可用，已按文字描述生成学习路线');
+        setImageError('图片识别未完成，已按文字描述生成学习路线');
         routeToTarget(goal, mode);
         didNavigate = true;
         return;
       }
 
-      setImageError('图片识别暂不可用，请补充文字描述');
+      setImageError('图片识别未完成，请补充文字描述后重试');
     } finally {
       if (!didNavigate) {
         submitLockRef.current = false;
@@ -358,7 +358,7 @@ export function GoalForm() {
             />
             <div className="min-w-0 flex-1">
               <p className="break-words text-sm font-semibold text-slate-900">{selectedImageFile.name}</p>
-              <p className="mt-1 text-xs text-slate-500">{formatFileSize(selectedImageFile.size)} · {modeValue === 'image' ? '当前生图模式暂只支持文字描述' : '将结合图片内容生成学习目标'}</p>
+              <p className="mt-1 text-xs text-slate-500">{formatFileSize(selectedImageFile.size)} · {modeValue === 'image' ? '生图请先使用文字描述' : '将结合图片内容生成学习目标'}</p>
             </div>
             <button
               type="button"

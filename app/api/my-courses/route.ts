@@ -172,6 +172,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.warn('load my courses failed', error instanceof Error ? error.message : 'unknown');
-    return NextResponse.json({ error: '课程加载失败，请稍后重试' }, { status: 500 });
+    return NextResponse.json({ error: '课程加载失败，请刷新后重试。' }, { status: 500 });
   }
 }
