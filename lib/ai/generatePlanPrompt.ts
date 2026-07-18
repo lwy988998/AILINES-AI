@@ -43,7 +43,7 @@ export function createGeneratePlanMessages(goal: string, mode: PlanMode = 'deep'
     },
     {
       role: 'user',
-      content: `学习目标：${goal}\n用户已经选择的规划模式：${mode === 'lite' ? '快速规划 mode=lite' : '深度 AILINES AI 规划 / 系统学习课程 mode=deep'}\n必须严格按照用户选择的模式生成，不允许自行改变模式，不允许输出或暗示另一种模式。${mode === 'lite' ? '请生成快速可执行 JSON：标题必须包含或贴近用户目标；不要写“通用技能学习方案”；重点是马上怎么做、准备什么、练几次、怎么判断合格、常见错误是什么。' : '请生成深度课程总览结构 JSON：更细、更系统，但只写大纲结构、阶段目标、topic、短步骤、阶段产出和检查点；不要一次性生成完整讲义、长篇课件或每个 topic 的完整 lesson。'}`, 
+      content: `学习目标：${goal}\n用户已经选择的规划模式：${mode === 'lite' ? '快速规划 mode=lite' : '深度 AILINES AI 规划 / 系统学习课程 mode=deep'}\n必须严格按照用户选择的模式生成，不允许自行改变模式，不允许输出或暗示另一种模式。${mode === 'lite' ? '请生成快速可执行 JSON：标题必须包含或贴近用户目标；不要写“通用技能学习方案”；重点是马上怎么做、准备什么、练几次、怎么判断合格、常见错误是什么。' : '请生成深度课程总览结构 JSON：更细、更系统，但只写大纲结构、阶段目标、topic、短步骤、阶段产出和检查点；不要一次性生成完整讲义、长篇课件或每个 topic 的完整 lesson。'}`,
     },
   ] as const;
 }
