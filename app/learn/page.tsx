@@ -11,7 +11,6 @@ import type { PlanMode } from '@/lib/ai/types';
 import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getLearningSession, upsertLearningSession } from '@/lib/course/learningSessionRepository';
 import { type LearningAnswer } from '@/lib/learning/mockLearningAnswer';
-import { getProgressStagesByGoal } from '@/lib/mockProgress';
 import type { CourseStage, MockPlan } from '@/lib/mockPlan';
 import { ResourceSearchError, searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
@@ -171,21 +170,8 @@ function getDifficulty(mode: PlanMode) {
   return mode === 'lite' ? '入门' : '系统学习';
 }
 
-function findTaskId(goal: string, phaseName: string, topic: string, phaseIndex?: string, topicIndex?: string) {
-  const stages = getProgressStagesByGoal(goal);
-  const phaseNumber = Number(phaseIndex);
-  const topicNumber = Number(topicIndex);
-  const phase = Number.isInteger(phaseNumber) && phaseNumber > 0
-    ? stages[phaseNumber - 1]
-    : stages.find((stage) => stage.title === phaseName);
-
-  if (!phase) return undefined;
-
-  const task = Number.isInteger(topicNumber) && topicNumber > 0
-    ? phase.tasks[topicNumber - 1]
-    : phase.tasks.find((item) => item.title === topic);
-
-  return task?.title === topic ? task.id : task?.id;
+function findTaskId(_goal: string, _phaseName: string, _topic: string, _phaseIndex?: string, _topicIndex?: string) {
+  return undefined;
 }
 
 async function searchLearningResources(query: string) {

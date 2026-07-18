@@ -1,6 +1,7 @@
 import type { GeneratedCourseSlide, GeneratedMindMap, GeneratedMindMapNode, GeneratedPlan, GeneratedPlanPhase, GeneratedPlanStep } from '@/lib/ai/types';
 import type { CourseMindMap, CourseSlide, CourseStep, MockPlan } from '@/lib/mockPlan';
 import { createSpecificStepContent, normalizeCoursePlanContent } from '@/lib/courseContentQuality';
+import { markCourseContentSource } from '@/lib/courseContentSource';
 
 function ensureArray<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
@@ -50,14 +51,14 @@ function slug(value: string, fallback: string) {
 }
 
 function adaptSlide(slide: GeneratedCourseSlide, index: number): CourseSlide {
-  return {
+  return markCourseContentSource({
     title: safeText(slide.title, `课程课件 ${index + 1}`),
     subtitle: safeText(slide.subtitle, ''),
     content: safeText(slide.content, '围绕本页主题理解核心概念，并通过练习完成掌握检查。'),
     bullets: ensureArray(slide.bullets).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
     speakerNote: safeText(slide.speakerNote, ''),
     relatedPhase: safeText(slide.relatedPhase, ''),
-  };
+  }, 'ai-derived');
 }
 
 function slidesFromPhases(plan: GeneratedPlan, phases: GeneratedPlanPhase[]): CourseSlide[] {
@@ -130,13 +131,13 @@ function mindMapFromPhases(plan: GeneratedPlan, phases: GeneratedPlanPhase[]): C
 }
 
 function adaptStep(step: GeneratedPlanStep, index: number, phase: GeneratedPlanPhase): CourseStep {
-  return {
+  return markCourseContentSource({
     title: safeText(step.title, `第 ${index + 1} 步：${safeText(phase.name, '理解本阶段重点')}`),
     explanation: safeText(step.explanation, safeText(phase.description, '先理解本阶段核心概念，再通过练习把知识转成可执行能力。')),
     example: safeText(step.example, ''),
     action: safeText(step.action, '完成本步骤对应练习，并记录遇到的问题。'),
     check: safeText(step.check, '能用自己的话解释本步骤，并独立完成一个小练习。'),
-  };
+  }, 'ai-derived');
 }
 
 function phaseTasks(phase: GeneratedPlanPhase) {
@@ -151,7 +152,7 @@ export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 
   const titleFallback = mode === 'lite' ? `${safeText(plan.goal, '你的目标')}快速学习方案` : 'AILINES AI 学习方案';
   const summaryFallback = mode === 'lite' ? '这是一份快速可执行方案，优先给出核心步骤、练习方法、检查标准和常见错误。' : '围绕你的目标生成阶段化学习路线。';
 
-  const adaptedPlan: MockPlan = {
+  const adaptedPlan: MockPlan = markCourseContentSource({
     title: safeText(plan.title, titleFallback),
     duration: mode === 'lite' ? `${typeof plan.durationWeeks === 'number' ? Math.max(1, Math.min(2, plan.durationWeeks)) : 1} 周` : `${typeof plan.durationWeeks === 'number' ? plan.durationWeeks : phases.length * 2} 周`,
     summary: safeText(plan.summary, safeText(plan.courseIntro || plan.overview, summaryFallback)),
@@ -195,7 +196,7 @@ export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 
       output: safeText(project.output, '一个可检查的练习成果。'),
       acceptance: ensureArray(project.acceptanceCriteria).join('；') || '目标明确、过程可复盘、结果可展示。',
     })),
-  };
+  }, 'ai-derived');
 
   return normalizeCoursePlanContent(adaptedPlan, goal);
 }

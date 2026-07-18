@@ -7,7 +7,7 @@ import { ProgressOverview } from '@/components/ProgressOverview';
 import { getLearningCardKey, ProgressStageCard, type LearningCardStatusByKey } from '@/components/ProgressStageCard';
 import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
 import type { LearningCardProgressItem, LearningCardStatus } from '@/lib/course/learningCardProgressRepository';
-import { getProgressStagesByGoal, type ProgressStage } from '@/lib/mockProgress';
+import type { ProgressStage } from '@/lib/mockProgress';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 import { clearProgressState, loadProgressState, saveProgressState } from '@/lib/progressStorage';
 
@@ -38,7 +38,7 @@ export function ProgressTracker({ goal, mode, courseId, anonymousId: initialAnon
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
 
-  const progressStages = useMemo(() => (Array.isArray(initialStages) && initialStages.length > 0 ? initialStages : getProgressStagesByGoal(goal)), [goal, initialStages]);
+  const progressStages = useMemo(() => (Array.isArray(initialStages) ? initialStages : []), [initialStages]);
   const allTopics = useMemo(() => progressStages.flatMap((stage, phaseIndex) => stage.tasks.map((task, topicIndex) => ({ stage, task, phaseIndex, topicIndex }))), [progressStages]);
   const totalCount = allTopics.length;
   const completedCount = allTopics.filter(({ phaseIndex, topicIndex }) => statuses[getLearningCardKey(phaseIndex, topicIndex)] === 'completed').length;

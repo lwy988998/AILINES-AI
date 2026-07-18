@@ -16,7 +16,8 @@ import type { PlanMode } from '@/lib/ai/types';
 import { type MockPlan, type RoadmapStage } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
-import { buildUnavailableCourseContentNotice, createTaskDescription, createTaskOutput, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { markCourseContentSource, type CourseContentSource } from '@/lib/courseContentSource';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,13 @@ function normalizeMode(value?: string): PlanMode {
   return value === 'lite' ? 'lite' : 'deep';
 }
 
+function sourceForStoredCourse(source?: string | null): CourseContentSource {
+  if (source === 'fallback' || source === 'domain-fallback') return 'domain-fallback';
+  if (source === 'template' || source === 'mock') return 'template';
+  if (source === 'invalid') return 'invalid';
+  return 'legacy-ai';
+}
+
 function normalizeStep(step: unknown, index: number, fallbackTitle: string): PhaseStep {
   const candidate = step && typeof step === 'object' ? (step as Partial<PhaseStep>) : {};
   return {
@@ -79,7 +87,7 @@ function stepsFromStage(stage: RoadmapStage | undefined): PhaseStep[] {
 }
 
 
-function tasksFromStage(stage: RoadmapStage | undefined, stageOutput: string, goal: string): PhaseTask[] {
+function tasksFromStage(stage: RoadmapStage | undefined, stageOutput: string): PhaseTask[] {
   if (!stage) return [];
 
   const stageTasks = Array.isArray(stage.tasks) ? stage.tasks : [];
@@ -90,12 +98,22 @@ function tasksFromStage(stage: RoadmapStage | undefined, stageOutput: string, go
 
   if (titles.length === 0) return [];
 
-  return titles.map((title, index) => ({
-    title,
-    duration: stage.duration || '30-60 分钟',
-    description: createTaskDescription({ goal, stageName: stage.name, taskTitle: title, index }),
-    output: index === titles.length - 1 ? (stageOutput || createTaskOutput({ goal, stageName: stage.name, taskTitle: title, index })) : createTaskOutput({ goal, stageName: stage.name, taskTitle: title, index }),
-  }));
+  const steps = Array.isArray(stage.steps) ? stage.steps : [];
+
+  return titles.map((title, index) => {
+    const relatedStep = steps[index] || steps.find((step) => {
+      const stepTitle = typeof step.title === 'string' ? step.title : '';
+      return stepTitle.includes(title) || title.includes(stepTitle.replace(/^第\s*\d+\s*步[:：]?\s*/, ''));
+    });
+    const description = relatedStep?.explanation || stage.description || stage.goal || '';
+    const output = relatedStep?.check || (index === titles.length - 1 ? stageOutput : '') || stage.checkpoint || '';
+    return {
+      title,
+      duration: stage.duration || '30-60 分钟',
+      description,
+      output,
+    };
+  }).filter((task) => task.title && task.description && task.output);
 }
 
 async function getPlanStage(input: { goal: string; mode: PlanMode; phaseIndex: number; phaseName: string; courseId?: string; anonymousId?: string }): Promise<{ stage?: RoadmapStage; plan?: MockPlan }> {
@@ -106,7 +124,9 @@ async function getPlanStage(input: { goal: string; mode: PlanMode; phaseIndex: n
       const ownedCourse = await getCourseOwnedByRequester({ courseId, userId: user?.id, anonymousId });
       const snapshot = ownedCourse?.snapshots[0]?.payload as MockPlan | undefined;
       if (snapshot) {
-        const plan = normalizeCoursePlanContent(snapshot, ownedCourse?.goal || goal);
+        const plan = normalizeCoursePlanContent(markCourseContentSource(snapshot, sourceForStoredCourse(ownedCourse?.source)), ownedCourse?.goal || goal);
+        const planValidation = validateUserVisibleCourseContent(plan, { goal: ownedCourse?.goal || goal, mode, courseTitle: plan.title });
+        if (!planValidation.valid) return {};
         const stages = Array.isArray(plan.roadmap) ? plan.roadmap : [];
         const normalizedPhaseName = phaseName.trim();
         return { plan, stage: stages.find((stage) => stage.name === normalizedPhaseName) || stages[phaseIndex - 1] || stages[0] };
@@ -116,7 +136,9 @@ async function getPlanStage(input: { goal: string; mode: PlanMode; phaseIndex: n
 
     const cachedPlan = await readCachedPlan(goal, mode);
     if (!cachedPlan) return {};
-    const plan = adaptGeneratedPlan(cachedPlan, mode);
+    const plan = adaptGeneratedPlan(markCourseContentSource(cachedPlan, 'legacy-ai'), mode);
+    const planValidation = validateUserVisibleCourseContent(plan, { goal, mode, courseTitle: plan.title });
+    if (!planValidation.valid) return {};
     const stages = Array.isArray(plan.roadmap) ? plan.roadmap : [];
     const normalizedPhaseName = phaseName.trim();
     return { plan, stage: stages.find((stage) => stage.name === normalizedPhaseName) || stages[phaseIndex - 1] || stages[0] };
@@ -181,7 +203,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const stageTitle = planStage?.name || phaseName;
   const teachingSteps = stepsFromStage(planStage);
   const stageOutput = planStage?.output || '';
-  const phaseTasks = tasksFromStage(planStage, stageOutput, goal);
+  const phaseTasks = tasksFromStage(planStage, stageOutput);
   const phaseValidation = validateUserVisibleCourseContent({ teachingSteps, phaseTasks, stageOutput, objective: planStage?.goal, description: planStage?.description }, { goal, mode, phaseName: stageTitle, availableTopics: teachingSteps.map((step) => step.title), availableTasks: phaseTasks.map((task) => task.title) });
   if (!planStage || teachingSteps.length === 0 || !phaseValidation.valid) {
     return <PhaseGenerationPendingState goal={goal} mode={mode} planHref={planHref} />;

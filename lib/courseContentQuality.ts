@@ -1,8 +1,9 @@
 import { normalizeCourseMindMap } from '@/lib/courseKnowledgeMap';
-import { buildDomainSpecificFallbackStep, buildDomainSpecificText, dedupeCourseItems, isGenericCourseText, modulesForGoal, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
+import { dedupeCourseItems, isGenericCourseText, modulesForGoal, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
+import { getCourseContentSource, markCourseContentSource, summarizeCourseContentSources, type CourseContentSource } from '@/lib/courseContentSource';
 import type { MockPlan, RoadmapStage, CourseStep } from '@/lib/mockPlan';
 
-export type ContentSource = 'ai' | 'ai-derived' | 'domain-derived' | 'empty' | 'invalid';
+export type ContentSource = CourseContentSource | 'empty';
 
 export const GENERIC_COURSE_PHRASES = [
   '关键抓手',
@@ -119,10 +120,10 @@ function pickByTitle(title: string, candidates: Array<[RegExp, number]>, fallbac
 function genericStepContent(context: StepContext) {
   const title = stripPrefix(context.title) || `步骤 ${context.index + 1}`;
   return {
-    explanation: buildDomainSpecificText({ goal: context.goal, phaseName: context.phaseName, taskTitle: title, index: context.index }),
-    example: `例如围绕「${title}」完成一次 30-60 分钟练习，保留过程、结果和卡点记录。`,
-    action: `完成「${title}」对应练习，保留过程记录和最终产出。`,
-    check: `能说明「${title}」解决了什么问题，并拿出一个可检查结果。`,
+    explanation: `围绕「${context.goal}」中的「${context.phaseName}」，本步骤只保留 AI 已生成的学习点「${title}」作为学习锚点：先确认它和当前阶段目标的关系，再完成一个围绕该学习点的实际操作或练习。`,
+    example: `把「${title}」写成一张练习卡：目标、操作对象、完成结果、检查标准各一行。`,
+    action: `基于「${title}」完成一次可记录的练习，并写下过程、结果和卡点。`,
+    check: `能用自己的练习结果说明「${title}」在「${context.phaseName}」中解决了什么问题。`,
   };
 }
 
@@ -236,24 +237,15 @@ function pythonBeginnerStepContent(context: StepContext) {
 }
 
 export function createSpecificStepContent(context: StepContext): CourseStep {
-  const domainStep = buildDomainSpecificFallbackStep(context);
-  if (domainStep) return domainStep;
+  const base = genericStepContent(context);
 
-  const base = isHardwarePcGoal(context.goal)
-    ? hardwarePcStepContent(context)
-    : isExamEnglishGoal(context.goal)
-      ? englishReadingStepContent(context)
-      : isPythonBeginnerGoal(context.goal)
-        ? pythonBeginnerStepContent(context)
-        : genericStepContent(context);
-
-  return {
+  return markCourseContentSource({
     title: context.title,
     explanation: base.explanation,
     example: base.example,
     action: base.action,
     check: base.check,
-  };
+  }, 'ai-derived');
 }
 
 function shouldReplace(value: string, seen: string[]) {
@@ -302,10 +294,10 @@ export function normalizeCoursePlanContent(plan: MockPlan, goal: string): MockPl
       : specificPlan.roadmap,
   };
 
-  return {
+  return markCourseContentSource({
     ...normalizedPlan,
     mindMap: normalizeCourseMindMap(normalizedPlan, goal),
-  };
+  }, getCourseContentSource(plan) || 'legacy-ai');
 }
 
 export function createTaskDescription(input: { goal: string; stageName: string; taskTitle: string; index: number }) {
@@ -378,14 +370,47 @@ export function validateUserVisibleCourseContent(content: unknown, context: Cour
   const uniqueCount = new Set(texts.map(normalizeForCompare).filter(Boolean)).size;
 
   if (genericCount > 0) reasons.push('generic_or_forbidden_phrase');
+  const record = content && typeof content === 'object' && !Array.isArray(content) ? content as Record<string, unknown> : {};
+  const phases = Array.isArray(record.phases) ? record.phases : Array.isArray(record.roadmap) ? record.roadmap : [];
+  if (phases.length > 0) {
+    const minPhases = context.mode === 'lite' ? 3 : 4;
+    const maxPhases = context.mode === 'lite' ? 5 : 8;
+    if (phases.length < minPhases || phases.length > maxPhases) reasons.push('invalid_phase_count');
+    const thinPhase = phases.some((phase) => {
+      const phaseRecord = phase && typeof phase === 'object' ? phase as Record<string, unknown> : {};
+      const topics = Array.isArray(phaseRecord.topics) ? phaseRecord.topics : [];
+      const tasks = Array.isArray(phaseRecord.tasks) ? phaseRecord.tasks : [];
+      const steps = Array.isArray(phaseRecord.steps) ? phaseRecord.steps : [];
+      const learningPoints = Math.max(topics.length, tasks.length, steps.length);
+      return learningPoints < (context.mode === 'lite' ? 3 : 4);
+    });
+    if (thinPhase) reasons.push('thin_phase_content');
+    if (context.mode === 'deep') {
+      const missingDeepFields = phases.some((phase) => {
+        const phaseRecord = phase && typeof phase === 'object' ? phase as Record<string, unknown> : {};
+        return !phaseRecord.output || !phaseRecord.checkpoint;
+      });
+      if (missingDeepFields) reasons.push('missing_deep_output_or_checkpoint');
+    }
+  }
   if (keywordHits < Math.min(3, Math.max(1, keywords.length))) reasons.push('weak_goal_relevance');
   if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) reasons.push('repeated_content');
   if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题)/i.test(joined)) reasons.push('missing_specific_action');
   if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准)/i.test(joined)) reasons.push('missing_output_or_acceptance');
 
   const score = Math.max(0, 100 - genericCount * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 20 : 0) - (reasons.includes('missing_specific_action') ? 15 : 0) - (reasons.includes('missing_output_or_acceptance') ? 15 : 0));
-  const source: ContentSource = reasons.includes('generic_or_forbidden_phrase') ? 'invalid' : keywordHits >= 3 ? 'ai' : modulesForGoal(context.goal).length ? 'domain-derived' : 'ai-derived';
-  return { valid: reasons.length === 0 || score >= 70, source, reasons, score };
+  const taggedSource = getCourseContentSource(content);
+  const sourceSummary = summarizeCourseContentSources(content);
+  (['domain-fallback', 'template', 'invalid'] as CourseContentSource[]).forEach((sourceName) => {
+    if (sourceSummary[sourceName] > 0) reasons.push(`unsafe_source:${sourceName}`);
+  });
+  const source: ContentSource = reasons.includes('generic_or_forbidden_phrase') ? 'invalid' : taggedSource || (keywordHits >= 3 ? 'ai' : 'ai-derived');
+  const hardInvalid = reasons.some((reason) => reason.startsWith('unsafe_source:') || reason === 'generic_or_forbidden_phrase' || reason === 'invalid_phase_count' || reason === 'thin_phase_content' || reason === 'missing_deep_output_or_checkpoint');
+  return { valid: !hardInvalid && (reasons.length === 0 || score >= 70), source, reasons, score };
+}
+
+export function validateCourseContentTree(content: unknown, context: CourseContentValidationContext) {
+  return validateUserVisibleCourseContent(content, context);
 }
 
 export function createRegenerationPromptSuffix(result: CourseContentValidationResult) {

@@ -63,11 +63,8 @@ function readPositiveNumber(value: string | undefined, fallback: number) {
 }
 
 export function getAIRequestTimeoutMs(overrideMs?: number) {
-  if (Number.isFinite(overrideMs) && Number(overrideMs) > 0) {
-    return Number(overrideMs);
-  }
-
-  return readPositiveNumber(process.env.AI_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+  const fallback = Number.isFinite(overrideMs) && Number(overrideMs) > 0 ? Number(overrideMs) : DEFAULT_TIMEOUT_MS;
+  return readPositiveNumber(process.env.AI_TIMEOUT_MS, fallback);
 }
 
 export function getAIConfig(modelOverride?: string): ClientConfig {

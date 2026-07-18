@@ -4,6 +4,7 @@ import type { PlanMode } from '@/lib/ai/types';
 import { referencesFromResources, type LearningAnswer, type LearningExample, type LearningLessonStep, type LearningPractice, type LearningQuizItem, type LearningReference } from '@/lib/learning/mockLearningAnswer';
 import { isGenericCourseText } from '@/lib/courseDomainQuality';
 import { buildUnavailableCourseContentNotice, createRegenerationPromptSuffix, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { markCourseContentSource, summarizeCourseContentSources } from '@/lib/courseContentSource';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 
 const DEFAULT_LEARNING_TIMEOUT_MS = 35_000;
@@ -205,7 +206,7 @@ function adaptLearningAnswer(rawAnswer: unknown, fallback: LearningAnswer, resou
 
   const record = rawAnswer as Record<string, unknown>;
 
-  return {
+  return markCourseContentSource({
     title: sanitizeText(record.title, fallback.title),
     summary: sanitizeText(record.summary, fallback.summary),
     keyConcepts: sanitizeStringArray(record.keyConcepts, fallback.keyConcepts),
@@ -217,7 +218,7 @@ function adaptLearningAnswer(rawAnswer: unknown, fallback: LearningAnswer, resou
     quiz: sanitizeQuiz(record.quiz, fallback.quiz),
     resourceSummary: sanitizeText(record.resourceSummary, fallback.resourceSummary),
     references: filterReferences(record.references, resources),
-  };
+  }, 'ai');
 }
 
 export async function generateLearningAnswer(input: GenerateLearningAnswerInput): Promise<LearningAnswer> {
@@ -255,9 +256,10 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       maxAttempts: 1,
     });
 
+    let retryCount = 0;
     let answer = adaptLearningAnswer(parseAIJson<unknown>(content), fallback, safeInput.resources);
     let validation = validateUserVisibleCourseContent(answer, { goal: safeInput.goal, mode: safeInput.mode, phaseName: safeInput.phaseName, topic: safeInput.topic, availableTopics: answer.keyConcepts, availableTasks: answer.practice.map((item) => item.title) });
-    if (!validation.valid && safeInput.mode === 'deep') {
+    if (!validation.valid) {
       const retryContent = await createChatCompletion({
         purpose: 'ask',
         messages: createLearningPromptMessages({ ...safeInput, topic: `${safeInput.topic}${createRegenerationPromptSuffix(validation)}` }, resourceBriefs),
@@ -267,12 +269,14 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
         timeoutMs: getLearningTimeoutMs(),
         maxAttempts: 1,
       });
+      retryCount = 1;
       answer = adaptLearningAnswer(parseAIJson<unknown>(retryContent), fallback, safeInput.resources);
       validation = validateUserVisibleCourseContent(answer, { goal: safeInput.goal, mode: safeInput.mode, phaseName: safeInput.phaseName, topic: safeInput.topic, availableTopics: answer.keyConcepts, availableTasks: answer.practice.map((item) => item.title) });
     }
     if (!validation.valid) {
       throw new AIClientError('invalid_response', 'Learning answer quality gate failed');
     }
+    console.log('AI learning quality accepted', { mode: safeInput.mode, rawAIValid: true, qualityValid: validation.valid, retryCount, finalSourceSummary: summarizeCourseContentSources(answer) });
     return answer;
   } catch (error) {
     const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
@@ -284,7 +288,7 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       resourceCount: safeInput.resources.length,
     });
 
-    return {
+    return markCourseContentSource({
       title: `${safeInput.topic}：内容生成未完成`,
       summary: buildUnavailableCourseContentNotice('这节微课程'),
       keyConcepts: [safeInput.topic, safeInput.phaseName].filter(Boolean),
@@ -297,6 +301,6 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       resourceSummary: safeInput.resources.length ? '参考资料已获取，但本节正文暂未生成完成。' : '参考资料和正文暂未生成完成。',
       references: referencesFromResources(safeInput.resources),
       notice: buildUnavailableCourseContentNotice('这节微课程'),
-    };
+    }, 'invalid');
   }
 }

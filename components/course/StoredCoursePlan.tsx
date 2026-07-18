@@ -7,7 +7,8 @@ import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
 import type { PlanMode } from '@/lib/ai/types';
 import type { MockPlan } from '@/lib/mockPlan';
-import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
+import { normalizeCoursePlanContent, validateUserVisibleCourseContent, buildUnavailableCourseContentNotice } from '@/lib/courseContentQuality';
+import { markCourseContentSource, type CourseContentSource } from '@/lib/courseContentSource';
 
 function getModeText(mode: PlanMode) {
   return mode === 'lite'
@@ -25,13 +26,20 @@ function isStoredPlan(value: unknown): value is MockPlan {
   return typeof plan.title === 'string' && Array.isArray(plan.roadmap) && Array.isArray(plan.courseStructure) && Array.isArray(plan.resources) && Array.isArray(plan.projects);
 }
 
-function MissingCourseState() {
+function sourceForStoredCourse(source?: string | null): CourseContentSource {
+  if (source === 'fallback' || source === 'domain-fallback') return 'domain-fallback';
+  if (source === 'template' || source === 'mock') return 'template';
+  if (source === 'invalid') return 'invalid';
+  return 'legacy-ai';
+}
+
+function MissingCourseState({ message }: { message?: string }) {
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
       <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
         <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">历史课堂不存在或已失效</h1>
-        <p className="mt-3 text-base leading-7 text-slate-600">没有找到这门历史课堂。你可以返回首页重新生成课程。</p>
+        <p className="mt-3 text-base leading-7 text-slate-600">{message || '没有找到这门历史课堂。你可以返回首页重新生成课程。'}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">
             <Home className="h-4 w-4" />
@@ -58,7 +66,11 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
 
   const modeText = getModeText(result.course.mode);
   const goal = result.course.goal || result.snapshot.payload.title;
-  const plan = normalizeCoursePlanContent(result.snapshot.payload, goal);
+  const plan = normalizeCoursePlanContent(markCourseContentSource(result.snapshot.payload, sourceForStoredCourse(result.course.source)), goal);
+  const restoredValidation = validateUserVisibleCourseContent(plan, { goal, mode: result.course.mode, courseTitle: plan.title });
+  if (!restoredValidation.valid) {
+    return <MissingCourseState message={buildUnavailableCourseContentNotice('这门历史课程')} />;
+  }
   let courseProgress = await getCourseProgress(result.course.id);
   if (!courseProgress) {
     courseProgress = await recomputeCourseProgress({ courseId: result.course.id, anonymousId: result.course.anonymousId || undefined });

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { markCourseContentSource, type CourseContentSource } from '@/lib/courseContentSource';
+import type { MockPlan } from '@/lib/mockPlan';
 
 function clampPercent(value: number) {
   if (!Number.isFinite(value)) return 0;
@@ -19,6 +22,21 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function safeArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
+}
+
+function sourceForStoredCourse(source?: string | null): CourseContentSource {
+  if (source === 'fallback' || source === 'domain-fallback') return 'domain-fallback';
+  if (source === 'template' || source === 'mock') return 'template';
+  if (source === 'invalid') return 'invalid';
+  return 'legacy-ai';
+}
+
+function getValidSnapshotPlan(payload: unknown, goal: string, mode: string, source?: string | null): MockPlan | null {
+  const plan = asRecord(payload);
+  if (!Array.isArray(plan.roadmap) || !Array.isArray(plan.courseStructure)) return null;
+  const normalizedPlan = normalizeCoursePlanContent(markCourseContentSource(plan as MockPlan, sourceForStoredCourse(source)), goal);
+  const validation = validateUserVisibleCourseContent(normalizedPlan, { goal, mode: mode === 'lite' ? 'lite' : 'deep', courseTitle: normalizedPlan.title });
+  return validation.valid ? normalizedPlan : null;
 }
 
 function countLearningCards(payload: unknown) {
@@ -77,6 +95,7 @@ export async function GET(request: NextRequest) {
         mode: true,
         title: true,
         summary: true,
+        source: true,
         createdAt: true,
         updatedAt: true,
         snapshots: {
@@ -125,7 +144,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       courses: courses.map((course) => {
         const snapshotPayload = course.snapshots[0]?.payload;
-        const totalCardsFromSnapshot = countLearningCards(snapshotPayload);
+        const validSnapshotPlan = getValidSnapshotPlan(snapshotPayload, course.goal, course.mode, course.source);
+        const totalCardsFromSnapshot = validSnapshotPlan ? countLearningCards(validSnapshotPlan) : 0;
         const completedCards = completedCardsByCourseId.get(course.id) || 0;
         const totalCards = totalCardsFromSnapshot || course.courseProgress?.totalCount || 0;
         const progressPercent = course.courseProgress
@@ -154,9 +174,9 @@ export async function GET(request: NextRequest) {
 
         return {
           id: course.id,
-          title: course.title,
+          title: validSnapshotPlan?.title || course.title || course.goal,
           goal: course.goal,
-          summary: course.summary,
+          summary: validSnapshotPlan?.summary || buildUnavailableCourseContentNotice('这门课程摘要'),
           mode: course.mode,
           createdAt: course.createdAt.toISOString(),
           updatedAt: course.updatedAt.toISOString(),

@@ -4,6 +4,7 @@ import { parseAIJson } from '@/lib/ai/parseAIJson';
 import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
 import { createRegenerationPromptSuffix, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 import { readCachedPlan, writeCachedPlan } from '@/lib/ai/planCache';
+import { markCourseContentSource, summarizeCourseContentSources } from '@/lib/courseContentSource';
 import type { GeneratedPlan, PlanMode } from '@/lib/ai/types';
 
 const DEFAULT_PLAN_TIMEOUT_MS = 35_000;
@@ -26,7 +27,7 @@ function toGeneratePlanError(error: unknown) {
   return new GeneratePlanError('生成未完成，已为你准备可继续学习的课程结构。', status, safeError.type);
 }
 
-export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'): Promise<GeneratedPlan> {
+export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep', options: { bypassCache?: boolean } = {}): Promise<GeneratedPlan> {
   const safeGoal = goal.trim();
   const safeMode: PlanMode = mode === 'lite' ? 'lite' : 'deep';
 
@@ -34,25 +35,26 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
     throw new GeneratePlanError('请提供学习目标', 400, 'invalid_request');
   }
 
-  const cachedPlan = await readCachedPlan(safeGoal, safeMode);
+  const cachedPlan = options.bypassCache ? null : await readCachedPlan(safeGoal, safeMode);
 
   if (cachedPlan) {
-    const rawCachedValidation = validateUserVisibleCourseContent(cachedPlan, { goal: safeGoal, mode: safeMode });
+    const taggedCachedPlan = markCourseContentSource(cachedPlan, 'legacy-ai');
+    const rawCachedValidation = validateUserVisibleCourseContent(taggedCachedPlan, { goal: safeGoal, mode: safeMode });
     const adaptedCachedValidation = rawCachedValidation.valid
-      ? validateUserVisibleCourseContent(adaptGeneratedPlan(cachedPlan, safeMode), { goal: safeGoal, mode: safeMode })
+      ? validateUserVisibleCourseContent(adaptGeneratedPlan(taggedCachedPlan, safeMode), { goal: safeGoal, mode: safeMode })
       : rawCachedValidation;
     if (rawCachedValidation.valid && adaptedCachedValidation.valid) {
-      console.log(`AI plan cache hit (${safeMode})`);
-      return cachedPlan;
+      console.log('AI plan cache hit', { mode: safeMode, rawAIValid: true, qualityValid: true, retryCount: 0, finalSourceSummary: summarizeCourseContentSources(taggedCachedPlan) });
+      return taggedCachedPlan;
     }
     console.log(`AI plan cache rejected by quality gate (${safeMode})`, adaptedCachedValidation.reasons);
   }
 
-  console.log(`AI plan cache miss (${safeMode})`);
+  console.log(options.bypassCache ? `AI plan cache bypass (${safeMode})` : `AI plan cache miss (${safeMode})`);
 
   try {
     let lastValidation: ReturnType<typeof validateUserVisibleCourseContent> | null = null;
-    for (let attempt = 0; attempt < (safeMode === 'deep' ? 2 : 1); attempt += 1) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
       const messages = attempt === 0
         ? createGeneratePlanMessages(safeGoal, safeMode)
         : createGeneratePlanMessages(`${safeGoal}${lastValidation ? createRegenerationPromptSuffix(lastValidation) : ''}`, safeMode);
@@ -65,13 +67,14 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep'):
         timeoutMs: getAIRequestTimeoutMs(DEFAULT_PLAN_TIMEOUT_MS),
       });
 
-      const plan = parseAIJson<GeneratedPlan>(content);
+      const plan = markCourseContentSource(parseAIJson<GeneratedPlan>(content), 'ai');
       const rawValidation = validateUserVisibleCourseContent(plan, { goal: safeGoal, mode: safeMode });
       const adaptedValidation = rawValidation.valid
         ? validateUserVisibleCourseContent(adaptGeneratedPlan(plan, safeMode), { goal: safeGoal, mode: safeMode })
         : rawValidation;
       if (rawValidation.valid && adaptedValidation.valid) {
         await writeCachedPlan(safeGoal, safeMode, plan);
+        console.log('AI plan quality accepted', { mode: safeMode, retryCount: attempt, rawAIValid: rawValidation.valid, qualityValid: adaptedValidation.valid, finalSourceSummary: summarizeCourseContentSources(plan) });
         return plan;
       }
       lastValidation = adaptedValidation.valid ? rawValidation : adaptedValidation;

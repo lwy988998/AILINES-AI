@@ -13,7 +13,7 @@ import type { PlanMode } from '@/lib/ai/types';
 import { type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
-import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent } from '@/lib/courseContentQuality';
+import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 import { canUseFeature } from '@/lib/membership/permissions';
 import { UpgradeRequiredCard } from '@/components/membership/UpgradeRequiredCard';
 
@@ -126,7 +126,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
       return <CourseGenerationPendingState goal={goal} mode={mode} message="今日课程生成次数已用完。这门课程暂未生成完成，你可以升级会员或明天重新生成。" />;
     } else {
       try {
-        const generatedPlan = await generatePlanWithAI(rawGoal, mode);
+        const generatedPlan = await generatePlanWithAI(rawGoal, mode, { bypassCache: forcePlan });
         const adaptedPlan = adaptGeneratedPlan(generatedPlan, mode);
 
         if (!isRenderablePlan(adaptedPlan)) {
@@ -134,6 +134,11 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         }
 
         plan = normalizeCoursePlanContent(adaptedPlan, goal);
+        const normalizedValidation = validateUserVisibleCourseContent(plan, { goal, mode, courseTitle: plan.title });
+        if (!normalizedValidation.valid) {
+          console.warn('AI plan normalized quality rejected', { mode, reasons: normalizedValidation.reasons, score: normalizedValidation.score });
+          throw new Error('课程内容质量未通过');
+        }
         isAIPlan = true;
         await incrementUsage('course_generate', usage.scope);
       } catch {

@@ -292,10 +292,12 @@ function sanitizeSlides(slides: CourseSlide[] | undefined) {
 
 export function normalizeSpecificCoursePlan(plan: MockPlan, goal: string): MockPlan {
   const modules = modulesForGoal(goal);
-  const sourcePlan = shouldRebuildPlan(plan, goal, modules) ? buildPlanFromModules(plan, goal, modules) : plan;
+  // Domain module fallbacks are no longer allowed to rebuild a complete user-visible course.
+  // Keep any usable AI/legacy structure and let the quality gate hide invalid modules.
+  const sourcePlan = plan;
   return {
     ...sourcePlan,
-    summary: isGenericCourseText(sourcePlan.summary) ? `围绕「${cleanGoal(goal)}」拆成具体阶段、学习点、练习任务和可检查成果。` : sourcePlan.summary,
+    summary: sourcePlan.summary,
     roadmap: Array.isArray(sourcePlan.roadmap) ? sourcePlan.roadmap.map((stage) => sanitizeStage(stage, goal)) : sourcePlan.roadmap,
     courseStructure: Array.isArray(sourcePlan.courseStructure)
       ? sourcePlan.courseStructure.map((stage) => ({
