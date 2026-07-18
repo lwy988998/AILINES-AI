@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       membershipStartedAt: user?.membershipStartedAt || null,
       membershipExpiresAt: user?.membershipExpiresAt || null,
       limits: getMembershipLimits(tier),
-      permissions: getMembershipPermissions(tier),
+      permissions: getMembershipPermissions({ tier, status: user?.membershipStatus, expiresAt: user?.membershipExpiresAt }),
       usage: Object.fromEntries(usageEntries),
     });
   } catch (error) {

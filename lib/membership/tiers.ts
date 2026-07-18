@@ -39,7 +39,8 @@ export const MEMBERSHIP_LIMITS = {
 } as const;
 
 export function normalizeMembershipTier(value?: string | null): MembershipTier {
-  return value === 'pro' || value === 'max' ? value : 'free';
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'pro' || normalized === 'max' ? normalized : 'free';
 }
 
 export function getMembershipLabel(tier?: string | null) {

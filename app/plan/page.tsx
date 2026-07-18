@@ -116,7 +116,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
   const retryHref = buildRetryHref({ goal, mode, anonymousId });
 
   const user = await getCurrentUser();
-  const deepAccess = mode === 'deep' ? canUseFeature(user?.membershipTier, 'deep_plan') : { allowed: true };
+  const deepAccess = mode === 'deep' ? canUseFeature({ tier: user?.membershipTier, status: user?.membershipStatus, expiresAt: user?.membershipExpiresAt }, 'deep_plan') : { allowed: true };
 
   if (rawGoal && !deepAccess.allowed) {
     return (

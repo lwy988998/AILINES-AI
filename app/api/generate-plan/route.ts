@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   const user = await getCurrentUserFromRequest(request);
   if (mode === 'deep') {
-    const access = canUseFeature(user?.membershipTier, 'deep_plan');
+    const access = canUseFeature({ tier: user?.membershipTier, status: user?.membershipStatus, expiresAt: user?.membershipExpiresAt }, 'deep_plan');
     if (!access.allowed) {
       return NextResponse.json({
         error: access.reason || '深度 AILINES AI 规划是 Pro 功能。你可以升级会员，或先使用快速规划。',

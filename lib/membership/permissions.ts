@@ -32,8 +32,36 @@ const FREE_ALLOWED_FEATURES = new Set<MembershipFeature>([
   'progress_sync',
 ]);
 
-export function canUseFeature(tierValue: string | null | undefined, feature: MembershipFeature): FeatureAccessResult {
-  const tier = normalizeMembershipTier(tierValue);
+type MembershipAccessInput = {
+  tier?: string | null;
+  status?: string | null;
+  expiresAt?: string | Date | null;
+};
+
+function normalizeMembershipStatus(value?: string | null) {
+  return String(value || 'active').trim().toLowerCase();
+}
+
+function isMembershipActive(input: MembershipAccessInput) {
+  if (normalizeMembershipStatus(input.status) !== 'active') return false;
+  if (!input.expiresAt) return true;
+
+  const expiresAtMs = input.expiresAt instanceof Date ? input.expiresAt.getTime() : new Date(input.expiresAt).getTime();
+  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
+}
+
+export function canUseFeature(tierValue: string | null | undefined | MembershipAccessInput, feature: MembershipFeature): FeatureAccessResult {
+  const membership = typeof tierValue === 'object' && tierValue !== null ? tierValue : { tier: tierValue };
+  const tier = normalizeMembershipTier(membership.tier);
+
+  if (tier !== 'free' && !isMembershipActive(membership)) {
+    const requiredTier = FEATURE_REQUIRED_TIER[feature] || 'pro';
+    return {
+      allowed: FREE_ALLOWED_FEATURES.has(feature),
+      requiredTier,
+      reason: '会员状态未生效或已过期，请检查会员状态后重试。',
+    };
+  }
 
   if (tier === 'max') return { allowed: true };
   if (tier === 'pro') return { allowed: true };
@@ -74,7 +102,7 @@ export function getUpgradeMessage(feature: MembershipFeature, requiredTier: Memb
   }
 }
 
-export function getMembershipPermissions(tier: string | null | undefined) {
+export function getMembershipPermissions(tier: string | null | undefined | MembershipAccessInput) {
   const features: MembershipFeature[] = [
     'quick_plan',
     'deep_plan',
