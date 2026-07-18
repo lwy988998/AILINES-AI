@@ -42,6 +42,10 @@ export type CourseContentValidationResult = {
   valid: boolean;
   source: ContentSource;
   reasons: string[];
+  fatalReasons: string[];
+  moduleReasons: string[];
+  warnings: string[];
+  fieldPaths: string[];
   score: number;
 };
 
@@ -348,6 +352,14 @@ export function summarizeCourseQualityIssues(content: unknown) {
   return { genericHits };
 }
 
+function emptyValidationResult(reason: string): CourseContentValidationResult {
+  return { valid: false, source: 'empty', reasons: [reason], fatalReasons: [reason], moduleReasons: [], warnings: [], fieldPaths: ['root'], score: 0 };
+}
+
+function addReason(target: string[], reason: string) {
+  if (!target.includes(reason)) target.push(reason);
+}
+
 function contextKeywords(context: CourseContentValidationContext) {
   const moduleKeywords = modulesForGoal(context.goal).flatMap((module) => [module.name, module.goal, ...module.topics]);
   return dedupeCourseItems([
@@ -371,57 +383,72 @@ function keywordHitCount(text: string, keywords: string[]) {
 }
 
 export function validateUserVisibleCourseContent(content: unknown, context: CourseContentValidationContext): CourseContentValidationResult {
-  const texts = collectValidationTexts(content).map((item) => item.trim()).filter(Boolean);
-  const reasons: string[] = [];
-  if (texts.length === 0) {
-    return { valid: false, source: 'empty', reasons: ['empty'], score: 0 };
-  }
+  const hits = collectValidationTextHits(content).map((item) => ({ ...item, text: item.text.trim() })).filter((item) => Boolean(item.text));
+  const texts = hits.map((item) => item.text);
+  const fatalReasons: string[] = [];
+  const moduleReasons: string[] = [];
+  const warnings: string[] = [];
+  const fieldPaths: string[] = [];
+  if (texts.length === 0) return emptyValidationResult('empty');
 
   const joined = texts.join('\n');
   const keywords = contextKeywords(context);
   const visibleTextCount = texts.length;
-  const genericCount = texts.filter((text) => isGenericCourseText(text) || GENERIC_COURSE_PHRASES.some((phrase) => text.toLowerCase().includes(phrase.toLowerCase()))).length;
+  const genericHits = hits.filter((hit) => isGenericCourseText(hit.text) || GENERIC_COURSE_PHRASES.some((phrase) => hit.text.toLowerCase().includes(phrase.toLowerCase())));
+  const fatalGenericHits = genericHits.filter((hit) => !/\.(slides|mindMap|resources)\b/.test(hit.path) && hit.text.length >= 10);
   const keywordHits = keywordHitCount(joined, keywords);
   const uniqueCount = new Set(texts.map(normalizeForCompare).filter(Boolean)).size;
 
-  if (genericCount > 0) reasons.push('generic_or_forbidden_phrase');
+  if (fatalGenericHits.length > 0) {
+    addReason(fatalReasons, 'generic_or_forbidden_phrase');
+    fieldPaths.push(...fatalGenericHits.slice(0, 12).map((hit) => hit.path));
+  } else if (genericHits.length > 0) {
+    addReason(warnings, 'generic_or_forbidden_phrase');
+    fieldPaths.push(...genericHits.slice(0, 12).map((hit) => hit.path));
+  }
+
   const record = content && typeof content === 'object' && !Array.isArray(content) ? content as Record<string, unknown> : {};
   const phases = Array.isArray(record.phases) ? record.phases : Array.isArray(record.roadmap) ? record.roadmap : [];
   if (phases.length > 0) {
     const minPhases = context.mode === 'lite' ? 3 : 4;
-    const maxPhases = context.mode === 'lite' ? 5 : 8;
-    if (phases.length < minPhases || phases.length > maxPhases) reasons.push('invalid_phase_count');
+    const maxPhases = context.mode === 'lite' ? 5 : 6;
+    if (phases.length < minPhases) addReason(fatalReasons, 'invalid_phase_count');
+    if (phases.length > maxPhases) addReason(warnings, 'invalid_phase_count');
     const thinPhase = phases.some((phase) => {
       const phaseRecord = phase && typeof phase === 'object' ? phase as Record<string, unknown> : {};
       const topics = Array.isArray(phaseRecord.topics) ? phaseRecord.topics : [];
       const tasks = Array.isArray(phaseRecord.tasks) ? phaseRecord.tasks : [];
       const steps = Array.isArray(phaseRecord.steps) ? phaseRecord.steps : [];
       const learningPoints = Math.max(topics.length, tasks.length, steps.length);
-      return learningPoints < (context.mode === 'lite' ? 3 : 4);
+      return learningPoints < 2;
     });
-    if (thinPhase) reasons.push('thin_phase_content');
+    if (thinPhase) addReason(fatalReasons, 'thin_phase_content');
     if (context.mode === 'deep') {
       const missingDeepFields = phases.some((phase) => {
         const phaseRecord = phase && typeof phase === 'object' ? phase as Record<string, unknown> : {};
         return !phaseRecord.output || !phaseRecord.checkpoint;
       });
-      if (missingDeepFields) reasons.push('missing_deep_output_or_checkpoint');
+      if (missingDeepFields) addReason(moduleReasons, 'missing_deep_output_or_checkpoint');
     }
+  } else {
+    addReason(fatalReasons, 'missing_course_body');
   }
-  if (keywordHits < Math.min(3, Math.max(1, keywords.length))) reasons.push('weak_goal_relevance');
-  if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) reasons.push('repeated_content');
-  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题)/i.test(joined)) reasons.push('missing_specific_action');
-  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准)/i.test(joined)) reasons.push('missing_output_or_acceptance');
 
-  const score = Math.max(0, 100 - genericCount * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 20 : 0) - (reasons.includes('missing_specific_action') ? 15 : 0) - (reasons.includes('missing_output_or_acceptance') ? 15 : 0));
+  if (keywordHits < Math.min(3, Math.max(1, keywords.length))) addReason(fatalReasons, 'weak_goal_relevance');
+  if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.55))) addReason(fatalReasons, 'repeated_content');
+  else if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) addReason(warnings, 'repeated_content');
+  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题|时间线|朝代|年代|事件|吉他|节奏)/i.test(joined)) addReason(fatalReasons, 'missing_specific_action');
+  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准|时间轴|时间线|错题|曲目|弹唱)/i.test(joined)) addReason(fatalReasons, 'missing_output_or_acceptance');
+
+  const score = Math.max(0, 100 - fatalGenericHits.length * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 10 : 0) - (fatalReasons.includes('missing_specific_action') ? 15 : 0) - (fatalReasons.includes('missing_output_or_acceptance') ? 15 : 0));
   const taggedSource = getCourseContentSource(content);
   const sourceSummary = summarizeCourseContentSources(content);
   (['domain-fallback', 'template', 'invalid'] as CourseContentSource[]).forEach((sourceName) => {
-    if (sourceSummary[sourceName] > 0) reasons.push(`unsafe_source:${sourceName}`);
+    if (sourceSummary[sourceName] > 0) addReason(fatalReasons, `unsafe_source:${sourceName}`);
   });
-  const source: ContentSource = reasons.includes('generic_or_forbidden_phrase') ? 'invalid' : taggedSource || (keywordHits >= 3 ? 'ai' : 'ai-derived');
-  const hardInvalid = reasons.some((reason) => reason.startsWith('unsafe_source:') || reason === 'generic_or_forbidden_phrase' || reason === 'invalid_phase_count' || reason === 'thin_phase_content' || reason === 'missing_deep_output_or_checkpoint');
-  return { valid: !hardInvalid && (reasons.length === 0 || score >= 70), source, reasons, score };
+  const source: ContentSource = fatalReasons.includes('generic_or_forbidden_phrase') ? 'invalid' : taggedSource || (keywordHits >= 3 ? 'ai' : 'ai-derived');
+  const reasons = [...fatalReasons, ...moduleReasons, ...warnings];
+  return { valid: fatalReasons.length === 0 && score >= 55, source, reasons, fatalReasons, moduleReasons, warnings, fieldPaths: Array.from(new Set(fieldPaths)), score };
 }
 
 export function validateCourseContentTree(content: unknown, context: CourseContentValidationContext) {

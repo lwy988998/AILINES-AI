@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
   const goal = typeof body === 'object' && body !== null && 'goal' in body ? String(body.goal).trim() : '';
   const rawMode = typeof body === 'object' && body !== null && 'mode' in body ? String(body.mode).trim() : 'deep';
   const anonymousId = typeof body === 'object' && body !== null && 'anonymousId' in body ? String(body.anonymousId).trim() : undefined;
+  const bypassCache = typeof body === 'object' && body !== null && ('bypassCache' in body || 'forcePlan' in body || 'retry' in body)
+    ? Boolean((body as Record<string, unknown>).bypassCache) || (body as Record<string, unknown>).forcePlan === 1 || (body as Record<string, unknown>).forcePlan === '1' || Boolean((body as Record<string, unknown>).retry)
+    : false;
   const mode: PlanMode = rawMode === 'lite' ? 'lite' : 'deep';
 
   if (!goal) {
@@ -41,19 +44,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const plan = await generatePlanWithAI(goal, mode);
+    const plan = await generatePlanWithAI(goal, mode, { bypassCache });
     await incrementUsage('course_generate', usage.scope);
     return NextResponse.json({ plan, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     const type = error instanceof GeneratePlanError ? error.type : 'unknown';
     const status = error instanceof GeneratePlanError ? error.status : 502;
-    const code = type === 'timeout' ? 'COURSE_GENERATION_TIMEOUT' : 'COURSE_GENERATION_UNAVAILABLE';
-    console.warn('Generate plan API unavailable', { errorType: type, status, mode, goalLength: goal.length });
+    const code = type === 'timeout' ? 'COURSE_GENERATION_TIMEOUT' : type === 'invalid_response' ? 'COURSE_QUALITY_REJECTED' : 'COURSE_GENERATION_UNAVAILABLE';
+    console.warn('Generate plan API unavailable', { errorType: type, status, mode, goalLength: goal.length, providerCalled: type !== 'missing_config', bypassCache });
     await incrementUsage('course_generate', usage.scope);
     return NextResponse.json({
       ok: false,
+      code,
       error: code,
-      message: '课程内容暂未生成完成，请稍后重试。',
+      message: '课程内容暂未生成完成，请重新生成。',
       canRetry: true,
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
     }, { status });

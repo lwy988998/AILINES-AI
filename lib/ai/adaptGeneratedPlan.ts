@@ -208,10 +208,6 @@ export function isRenderablePlan(plan: MockPlan) {
       Array.isArray(plan.roadmap) &&
       plan.roadmap.length > 0 &&
       Array.isArray(plan.courseStructure) &&
-      plan.courseStructure.length > 0 &&
-      Array.isArray(plan.resources) &&
-      plan.resources.length > 0 &&
-      Array.isArray(plan.projects) &&
-      plan.projects.length > 0,
+      plan.courseStructure.length > 0,
   );
 }

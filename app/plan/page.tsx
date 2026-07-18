@@ -22,8 +22,20 @@ export const dynamic = 'force-dynamic';
 const RESOURCE_SEARCH_TIMEOUT_MS = 8_000;
 
 
-function CourseGenerationPendingState({ goal, mode, message }: { goal: string; mode: PlanMode; message?: string }) {
-  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}`;
+function buildRetryHref(input: { goal: string; mode: PlanMode; anonymousId?: string }) {
+  const params = new URLSearchParams({
+    goal: input.goal,
+    mode: input.mode,
+    forcePlan: '1',
+    bypassCache: 'true',
+    retry: String(Date.now()),
+  });
+  if (input.anonymousId) params.set('anonymousId', input.anonymousId);
+  return `/plan?${params.toString()}`;
+}
+
+function CourseGenerationPendingState({ goal, mode, anonymousId, message }: { goal: string; mode: PlanMode; anonymousId?: string; message?: string }) {
+  const retryHref = buildRetryHref({ goal, mode, anonymousId });
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
       <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -43,6 +55,8 @@ type PlanPageProps = {
     goal?: string;
     mode?: string;
     forcePlan?: string;
+    bypassCache?: string;
+    retry?: string;
     courseId?: string;
     anonymousId?: string;
   }>;
@@ -90,7 +104,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps['searchParams']> & { goal: string; mode: PlanMode } }) {
   const rawGoal = params.goal;
   const mode = params.mode;
-  const forcePlan = params.forcePlan === '1';
+  const forcePlan = params.forcePlan === '1' || params.bypassCache === 'true' || Boolean(params.retry);
   const anonymousId = params.anonymousId?.trim() || undefined;
   const goal = rawGoal || '你的目标';
   const modeLabel = mode === 'lite' ? '快速规划' : '深度 AILINES AI 规划';
@@ -99,7 +113,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
   let plan: MockPlan | null = null;
   let isAIPlan = false;
   let resourceSourceMessage = '以下为 AILINES AI 推荐资源';
-  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=${forcePlan ? '1' : '0'}&retry=${Date.now()}`;
+  const retryHref = buildRetryHref({ goal, mode, anonymousId });
 
   const user = await getCurrentUser();
   const deepAccess = mode === 'deep' ? canUseFeature(user?.membershipTier, 'deep_plan') : { allowed: true };
@@ -123,7 +137,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
     const usage = await checkUsageLimit({ userId: user?.id, anonymousId, tier: user?.membershipTier, type: 'course_generate' });
 
     if (!usage.allowed) {
-      return <CourseGenerationPendingState goal={goal} mode={mode} message="今日课程生成次数已用完。这门课程暂未生成完成，你可以升级会员或明天重新生成。" />;
+      return <CourseGenerationPendingState goal={goal} mode={mode} anonymousId={anonymousId} message="今日课程生成次数已用完。这门课程暂未生成完成，你可以升级会员或明天重新生成。" />;
     } else {
       try {
         const generatedPlan = await generatePlanWithAI(rawGoal, mode, { bypassCache: forcePlan });
@@ -143,7 +157,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         await incrementUsage('course_generate', usage.scope);
       } catch {
         await incrementUsage('course_generate', usage.scope);
-        return <CourseGenerationPendingState goal={goal} mode={mode} />;
+        return <CourseGenerationPendingState goal={goal} mode={mode} anonymousId={anonymousId} />;
       }
     }
 
@@ -177,7 +191,7 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
   }
 
   if (!plan) {
-    return <CourseGenerationPendingState goal={goal} mode={mode} />;
+    return <CourseGenerationPendingState goal={goal} mode={mode} anonymousId={anonymousId} />;
   }
 
   const notice = rawGoal ? (

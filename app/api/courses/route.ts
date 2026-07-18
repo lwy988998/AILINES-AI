@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
   const validation = validateUserVisibleCourseContent(payload, { goal, mode: normalizeMode(data.mode), courseTitle: title });
   if (!validation.valid) {
-    console.warn('Course snapshot save rejected by quality gate', { reasons: validation.reasons, score: validation.score, source: validation.source });
+    console.warn('Course snapshot save rejected by quality gate', { fatalReasons: validation.fatalReasons, moduleReasons: validation.moduleReasons, warnings: validation.warnings, fieldPaths: validation.fieldPaths.slice(0, 12), score: validation.score, source: validation.source });
     return NextResponse.json({ ok: false, error: 'COURSE_SNAPSHOT_INVALID', message: '课程内容暂未生成完成，请重新生成后再保存。', canRetry: true }, { status: 422 });
   }
 
