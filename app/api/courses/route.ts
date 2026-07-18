@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createOrUpdateCourseSnapshot, listCoursesForUserOrAnonymous } from '@/lib/course/courseRepository';
 import type { CourseHistoryMode } from '@/lib/courseHistory';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
+import { validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 
 function normalizeMode(value: unknown): CourseHistoryMode {
   return value === 'lite' || value === 'deep' ? value : 'deep';
@@ -11,6 +12,21 @@ function parseIntegerParam(value: string | null, fallback: number) {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+const COURSE_SAVE_TIMEOUT_MS = 12_000;
+
+async function withSaveTimeout<T>(promise: Promise<T>): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('course_save_timeout')), COURSE_SAVE_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 function serializeProgress(progress?: {
@@ -87,12 +103,18 @@ export async function POST(request: NextRequest) {
   const payload = data.payload;
 
   if (!goal || !title || !payload) {
-    return NextResponse.json({ error: '课程信息不完整。' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'COURSE_SAVE_INVALID_INPUT', message: '课程信息不完整。', canRetry: true }, { status: 400 });
+  }
+
+  const validation = validateUserVisibleCourseContent(payload, { goal, mode: normalizeMode(data.mode), courseTitle: title });
+  if (!validation.valid) {
+    console.warn('Course snapshot save rejected by quality gate', { reasons: validation.reasons, score: validation.score, source: validation.source });
+    return NextResponse.json({ ok: false, error: 'COURSE_SNAPSHOT_INVALID', message: '课程内容暂未生成完成，请重新生成后再保存。', canRetry: true }, { status: 422 });
   }
 
   try {
     const user = await getCurrentUserFromRequest(request);
-    const { courseId } = await createOrUpdateCourseSnapshot({
+    const { courseId } = await withSaveTimeout(createOrUpdateCourseSnapshot({
       anonymousId,
       userId: user?.id,
       goal,
@@ -101,9 +123,11 @@ export async function POST(request: NextRequest) {
       summary,
       source,
       payload,
-    });
-    return NextResponse.json({ courseId, href: `/plan?courseId=${encodeURIComponent(courseId)}` });
-  } catch {
-    return NextResponse.json({ error: '课程保存失败，请稍后重试。' }, { status: 500 });
+    }));
+    return NextResponse.json({ ok: true, courseId, href: `/plan?courseId=${encodeURIComponent(courseId)}` });
+  } catch (error) {
+    const code = error instanceof Error && error.message === 'course_save_timeout' ? 'COURSE_SAVE_TIMEOUT' : 'COURSE_SAVE_FAILED';
+    console.warn('Course snapshot save unavailable', { error: code });
+    return NextResponse.json({ ok: false, error: code, message: '课程保存失败，但你可以重新生成或稍后重试。', canRetry: true }, { status: code === 'COURSE_SAVE_TIMEOUT' ? 504 : 500 });
   }
 }

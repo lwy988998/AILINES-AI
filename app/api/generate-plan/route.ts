@@ -46,11 +46,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ plan, usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) } });
   } catch (error) {
     const type = error instanceof GeneratePlanError ? error.type : 'unknown';
-    console.warn('Generate plan API unavailable', { errorType: type, mode, goalLength: goal.length });
+    const status = error instanceof GeneratePlanError ? error.status : 502;
+    const code = type === 'timeout' ? 'COURSE_GENERATION_TIMEOUT' : 'COURSE_GENERATION_UNAVAILABLE';
+    console.warn('Generate plan API unavailable', { errorType: type, status, mode, goalLength: goal.length });
     await incrementUsage('course_generate', usage.scope);
     return NextResponse.json({
-      error: '课程内容暂未生成完成，你可以点击重新生成。',
+      ok: false,
+      error: code,
+      message: '课程内容暂未生成完成，请稍后重试。',
+      canRetry: true,
       usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
-    }, { status: error instanceof GeneratePlanError ? error.status : 502 });
+    }, { status });
   }
 }

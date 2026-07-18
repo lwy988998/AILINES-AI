@@ -323,14 +323,29 @@ export function createTaskOutput(input: { goal: string; stageName: string; taskT
   return content.action;
 }
 
-function collectValidationTexts(content: unknown): string[] {
-  if (typeof content === 'string') return [content];
+type ValidationTextHit = { path: string; text: string };
+
+function collectValidationTextHits(content: unknown, path = 'root'): ValidationTextHit[] {
+  if (typeof content === 'string') return [{ path, text: content }];
   if (!content || typeof content !== 'object') return [];
-  if (Array.isArray(content)) return content.flatMap(collectValidationTexts);
+  if (Array.isArray(content)) return content.flatMap((item, index) => collectValidationTextHits(item, `${path}[${index}]`));
   const record = content as Record<string, unknown>;
   return Object.entries(record)
     .filter(([key]) => !['id', 'href', 'url', 'createdAt', 'updatedAt'].includes(key))
-    .flatMap(([, value]) => collectValidationTexts(value));
+    .flatMap(([key, value]) => collectValidationTextHits(value, `${path}.${key}`));
+}
+
+function collectValidationTexts(content: unknown): string[] {
+  return collectValidationTextHits(content).map((hit) => hit.text);
+}
+
+export function summarizeCourseQualityIssues(content: unknown) {
+  const genericHits = collectValidationTextHits(content)
+    .filter((hit) => isGenericCourseText(hit.text) || GENERIC_COURSE_PHRASES.some((phrase) => hit.text.toLowerCase().includes(phrase.toLowerCase())))
+    .slice(0, 12)
+    .map((hit) => ({ path: hit.path, length: hit.text.length }));
+
+  return { genericHits };
 }
 
 function contextKeywords(context: CourseContentValidationContext) {
