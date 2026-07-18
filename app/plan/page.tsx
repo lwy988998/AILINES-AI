@@ -42,8 +42,10 @@ function CourseGenerationPendingState({ goal, mode, anonymousId, message }: { go
         <h1 className="text-3xl font-semibold tracking-tight text-slate-950">课程内容暂未生成完成</h1>
         <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这门课程')}</p>
         <p className="mt-2 text-sm leading-6 text-slate-500">这部分内容暂未生成完整。请点击重新生成，AILINES AI 会再次根据「{goal}」生成具体学习路径。</p>
-        <div className="mt-6 flex justify-center">
-          <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成</Link>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成深度课程</Link>
+          {mode === 'deep' ? <Link href={`/plan?${new URLSearchParams({ goal, mode: 'lite', forcePlan: '1', bypassCache: 'true', retry: String(Date.now()), ...(anonymousId ? { anonymousId } : {}) }).toString()}`} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">先生成快速规划</Link> : null}
+          <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回首页</Link>
         </div>
       </section>
     </div>

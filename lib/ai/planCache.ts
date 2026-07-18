@@ -85,7 +85,6 @@ export function isValidGeneratedPlan(plan: unknown): plan is GeneratedPlan {
         isValidStepArray(phase.steps),
     ) &&
     Array.isArray(candidate.resources) &&
-    candidate.resources.length > 0 &&
     candidate.resources.every(
       (resource) =>
         typeof resource.name === 'string' &&
