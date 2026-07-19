@@ -1,65 +1,70 @@
 import Link from 'next/link';
-import { Clock3, Target } from 'lucide-react';
-import type { RoadmapStage } from '@/lib/mockPlan';
+import { ArrowRight, BookOpen, Clock3, PlayCircle, Target } from 'lucide-react';
+import { createLearnHref, createPhaseHref, getStageTopics } from '@/lib/course/courseLearningNavigation';
+import type { CourseStage, RoadmapStage } from '@/lib/mockPlan';
 
 type RoadmapSectionProps = {
   goal: string;
   stages: RoadmapStage[];
+  courseStructure?: CourseStage[];
   mode?: 'lite' | 'deep';
   courseId?: string;
   anonymousId?: string;
 };
 
-export function RoadmapSection({ goal, stages, mode = 'deep', courseId, anonymousId }: RoadmapSectionProps) {
+export function RoadmapSection({ goal, stages, courseStructure = [], mode = 'deep', courseId, anonymousId }: RoadmapSectionProps) {
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
         <p className="text-sm font-semibold text-sky-700">学习路线</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">分阶段推进，不靠临时冲刺</h2>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">分阶段推进，每个阶段都有入口</h2>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         {stages.map((stage, index) => {
-          const phaseParams = new URLSearchParams({ goal, mode, phaseIndex: `${index + 1}`, phaseName: stage.name });
-          if (courseId) {
-            phaseParams.set('courseId', courseId);
-          }
-          if (anonymousId) {
-            phaseParams.set('anonymousId', anonymousId);
-          }
-          const phaseHref = `/phase?${phaseParams.toString()}`;
+          const phaseNo = index + 1;
+          const phaseHref = createPhaseHref({ goal, mode, courseId, anonymousId, phaseIndex: phaseNo, phaseName: stage.name });
+          const topics = getStageTopics(stage, courseStructure[index]);
+          const firstTopic = topics[0];
+          const firstLearnHref = firstTopic ? createLearnHref({ goal, mode, courseId, anonymousId, phaseIndex: phaseNo, phaseName: stage.name, topicIndex: 1, topic: firstTopic }) : phaseHref;
 
           return (
-            <Link
-              key={stage.name}
-              href={phaseHref}
-              className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition sm:p-5 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-900/10 focus:outline-none focus:ring-4 focus:ring-sky-100"
-            >
-              <article>
-                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white transition group-hover:bg-sky-800">
-                    {index + 1}
+            <article key={stage.name} className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition sm:p-5 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-900/10">
+              <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-700 text-sm font-semibold text-white transition group-hover:bg-sky-800">
+                  {phaseNo}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words text-lg font-semibold text-slate-950 transition group-hover:text-sky-900">{stage.name}</h3>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
+                      <Clock3 className="h-3.5 w-3.5 text-sky-700" />
+                      {stage.duration}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
+                      <Target className="h-3.5 w-3.5 text-sky-700" />
+                      学习目标
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="break-words text-lg font-semibold text-slate-950 transition group-hover:text-sky-900">{stage.name}</h3>
-                    <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
-                        <Clock3 className="h-3.5 w-3.5 text-sky-700" />
-                        {stage.duration}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
-                        <Target className="h-3.5 w-3.5 text-sky-700" />
-                        学习目标
-                      </span>
-                    </div>
-                    <p className="mt-4 break-words font-medium leading-7 text-slate-800">{stage.goal}</p>
-                    <p className="mt-2 break-words text-sm leading-6 text-slate-600">{stage.description || '暂无说明'}</p>
-                    {stage.output ? <p className="mt-3 break-words rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">阶段产出：{stage.output}</p> : null}
-                    {stage.checkpoint ? <p className="mt-2 break-words text-sm leading-6 text-slate-600">检查点：{stage.checkpoint}</p> : null}
-                    <p className="mt-4 text-sm font-semibold text-sky-700 transition group-hover:text-sky-900">查看阶段详情 →</p>
+                  <p className="mt-4 break-words font-medium leading-7 text-slate-800">{stage.goal}</p>
+                  <p className="mt-2 break-words text-sm leading-6 text-slate-600">{stage.description || '暂无说明'}</p>
+                  {stage.output ? <p className="mt-3 break-words rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">阶段产出：{stage.output}</p> : null}
+                  {stage.checkpoint ? <p className="mt-2 break-words text-sm leading-6 text-slate-600">检查点：{stage.checkpoint}</p> : null}
+                  <div className="mobile-button-stack mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <Link href={phaseHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                      <BookOpen className="h-4 w-4" />查看阶段
+                    </Link>
+                    <Link href={firstLearnHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-sky-700 px-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+                      <PlayCircle className="h-4 w-4" />开始本阶段
+                    </Link>
+                    {firstTopic ? (
+                      <Link href={firstLearnHref} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">
+                        进入第一个知识点<ArrowRight className="h-4 w-4" />
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
-              </article>
-            </Link>
+              </div>
+            </article>
           );
         })}
       </div>

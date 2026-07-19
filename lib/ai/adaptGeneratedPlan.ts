@@ -1,6 +1,6 @@
 import type { GeneratedCourseSlide, GeneratedMindMap, GeneratedMindMapNode, GeneratedPlan, GeneratedPlanPhase, GeneratedPlanStep } from '@/lib/ai/types';
 import type { CourseMindMap, CourseSlide, CourseStep, MockPlan } from '@/lib/mockPlan';
-import { createSpecificStepContent, normalizeCoursePlanContent } from '@/lib/courseContentQuality';
+import { normalizeCoursePlanContent } from '@/lib/courseContentQuality';
 import { markCourseContentSource } from '@/lib/courseContentSource';
 
 function ensureArray<T>(value: T[] | undefined): T[] {
@@ -20,25 +20,20 @@ function compactStrings(values: unknown[], limit = 6) {
     .slice(0, limit);
 }
 
-function fallbackStepsFromPhase(phase: GeneratedPlanPhase, goal = ''): GeneratedPlanStep[] {
+function skeletonStepsFromPhase(phase: GeneratedPlanPhase): GeneratedPlanStep[] {
   const phaseName = safeText(phase.name, '本阶段');
-  const topics = compactStrings(ensureArray(phase.topics), 5);
-  const tasks = compactStrings(ensureArray(phase.tasks), 5);
+  const topics = compactStrings(ensureArray(phase.topics), 6);
+  const tasks = compactStrings(ensureArray(phase.tasks), 6);
   const anchors = topics.length > 0 ? topics : tasks;
-
-  if (anchors.length > 0) {
-    return anchors.slice(0, 5).map((topic, index) => createSpecificStepContent({
-      goal: goal || phaseName,
-      phaseName,
-      title: `第 ${index + 1} 步：${topic}`,
-      index,
-    }));
-  }
-
-  return [
-    createSpecificStepContent({ goal: goal || phaseName, phaseName, title: `理解${phaseName}要解决的问题`, index: 0 }),
-  ];
+  return anchors.slice(0, 6).map((topic, index) => ({
+    title: topic,
+    explanation: safeText((phase as unknown as Record<string, unknown>).topicDescriptions && Array.isArray((phase as unknown as Record<string, unknown>).topicDescriptions) ? ((phase as unknown as Record<string, unknown>).topicDescriptions as unknown[])[index] : undefined, `${phaseName}中的学习点：${topic}`),
+    example: '',
+    action: `进入微课程学习「${topic}」`,
+    check: safeText(phase.checkpoint, `能完成「${topic}」相关练习`),
+  }));
 }
+
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
@@ -162,7 +157,7 @@ export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 
     prerequisites: ensureArray(plan.prerequisites).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
     outcome: safeText(plan.outcome, '完成后能够形成可展示的学习成果，并知道下一步如何继续提升。'),
     learningOutcomes: isStringArray(plan.learningOutcomes) ? plan.learningOutcomes : [],
-    slides: ensureArray(plan.slides).length > 0 ? ensureArray(plan.slides).map(adaptSlide) : slidesFromPhases(plan, phases),
+    slides: ensureArray(plan.slides).length > 0 ? ensureArray(plan.slides).slice(0, mode === 'lite' ? 1 : 2).map(adaptSlide) : slidesFromPhases(plan, phases).slice(0, mode === 'lite' ? 1 : 2),
     mindMap: plan.mindMap && Array.isArray(plan.mindMap.nodes) ? { title: safeText(plan.mindMap.title, '课程知识结构'), nodes: plan.mindMap.nodes.map((node, index) => adaptNode(node, `node-${index + 1}`)) } : mindMapFromPhases(plan, phases),
     roadmap: phases.map((phase, index) => ({
       name: safeText(phase.name, `阶段${index + 1}`),
@@ -175,7 +170,7 @@ export function adaptGeneratedPlan(plan: GeneratedPlan, mode: 'lite' | 'deep' = 
       checkpoint: safeText(phase.checkpoint, ''),
       commonMistakes: ensureArray(phase.commonMistakes).filter((item): item is string => typeof item === 'string' && item.trim().length > 0),
       tasks: compactStrings(ensureArray(phase.tasks), 6),
-      steps: (ensureArray(phase.steps).length > 0 ? ensureArray(phase.steps) : fallbackStepsFromPhase(phase, goal)).map((step, stepIndex) => adaptStep(step, stepIndex, phase)),
+      steps: (ensureArray(phase.steps).length > 0 ? ensureArray(phase.steps).slice(0, 6) : skeletonStepsFromPhase(phase)).map((step, stepIndex) => adaptStep(step, stepIndex, phase)),
     })),
     courseStructure: phases.map((phase) => ({
       stage: safeText(phase.name, '学习阶段'),

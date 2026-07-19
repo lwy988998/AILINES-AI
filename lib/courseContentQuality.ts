@@ -266,15 +266,14 @@ function normalizeSteps(goal: string, stage: RoadmapStage): CourseStep[] | undef
 
   return stage.steps.map((step, index) => {
     const title = clean(step.title, `第 ${index + 1} 步：${stage.name || '学习本阶段重点'}`);
-    const fallback = createSpecificStepContent({ goal, phaseName: stage.name || '当前阶段', phaseGoal: stage.goal, title, index });
-    const explanation = shouldReplace(step.explanation || '', seenExplanations) ? fallback.explanation : step.explanation;
-    const action = shouldReplace(step.action || '', seenActions) ? fallback.action : step.action;
-    const check = shouldReplace(step.check || '', seenChecks) ? fallback.check : step.check;
+    const explanation = shouldReplace(step.explanation || '', seenExplanations) ? `${stage.name || goal}中的学习点：${stripPrefix(title)}` : step.explanation;
+    const action = shouldReplace(step.action || '', seenActions) ? `进入微课程学习「${stripPrefix(title)}」` : step.action;
+    const check = shouldReplace(step.check || '', seenChecks) ? (stage.checkpoint || `能完成「${stripPrefix(title)}」相关练习`) : step.check;
     const normalized = {
       ...step,
       title,
       explanation,
-      example: clean(step.example, fallback.example || ''),
+      example: typeof step.example === 'string' ? step.example : '',
       action,
       check,
     };

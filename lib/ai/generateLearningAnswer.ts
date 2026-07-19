@@ -280,7 +280,7 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
     return answer;
   } catch (error) {
     const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
-    console.warn('AI learning fallback', {
+    console.warn('AI learning generation unavailable', {
       errorType: safeError.type,
       status: safeError.status,
       mode: safeInput.mode,

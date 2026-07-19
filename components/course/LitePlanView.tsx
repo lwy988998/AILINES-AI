@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, ClipboardCheck, ListChecks, PackageCheck, RefreshCw, Route, Target } from 'lucide-react';
 import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
+import { CourseStructureSection } from '@/components/CourseStructureSection';
 import { CourseProgressBanner } from '@/components/course/CourseProgressBanner';
 import { LastVisitedRecorder } from '@/components/course/LastVisitedRecorder';
 import { PlanActions } from '@/components/PlanActions';
 import type { PlanMode } from '@/lib/ai/types';
 import type { CourseProgressSummary } from '@/lib/course/courseProgressRepository';
+import type { LearningCardProgressItem } from '@/lib/course/learningCardProgressRepository';
+import { getPlanPrimaryCta } from '@/lib/course/courseLearningNavigation';
 import type { MockPlan, ResourceItem, RoadmapStage } from '@/lib/mockPlan';
 
 type LitePlanViewProps = {
@@ -17,6 +20,7 @@ type LitePlanViewProps = {
   courseId?: string;
   anonymousId?: string;
   courseProgress?: CourseProgressSummary | null;
+  cardProgressItems?: LearningCardProgressItem[];
 };
 
 type LiteStep = {
@@ -105,7 +109,7 @@ function LiteResources({ resources, message }: { resources: ResourceItem[]; mess
   );
 }
 
-export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, courseId, anonymousId, courseProgress }: LitePlanViewProps) {
+export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, courseId, anonymousId, courseProgress, cardProgressItems = [] }: LitePlanViewProps) {
   const title = titleForGoal(goal, plan.title);
   const stages = plan.roadmap.slice(0, 5);
   const coreSteps = getCoreSteps(plan);
@@ -113,6 +117,7 @@ export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, 
   const practiceItems = getPracticeItems(plan, stages);
   const mistakes = getMistakes(plan, stages);
   const firstStage = stages[0];
+  const primaryCta = getPlanPrimaryCta({ plan, goal, mode, courseId, anonymousId, courseProgress });
   const encodedGoal = encodeURIComponent(goal);
   const encodedMode = encodeURIComponent(mode);
 
@@ -143,8 +148,22 @@ export function LitePlanView({ goal, mode, plan, resourceSourceMessage, notice, 
           </div>
         </section>
 
+        <section className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-700 to-sky-700 p-5 text-white shadow-sm shadow-sky-900/10 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-100">下一步</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">直接开始第一节微课程</h2>
+              <p className="mt-2 text-sm leading-6 text-emerald-50">{primaryCta.helper}</p>
+            </div>
+            <Link href={primaryCta.href} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-white/40">
+              {primaryCta.label}
+            </Link>
+          </div>
+        </section>
         {courseProgress ? <CourseProgressBanner progress={courseProgress} /> : null}
         {notice}
+
+        <CourseStructureSection stages={plan.courseStructure} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} cardProgressItems={cardProgressItems} />
 
         <section className="grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
           <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">

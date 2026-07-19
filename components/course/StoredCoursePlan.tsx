@@ -5,6 +5,7 @@ import { LitePlanView } from '@/components/course/LitePlanView';
 import { getCurrentUser } from '@/lib/auth/currentUser';
 import { getCourseOwnedByRequester } from '@/lib/course/courseRepository';
 import { getCourseProgress, recomputeCourseProgress } from '@/lib/course/courseProgressRepository';
+import { listLearningCardProgress } from '@/lib/course/learningCardProgressRepository';
 import type { PlanMode } from '@/lib/ai/types';
 import type { MockPlan } from '@/lib/mockPlan';
 import { normalizeCoursePlanContent, validateUserVisibleCourseContent, buildUnavailableCourseContentNotice } from '@/lib/courseContentQuality';
@@ -77,6 +78,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
   }
 
   const ownedAnonymousId = result.course.anonymousId || anonymousId;
+  const cardProgressItems = await listLearningCardProgress({ courseId: result.course.id, anonymousId: ownedAnonymousId, goal, mode: result.course.mode }).catch(() => []);
   const anonymousQuery = ownedAnonymousId && !user ? `&anonymousId=${encodeURIComponent(ownedAnonymousId)}` : '';
 
   const notice = (
@@ -101,6 +103,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
         courseId={result.course.id}
         anonymousId={ownedAnonymousId}
         courseProgress={courseProgress}
+        cardProgressItems={cardProgressItems}
         notice={notice}
       />
     );
@@ -117,6 +120,7 @@ export async function StoredCoursePlan({ courseId, anonymousId }: { courseId: st
       courseId={result.course.id}
       anonymousId={ownedAnonymousId}
       courseProgress={courseProgress}
+      cardProgressItems={cardProgressItems}
       notice={notice}
       membershipTier={user?.membershipTier || 'free'}
     />

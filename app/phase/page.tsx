@@ -17,6 +17,7 @@ import { type MockPlan, type RoadmapStage } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
 import type { SearchResource } from '@/lib/search/resourceTypes';
 import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { generatePhaseExpansion } from '@/lib/ai/generatePhaseExpansion';
 import { markCourseContentSource, type CourseContentSource } from '@/lib/courseContentSource';
 
 export const dynamic = 'force-dynamic';
@@ -199,35 +200,46 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const encodedMode = encodeURIComponent(mode);
   const encodedCourseId = encodeURIComponent(courseId);
   const planHref = courseId ? `/plan?courseId=${encodedCourseId}` : `/plan?goal=${encodedGoal}&mode=${encodedMode}`;
-  const { stage: planStage } = await getPlanStage({ goal, mode, phaseIndex, phaseName, courseId, anonymousId });
+  const { stage: planStage, plan } = await getPlanStage({ goal, mode, phaseIndex, phaseName, courseId, anonymousId });
   const stageTitle = planStage?.name || phaseName;
-  const teachingSteps = stepsFromStage(planStage);
+  const stageTopics = plan?.courseStructure?.[phaseIndex - 1]?.topics || planStage?.tasks || [];
   const stageOutput = planStage?.output || '';
-  const phaseTasks = tasksFromStage(planStage, stageOutput);
-  const phaseValidation = validateUserVisibleCourseContent({ teachingSteps, phaseTasks, stageOutput, objective: planStage?.goal, description: planStage?.description }, { goal, mode, phaseName: stageTitle, availableTopics: teachingSteps.map((step) => step.title), availableTasks: phaseTasks.map((task) => task.title) });
+  let teachingSteps = stepsFromStage(planStage);
+  let phaseTasks = tasksFromStage(planStage, stageOutput);
+  let generatedExpansion = null as Awaited<ReturnType<typeof generatePhaseExpansion>>;
+
+  if (planStage) {
+    generatedExpansion = await generatePhaseExpansion({ goal, mode, phaseIndex, stage: planStage, topics: stageTopics, resources: [] });
+    if (generatedExpansion) {
+      teachingSteps = generatedExpansion.steps;
+      phaseTasks = generatedExpansion.tasks;
+    }
+  }
+
+  const phaseValidation = validateUserVisibleCourseContent({ teachingSteps, phaseTasks, stageOutput, objective: generatedExpansion?.objective || planStage?.goal, description: generatedExpansion?.overview || planStage?.description }, { goal, mode, phaseName: stageTitle, availableTopics: teachingSteps.map((step) => step.title), availableTasks: phaseTasks.map((task) => task.title) });
   if (!planStage || teachingSteps.length === 0 || !phaseValidation.valid) {
     return <PhaseGenerationPendingState goal={goal} mode={mode} planHref={planHref} />;
   }
-  const phaseSlides = teachingSteps.map((step, index) => ({
+  const phaseSlides = (generatedExpansion?.slides?.length ? generatedExpansion.slides : teachingSteps.map((step, index) => ({
     title: step.title || `第 ${index + 1} 步`,
     subtitle: stageTitle,
     content: step.explanation,
     bullets: [step.example ? `例子：${step.example}` : '', `现在你要做：${step.action}`, `完成检查：${step.check}`].filter(Boolean),
     speakerNote: '先读懂讲解，再完成行动建议，最后用完成检查判断是否掌握。',
     relatedPhase: stageTitle,
-  }));
+  })));
   const phaseMindMap = {
     title: '当前阶段知识结构',
     nodes: [{
       id: 'root',
       label: stageTitle,
-      children: teachingSteps.map((step, index) => ({ id: `step-${index + 1}`, label: (step.title || `第 ${index + 1} 步`).replace(/^第\s*\d+\s*步[:：]?\s*/, '') })),
+      children: (generatedExpansion?.knowledgeTopics?.length ? generatedExpansion.knowledgeTopics : teachingSteps.map((step) => step.title)).map((label, index) => ({ id: `step-${index + 1}`, label: (label || `第 ${index + 1} 步`).replace(/^第\s*\d+\s*步[:：]?\s*/, '') })),
     }],
   };
   const stageWhy = planStage?.why || '';
   const phaseContextSummary = [
-    `阶段目标：${planStage?.goal || ''}`,
-    `为什么学：${stageWhy || ''}`,
+    `阶段目标：${generatedExpansion?.objective || planStage?.goal || ''}`,
+    `阶段导学：${generatedExpansion?.overview || stageWhy || ''}`,
     `阶段产出：${stageOutput || ''}`,
     ...teachingSteps.slice(0, 4).map((step, index) => `步骤 ${index + 1}：${step.title}。${step.explanation}`),
   ].filter(Boolean).join('\n').slice(0, 1000);
