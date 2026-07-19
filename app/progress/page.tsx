@@ -41,7 +41,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
     return (
       <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
-        <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
+        <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12 md:px-6">
           <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">无法查看这个课程进度</h1>
             <p className="mt-3 text-base leading-7 text-slate-600">这个课程不存在、已失效，或当前账号没有访问权限。</p>
@@ -63,7 +63,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
     return (
       <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
-        <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
+        <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12 md:px-6">
           <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">学习进度暂未生成完成</h1>
             <p className="mt-3 text-base leading-7 text-slate-600">{buildUnavailableCourseContentNotice('这门课程的进度卡片')}</p>

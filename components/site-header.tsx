@@ -46,15 +46,15 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/92 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-13 w-full max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:min-h-16 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-13 w-full max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:min-h-16 md:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <BackHomeButton />
-          <Link href="/" className="shrink-0 text-base font-semibold tracking-tight text-sky-900 sm:text-lg">
+          <Link href="/" className="shrink-0 text-base font-semibold tracking-tight text-sky-900 md:text-lg">
             AILINES AI
           </Link>
           <CourseHistoryButton />
         </div>
-        <nav className="hidden min-w-0 items-center justify-end gap-2 text-sm font-medium text-slate-600 md:flex lg:gap-4">
+        <nav className="hidden min-w-0 flex-1 items-center justify-end gap-2 text-sm font-medium text-slate-600 md:flex lg:gap-4">
           {navContent}
         </nav>
         <details className="group relative md:hidden">

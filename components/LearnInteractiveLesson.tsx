@@ -70,7 +70,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
   return (
     <>
       <section id="practice-steps" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-sky-700">分步练习</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">跟着做，而不是只看懂</h2>
@@ -132,7 +132,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
       <section id="quiz" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
         {quiz.length > 0 ? (
           <>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-sky-700">小测验</p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">AI 生成题检查你有没有真正掌握</h2>
@@ -209,7 +209,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             <p className="text-sm font-semibold text-sky-700">底部操作区</p>
             <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">完成本节课后，继续推进路线</h2>
             <p className="mt-3 break-words text-sm leading-6 text-slate-600">建议先完成分步练习和小测验，再标记完成。完成后课程总进度会重新计算。</p>
-            <div className="mobile-button-stack mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mobile-button-stack mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap">
               <Link href={nextHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
                 继续下一节
                 <ArrowRight className="h-4 w-4" />

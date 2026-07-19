@@ -24,7 +24,7 @@ export default async function HomePage() {
     <main className="mobile-app-page min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(14,165,233,0.12),transparent_28rem),linear-gradient(180deg,#f8fbff_0%,#ffffff_62%,#f8fafc_100%)] text-slate-950">
       <SiteHeader />
 
-      <section className="mx-auto flex min-h-[calc(100vh-3.25rem)] w-full max-w-5xl flex-col items-center px-4 pb-10 pt-5 text-center sm:min-h-[calc(100vh-4rem)] sm:px-6 sm:pt-10 lg:px-8">
+      <section className="mx-auto flex min-h-[calc(100vh-3.25rem)] w-full max-w-6xl flex-col items-center px-4 pb-10 pt-5 text-center md:min-h-[calc(100vh-4rem)] md:px-6 md:pt-10 lg:px-8 xl:max-w-7xl">
         <div className="flex flex-col items-center">
           <Image
             src="/ailines-logo-transparent.png"
@@ -32,21 +32,21 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-20 w-auto max-w-full object-contain drop-shadow-sm sm:h-48 lg:h-56"
+            className="h-20 w-auto max-w-full object-contain drop-shadow-sm md:h-48 lg:h-56"
           />
-          <p className="mt-1 max-w-2xl break-words text-base leading-7 text-slate-600 sm:mt-2 sm:text-lg sm:leading-8">
+          <p className="mt-1 max-w-2xl break-words text-base leading-7 text-slate-600 md:mt-2 md:text-lg md:leading-8">
             把学习目标变成可以一步步完成的课程。
           </p>
-          <p className="mt-1 hidden max-w-2xl break-words text-sm leading-6 text-slate-500 sm:mt-2 sm:block sm:text-base">
+          <p className="mt-1 hidden max-w-2xl break-words text-sm leading-6 text-slate-500 md:mt-2 md:block md:text-base">
             输入你想学习的内容，AILINES AI 会生成课程路线、学习任务、微课程和进度记录。
           </p>
         </div>
 
-        <div className="mt-4 w-full max-w-3xl sm:max-w-5xl">
+        <div className="mt-4 w-full max-w-3xl md:max-w-5xl xl:max-w-6xl">
           <GoalForm />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-slate-600 sm:mt-5 sm:gap-3">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-slate-600 md:mt-5 md:gap-3">
           {user ? (
             <Link href="/my-courses" className="rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-sky-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300">
               继续我的课堂
@@ -61,7 +61,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="mt-6 hidden w-full max-w-4xl grid-cols-1 gap-3 text-left sm:grid sm:grid-cols-3">
+        <div className="mt-6 hidden w-full max-w-5xl grid-cols-1 gap-3 text-left md:grid md:grid-cols-3 xl:max-w-6xl">
           {capabilityNotes.map(([title, description]) => (
             <div key={title} className="min-w-0 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">

@@ -36,7 +36,7 @@ export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, r
   return (
     <>
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={anonymousId} goal={goal} mode={mode} lastPageType="plan" /> : null}
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 md:px-6 lg:px-8 lg:py-10 xl:max-w-7xl">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
         {courseProgress ? <CourseProgressBanner progress={courseProgress} /> : null}
         {notice}

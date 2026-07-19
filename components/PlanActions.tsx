@@ -18,7 +18,7 @@ export function PlanActions({ goal, title, mode = 'deep', courseId, anonymousId 
   const courseQuery = `${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ''}${anonymousId ? `&anonymousId=${encodeURIComponent(anonymousId)}` : ''}`;
 
   return (
-    <div className="mobile-button-stack mt-8 flex flex-col gap-3 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:flex-row sm:items-center sm:justify-end sm:p-5">
+    <div className="mobile-button-stack mt-8 flex flex-col gap-3 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 md:flex-row md:items-center md:justify-end sm:p-5">
       <button
         type="button"
         onClick={() => {
