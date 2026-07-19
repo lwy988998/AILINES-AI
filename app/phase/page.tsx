@@ -167,7 +167,7 @@ function adaptSearchResource(resource: SearchResource): DisplayResource {
 function PhaseGenerationPendingState({ goal, mode, planHref }: { goal: string; mode: PlanMode; planHref: string }) {
   const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}`;
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
         <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -256,7 +256,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={anonymousId} goal={goal} mode={mode} lastPageType="phase" lastPhaseIndex={phaseIndex} lastPhaseName={phaseName} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -281,7 +281,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
                 <p className="mt-1 leading-6 text-slate-600">{modeDescription}</p>
               </div>
             </div>
-            <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="mobile-button-stack grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <Link
                 href={progressHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
@@ -300,7 +300,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-4">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-5">
             <p className="text-sm font-semibold text-sky-700">阶段名称</p>
             <p className="mt-2 break-words text-lg font-semibold text-slate-950">{stageTitle}</p>
@@ -396,7 +396,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             </p>
             <p className="mt-2 break-words text-sm leading-6 text-slate-600">可以进入进度页勾选任务，或继续向 AILINES AI 追问本阶段卡点。</p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="mobile-button-stack flex flex-col gap-3 sm:flex-row">
             <Link href={progressHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
               <ClipboardCheck className="h-4 w-4" />
               开始执行

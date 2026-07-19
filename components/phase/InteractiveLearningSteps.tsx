@@ -274,7 +274,7 @@ export function InteractiveLearningSteps({ steps, goal, mode = 'deep', courseId,
                     ) : null}
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mobile-button-stack mt-4 flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => updateStatus(index, 'understood')}

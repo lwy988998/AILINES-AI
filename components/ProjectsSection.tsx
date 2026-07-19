@@ -19,7 +19,7 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
               <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-800">{project.difficulty}</span>
               <span className="text-sm font-medium text-slate-500">{project.duration}</span>
             </div>
-            <h3 className="text-lg font-semibold text-slate-950">{project.name}</h3>
+            <h3 className="break-words text-lg font-semibold text-slate-950">{project.name}</h3>
             <div className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
               <div>
                 <p className="font-semibold text-slate-800">项目产出</p>

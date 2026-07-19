@@ -11,6 +11,9 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: pan-x pan-y;
 }
 
 body {
@@ -26,8 +29,76 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
+}
+
+.learn-app-page {
+  background:
+    radial-gradient(circle at top left, rgba(186, 230, 253, 0.38), transparent 32rem),
+    linear-gradient(180deg, #f8fbff 0%, #f5f9ff 42%, #f8fafc 100%);
+}
+
+.mobile-button-stack > a,
+.mobile-button-stack > button {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .learn-app-page > div {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+    padding-top: 1rem !important;
+  }
+
+  .learn-app-page section,
+  .learn-app-page article {
+    border-radius: 1.25rem !important;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  .learn-app-page section {
+    padding: 1rem !important;
+  }
+
+  .learn-app-page h1 {
+    font-size: 1.65rem !important;
+    line-height: 1.16 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .learn-app-page h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .learn-app-page h3 {
+    font-size: 1rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .learn-app-page p,
+  .learn-app-page li {
+    line-height: 1.65 !important;
+  }
+
+  .mobile-button-stack {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .mobile-button-stack > a,
+  .mobile-button-stack > button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }
 
 ::selection {
@@ -124,5 +195,27 @@ input {
   .ailines-soft-float,
   .ailines-skeleton {
     animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-app-page section,
+  .learn-app-page section {
+    border-color: rgba(226, 232, 240, 0.82) !important;
+  }
+
+  .mobile-app-page .mobile-prompt-examples > :nth-child(n + 4),
+  .learn-app-page .mobile-prompt-examples > :nth-child(n + 4) {
+    display: none;
+  }
+
+  .learn-app-page pre,
+  .learn-app-page code,
+  .mobile-app-page pre,
+  .mobile-app-page code {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 }

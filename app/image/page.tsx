@@ -30,11 +30,11 @@ export default async function ImagePage({ searchParams }: ImagePageProps) {
   const regenerateHref = prompt ? createRegenerateHref(prompt, anonymousId) : '/';
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
-          <div className="flex flex-wrap gap-3">
+          <div className="mobile-button-stack flex flex-wrap gap-3">
             <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
               <ArrowLeft className="h-4 w-4" />
               返回首页
@@ -52,8 +52,8 @@ export default async function ImagePage({ searchParams }: ImagePageProps) {
               <ImageIcon className="h-4 w-4" />
               AILINES AI 图片生成
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">AILINES AI 图片生成</h1>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+            <h1 className="break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">AILINES AI 图片生成</h1>
+            <p className="mt-3 max-w-3xl break-words text-sm leading-7 text-slate-600 sm:mt-4 sm:text-lg sm:leading-8">
               AILINES AI 会根据你的描述生成图片。描述越具体，画面越接近你的预期。
             </p>
           </div>

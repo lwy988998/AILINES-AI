@@ -249,7 +249,7 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <h3 className="text-lg font-semibold text-slate-950">{task.title}</h3>
+                    <h3 className="break-words text-lg font-semibold text-slate-950">{task.title}</h3>
                     <span
                       className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                         isCompleted
@@ -266,10 +266,10 @@ export function InteractivePhaseTasks({ tasks, goal, mode = 'deep', courseId, ph
                     <Clock3 className="h-3.5 w-3.5 text-sky-700" />
                     {task.duration}
                   </p>
-                  <p className="mt-4 text-sm leading-6 text-slate-600">{task.description}</p>
-                  <p className="mt-3 rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">产出物：{task.output}</p>
+                  <p className="mt-4 break-words text-sm leading-6 text-slate-600">{task.description}</p>
+                  <p className="mt-3 break-words rounded-xl bg-white p-3 text-sm font-medium leading-6 text-slate-700">产出物：{task.output}</p>
 
-                  <div className="mt-4 flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
+                  <div className="mobile-button-stack mt-4 flex flex-wrap gap-2" onClick={(event) => event.stopPropagation()}>
                     {statusOptions.map((option) => (
                       <button
                         key={option}

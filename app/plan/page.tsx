@@ -72,7 +72,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
 
   if (courseId) {
     return (
-      <main className="min-h-screen bg-[#f5f9ff]">
+      <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
         <Suspense
           fallback={
@@ -88,7 +88,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <Suspense
         fallback={

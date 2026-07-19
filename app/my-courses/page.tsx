@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export default function MyCoursesPage() {
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <MyCoursesClient />
     </main>

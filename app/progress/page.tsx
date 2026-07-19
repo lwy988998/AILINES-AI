@@ -39,7 +39,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
 
   if (courseId && !ownedCourse) {
     return (
-      <main className="min-h-screen bg-[#f5f9ff]">
+      <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
         <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
           <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -61,7 +61,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
 
   if (progressStages.length === 0) {
     return (
-      <main className="min-h-screen bg-[#f5f9ff]">
+      <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
         <SiteHeader />
         <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
           <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -84,7 +84,7 @@ export default async function ProgressPage({ searchParams }: ProgressPageProps) 
     .slice(0, 1000);
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       {courseId ? <LastVisitedRecorder courseId={courseId} goal={goal} mode={mode} lastPageType="progress" /> : null}
       <SiteHeader />
       <ProgressTracker goal={goal} mode={mode} courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} title={title} courseProgress={courseProgress} initialStages={progressStages} />

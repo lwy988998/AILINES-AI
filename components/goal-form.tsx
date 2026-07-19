@@ -268,7 +268,7 @@ export function GoalForm() {
   const submitLabel = modeValue === 'image' ? '生成图片' : modeValue === 'lite' ? '开始快速规划' : '生成深度课程';
 
   return (
-    <div className="w-full max-w-full rounded-[28px] border border-slate-200/80 bg-white/90 p-2 text-left shadow-2xl shadow-sky-950/12 backdrop-blur-md sm:p-2.5">
+    <div className="w-full max-w-full rounded-[24px] border border-slate-200/70 bg-white/95 p-1.5 text-left shadow-xl shadow-sky-950/10 backdrop-blur-md sm:rounded-[28px] sm:p-2.5 sm:shadow-2xl">
       <form onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
@@ -276,8 +276,8 @@ export function GoalForm() {
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
         <input type="hidden" name="mode" value={modeValue} />
 
-        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white transition focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100">
-          <div className="px-4 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4">
+        <div className="overflow-hidden rounded-[22px] border border-slate-100 bg-white transition focus-within:border-sky-300 focus-within:ring-4 focus-within:ring-sky-100 sm:rounded-[24px]">
+          <div className="px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-sky-800">
               <Sparkles className="h-4 w-4" />
               今天你想学什么？
@@ -295,14 +295,14 @@ export function GoalForm() {
               }}
               placeholder={modeValue === 'image' ? '描述你想生成的图片，例如：未来感 AI 学习助手海报' : '输入你的学习目标，例如：中考英语阅读理解提分、Python 零基础入门、学习摄影构图'}
               rows={4}
-              className="block min-h-[100px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[120px] sm:text-lg lg:min-h-[130px]"
+              className="block min-h-[92px] w-full resize-none border-0 bg-transparent text-base leading-7 text-slate-950 outline-none placeholder:text-slate-400 sm:min-h-[120px] sm:text-lg lg:min-h-[130px]"
             />
             <div className="mt-2 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <button
                 type="button"
                 aria-label="上传图片"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
               >
                 <Plus className="h-4 w-4" />
                 上传参考图
@@ -310,7 +310,7 @@ export function GoalForm() {
               <button
                 type="submit"
                 disabled={isWorking}
-                className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
               >
                 {isAnalyzingImage ? '识别中...' : isWorking ? '准备生成...' : submitLabel}
                 <ArrowRight className="h-4 w-4" />
@@ -318,7 +318,7 @@ export function GoalForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 border-t border-slate-200 bg-slate-50/70 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-1 border-t border-slate-100 bg-slate-50/70 p-1 sm:gap-0 sm:p-0">
             {planningModes.map((mode, index) => {
               const selected = modeValue === mode.value;
 
@@ -331,18 +331,18 @@ export function GoalForm() {
                   data-mode-option={mode.value}
                   data-selected={selected ? 'true' : 'false'}
                   className={[
-                    'min-h-[82px] w-full px-4 py-3 text-left transition-all sm:min-h-[92px] sm:px-5',
-                    index > 0 ? 'border-t border-slate-200 sm:border-l sm:border-t-0' : '',
+                    'min-h-12 w-full rounded-2xl px-2 py-2 text-center transition-all sm:min-h-[92px] sm:rounded-none sm:px-5 sm:py-3 sm:text-left',
+                    index > 0 ? 'sm:border-l sm:border-slate-200' : '',
                     'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-400',
-                    selected ? 'bg-white text-sky-900 shadow-[inset_0_3px_0_#0284c7]' : 'text-slate-600 hover:bg-white hover:text-slate-950',
+                    selected ? 'bg-white text-sky-900 shadow-sm sm:shadow-[inset_0_3px_0_#0284c7]' : 'text-slate-600 hover:bg-white hover:text-slate-950',
                   ].join(' ')}
                 >
-                  <span className="flex flex-wrap items-center gap-2 text-sm font-semibold sm:text-base">
+                  <span className="flex items-center justify-center gap-1 text-xs font-semibold sm:justify-start sm:gap-2 sm:text-base">
                     {mode.title}
                     {mode.value === 'deep' ? <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-700">推荐</span> : null}
                     {mode.value === 'deep' && membershipLoaded && !canUseDeepPlan ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">Pro</span> : null}
                   </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500 sm:text-sm">{mode.description}</span>
+                  <span className="mt-1 hidden text-xs leading-5 text-slate-500 sm:block sm:text-sm">{mode.description}</span>
                 </button>
               );
             })}
@@ -390,13 +390,13 @@ export function GoalForm() {
         </div>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap justify-center gap-2">
+      <div className="mobile-prompt-examples mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
         {(promptExamples.length > 0 ? promptExamples : modeValue === 'image' ? defaultImagePromptExamples : defaultStudyPromptExamples).map((example) => (
           <button
             key={example}
             type="button"
             onClick={() => setGoalValue(example)}
-            className="min-w-0 break-words rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300"
+            className="shrink-0 whitespace-nowrap rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 sm:min-w-0 sm:whitespace-normal sm:break-words"
           >
             {example}
           </button>

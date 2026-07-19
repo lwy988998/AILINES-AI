@@ -202,7 +202,7 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 
 function LearningGenerationPendingState({ regenerateHref, planHref, message }: { regenerateHref: string; planHref: string; message?: string }) {
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
         <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -222,7 +222,7 @@ function LearningGenerationPendingState({ regenerateHref, planHref, message }: {
 
 function FriendlyMissingState({ courseId }: { courseId?: string }) {
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
         <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
@@ -379,12 +379,12 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   ].filter(Boolean).join('\n').slice(0, 1000);
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff]">
+    <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} goal={courseGoal} mode={mode} lastPageType="learn" lastPhaseIndex={location.phaseIndex} lastPhaseName={location.phaseName} lastTopicIndex={location.topicIndex} lastTopicTitle={location.topic} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-4 shadow-sm shadow-sky-900/5 sm:p-8">
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="mobile-button-stack flex flex-wrap gap-2 sm:gap-3">
             <Link href={progressHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ArrowLeft className="h-4 w-4" />返回进度页</Link>
             <Link href={planHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
             <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><Home className="h-4 w-4" />返回首页</Link>
