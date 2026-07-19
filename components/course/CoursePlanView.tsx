@@ -43,14 +43,14 @@ export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, r
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={anonymousId} goal={goal} mode={mode} lastPageType="plan" /> : null}
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 md:px-6 lg:px-8 lg:py-10 xl:max-w-7xl">
         <PlanHeader goal={goal} title={plan.title} duration={plan.duration} summary={plan.summary} modeLabel={modeLabel} modeDescription={modeDescription} />
-        <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-700 to-emerald-600 p-5 text-white shadow-sm shadow-sky-900/10 sm:p-6">
+        <section className="animate-slide-up rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-700 to-emerald-600 p-5 text-white shadow-sm shadow-sky-900/10 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-semibold text-sky-100">下一步</p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">从这里进入学习</h2>
               <p className="mt-2 text-sm leading-6 text-sky-50">{primaryCta.helper}</p>
             </div>
-            <Link href={primaryCta.href} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-white/40">
+            <Link href={primaryCta.href} className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-sky-800 interactive-button transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-white/40">
               {primaryCta.label}
             </Link>
           </div>

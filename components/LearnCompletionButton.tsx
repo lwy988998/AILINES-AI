@@ -168,7 +168,7 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
       </button>
       <p className={`text-xs font-medium ${completed ? 'text-emerald-700' : 'text-sky-700'}`}>{completed ? '完成得很好。现在可以继续下一节，或回到课程大纲复习。' : syncLabel}</p>
       {progressHref ? (
-        <Link href={progressHref} className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 transition hover:text-sky-900">
+        <Link href={progressHref} className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 interactive-button transition hover:text-sky-900">
           <ListChecks className="h-3.5 w-3.5" />
           返回进度页
         </Link>

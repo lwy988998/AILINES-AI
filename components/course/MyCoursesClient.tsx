@@ -72,9 +72,9 @@ function LoadingState() {
         showSkeleton={false}
         estimatedSeconds={6}
       />
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="stagger-fade grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
+        <div key={index} className="interactive-card min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
           <div className="h-4 w-24 animate-pulse rounded-full bg-sky-100" />
           <div className="mt-4 h-7 w-3/4 animate-pulse rounded-full bg-slate-100" />
           <div className="mt-3 h-4 w-full animate-pulse rounded-full bg-slate-100" />
@@ -162,7 +162,7 @@ export function MyCoursesClient() {
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">我的课堂</h1>
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">继续你的 AILINES AI 学习旅程，集中管理课程、进度和下一步学习入口。</p>
           </div>
-          <Link href="/" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+          <Link href="/" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
             <Plus className="h-4 w-4" />
             创建新课程
           </Link>
@@ -175,10 +175,10 @@ export function MyCoursesClient() {
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">请先登录后查看我的课堂</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">登录后才能查看与你账号关联的课程和学习记录，避免看到其他人的课程。</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href="/login" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+            <Link href="/login" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
               <LogIn className="h-4 w-4" />登录
             </Link>
-            <Link href="/register" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+            <Link href="/register" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 interactive-button transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
               <UserPlus className="h-4 w-4" />注册
             </Link>
           </div>
@@ -190,7 +190,7 @@ export function MyCoursesClient() {
           <AlertCircle className="mx-auto h-12 w-12 text-red-600" />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">课程加载失败，请刷新后重试。</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">{error || '暂时无法读取我的课堂。'}</p>
-          <button type="button" onClick={loadCourses} className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+          <button type="button" onClick={loadCourses} className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
             <RefreshCw className="h-4 w-4" />重试
           </button>
         </section>
@@ -199,11 +199,11 @@ export function MyCoursesClient() {
       {state === 'loading' ? <LoadingState /> : null}
 
       {state === 'ready' && courses.length === 0 ? (
-        <section className="rounded-3xl border border-dashed border-sky-200 bg-sky-50/70 p-8 text-center">
+        <section className="rounded-3xl border border-dashed border-sky-200 bg-sky-50/70 p-8 text-center animate-soft-pop">
           <Sparkles className="mx-auto h-12 w-12 text-sky-700" />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">你还没有创建课程</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">从一个学习目标开始，让 AILINES AI 为你生成课程化学习路线。</p>
-          <Link href="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+          <Link href="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
             创建第一门课程
           </Link>
         </section>
@@ -211,20 +211,20 @@ export function MyCoursesClient() {
 
       {state === 'ready' && courses.length > 0 ? (
         <>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+          <section className="stagger-fade grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="interactive-card rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
               <p className="text-sm font-semibold text-slate-500">总课程数</p>
               <p className="mt-2 text-3xl font-semibold text-slate-950">{stats.total}</p>
             </div>
-            <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+            <div className="interactive-card rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
               <p className="text-sm font-semibold text-slate-500">学习中</p>
               <p className="mt-2 text-3xl font-semibold text-sky-700">{stats.learning}</p>
             </div>
-            <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+            <div className="interactive-card rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
               <p className="text-sm font-semibold text-slate-500">已完成</p>
               <p className="mt-2 text-3xl font-semibold text-emerald-700">{stats.completed}</p>
             </div>
-            <div className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
+            <div className="interactive-card rounded-3xl border border-sky-100 bg-white p-5 shadow-sm shadow-sky-900/5">
               <p className="text-sm font-semibold text-slate-500">平均进度</p>
               <p className="mt-2 text-3xl font-semibold text-slate-950">{stats.average}%</p>
             </div>
@@ -232,7 +232,7 @@ export function MyCoursesClient() {
 
           {error ? <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div> : null}
 
-          <section className="grid gap-4 lg:grid-cols-2">
+          <section className="stagger-fade grid gap-4 lg:grid-cols-2">
             {courses.map((course) => {
               const percent = normalizePercent(course.progressPercent);
               const meta = course.needsRegeneration ? { label: '需要重新生成', className: 'bg-amber-100 text-amber-800' } : statusMeta[course.status] || statusMeta.not_started;
@@ -240,7 +240,7 @@ export function MyCoursesClient() {
               const primaryLabel = course.needsRegeneration ? '重新生成课程' : course.status === 'completed' ? '复习课程' : course.status === 'not_started' ? '开始学习' : '继续学习';
               const primaryHref = course.needsRegeneration ? `/?goal=${encodeURIComponent(course.goal)}&mode=${course.mode === 'lite' ? 'lite' : 'deep'}` : (course.continueUrl || course.planUrl);
               return (
-                <article key={course.id} className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
+                <article key={course.id} className="interactive-card min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
                   <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -254,7 +254,7 @@ export function MyCoursesClient() {
                       type="button"
                       onClick={() => handleDelete(course)}
                       disabled={deletingId === course.id}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-red-100"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 interactive-button transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-red-100"
                       aria-label="删除课程"
                     >
                       {deletingId === course.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -286,10 +286,10 @@ export function MyCoursesClient() {
                   ) : null}
 
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <Link href={primaryHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+                    <Link href={primaryHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
                       <PlayCircle className="h-4 w-4" />{primaryLabel}
                     </Link>
-                    <Link href={course.planUrl} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                    <Link href={course.planUrl} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 interactive-button transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
                       <BookOpen className="h-4 w-4" />查看课程
                     </Link>
                   </div>

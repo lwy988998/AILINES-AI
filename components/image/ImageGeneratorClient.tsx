@@ -94,7 +94,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
           type="button"
           onClick={generate}
           disabled={state.status === 'loading'}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
         >
           <RefreshCw className={`h-4 w-4 ${state.status === 'loading' ? 'motion-safe:animate-pulse' : ''}`} />
           {state.status === 'loading' ? '生成中' : '重新生成'}
@@ -109,7 +109,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         ) : null}
 
         {state.status === 'success' && imageSrc ? (
-          <div className="space-y-4 p-4 sm:p-6">
+          <div className="space-y-4 p-4 animate-fade-in sm:p-6">
             <div className="flex justify-center rounded-2xl bg-white p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imageSrc} alt={prompt} className="max-h-[720px] w-auto max-w-full rounded-2xl object-contain shadow-sm" />
@@ -123,7 +123,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
                 download="ailines-ai-image.png"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white px-4 text-sm font-semibold text-sky-800 interactive-button transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
               >
                 <Download className="h-4 w-4" />
                 下载图片
@@ -133,7 +133,7 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
         ) : null}
 
         {state.status === 'error' ? (
-          <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-4 text-center sm:min-h-[420px] sm:p-8">
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 p-4 text-center animate-soft-pop sm:min-h-[420px] sm:p-8">
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
               <ImageIcon className="h-7 w-7" />
             </div>
@@ -145,15 +145,15 @@ export function ImageGeneratorClient({ initialPrompt, anonymousId }: ImageGenera
               <button
                 type="button"
                 onClick={generate}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
                 <RefreshCw className="h-4 w-4" />
                 重新生成
               </button>
-              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 修改描述
               </Link>
-              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 返回首页
               </Link>
             </div>

@@ -268,7 +268,7 @@ export function GoalForm() {
   const submitLabel = modeValue === 'image' ? '生成图片' : modeValue === 'lite' ? '开始快速规划' : '生成深度课程';
 
   return (
-    <div className="w-full max-w-full rounded-[24px] border border-slate-200/70 bg-white/95 p-1.5 text-left shadow-xl shadow-sky-950/10 backdrop-blur-md md:rounded-[28px] md:p-2.5 md:shadow-2xl">
+    <div className="w-full max-w-full rounded-[24px] border border-slate-200/70 bg-white/95 p-1.5 text-left shadow-xl shadow-sky-950/10 backdrop-blur-md transition-all duration-200 hover:border-sky-100 hover:shadow-sky-950/15 md:rounded-[28px] md:p-2.5 md:shadow-2xl">
       <form onSubmit={handleSubmit}>
         <label htmlFor="learning-goal" className="sr-only">
           你的学习目标
@@ -302,7 +302,7 @@ export function GoalForm() {
                 type="button"
                 aria-label="上传图片"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 text-sm font-semibold text-sky-800 interactive-button transition hover:border-sky-200 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300"
               >
                 <Plus className="h-4 w-4" />
                 上传参考图
@@ -310,7 +310,7 @@ export function GoalForm() {
               <button
                 type="submit"
                 disabled={isWorking}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white shadow-sm shadow-sky-900/20 interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:bg-sky-400"
               >
                 {isAnalyzingImage ? '识别中...' : isWorking ? '准备生成...' : submitLabel}
                 <ArrowRight className="h-4 w-4" />
@@ -331,7 +331,7 @@ export function GoalForm() {
                   data-mode-option={mode.value}
                   data-selected={selected ? 'true' : 'false'}
                   className={[
-                    'min-h-12 w-full rounded-2xl px-2 py-2 text-center transition-all md:min-h-[92px] md:rounded-none md:px-5 md:py-3 md:text-left',
+                    'min-h-12 w-full rounded-2xl px-2 py-2 text-center interactive-button transition-all md:min-h-[92px] md:rounded-none md:px-5 md:py-3 md:text-left',
                     index > 0 ? 'md:border-l md:border-slate-200' : '',
                     'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-400',
                     selected ? 'bg-white text-sky-900 shadow-sm md:shadow-[inset_0_3px_0_#0284c7]' : 'text-slate-600 hover:bg-white hover:text-slate-950',
@@ -350,7 +350,7 @@ export function GoalForm() {
         </div>
 
         {selectedImageFile && selectedImagePreviewUrl ? (
-          <div className="mt-2.5 flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-left">
+          <div className="mt-2.5 flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 text-left animate-soft-pop">
             <img
               src={selectedImagePreviewUrl}
               alt={selectedImageFile.name || '已上传图片预览'}
@@ -364,7 +364,7 @@ export function GoalForm() {
               type="button"
               aria-label="移除图片"
               onClick={clearSelectedImage}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 interactive-button transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200"
             >
               <X className="h-4 w-4" />
             </button>
@@ -372,7 +372,7 @@ export function GoalForm() {
         ) : null}
 
         {imageError ? (
-          <div className="mt-2.5 rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
+          <div className="mt-2.5 rounded-2xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 animate-soft-pop">
             <p>{imageError}</p>
             {imageError.includes('Pro 功能') ? <a href="/membership" className="mt-2 inline-flex font-semibold text-sky-800 underline underline-offset-4">查看会员方案</a> : null}
           </div>
@@ -390,13 +390,13 @@ export function GoalForm() {
         </div>
       ) : null}
 
-      <div className="mobile-prompt-examples mt-3 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
+      <div className="mobile-prompt-examples stagger-fade mt-3 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
         {(promptExamples.length > 0 ? promptExamples : modeValue === 'image' ? defaultImagePromptExamples : defaultStudyPromptExamples).map((example) => (
           <button
             key={example}
             type="button"
             onClick={() => setGoalValue(example)}
-            className="shrink-0 whitespace-nowrap rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 md:min-w-0 md:whitespace-normal md:break-words"
+            className="shrink-0 whitespace-nowrap rounded-full border border-sky-100 bg-white/70 px-3 py-2 text-sm font-medium text-sky-900 interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 md:min-w-0 md:whitespace-normal md:break-words"
           >
             {example}
           </button>

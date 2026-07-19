@@ -81,7 +81,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
           </div>
           <span className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${checkedCount === answer.lessonSteps.length ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-800'}`}>{checkedCount} / {answer.lessonSteps.length} 步已完成</span>
         </div>
-        <div className="mt-6 space-y-3">
+        <div className="stagger-fade mt-6 space-y-3">
           {answer.lessonSteps.map((step, index) => {
             const checked = Boolean(checkedSteps[index]);
             return (
@@ -115,9 +115,9 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             <h2 className="break-words text-2xl font-semibold tracking-tight text-slate-950">用题目把知识变成能力</h2>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="stagger-fade grid gap-4 md:grid-cols-2">
           {answer.practice.map((item, index) => (
-            <article key={`${item.title}-${index}`} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <article key={`${item.title}-${index}`} className="interactive-card min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="break-words font-semibold text-slate-950">{index + 1}. {item.title}</h3>
                 <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-sky-700">{item.difficulty}</span>
@@ -142,13 +142,13 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
               </div>
               <span className="w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-800">得分 {score} / {quiz.length}</span>
             </div>
-            <div className="mt-6 space-y-5">
+            <div className="stagger-fade mt-6 space-y-5">
               {quiz.map((item, questionIndex) => {
                 const selected = selectedAnswers[questionIndex];
                 const answered = selected !== undefined;
                 const correct = selected === item.answerIndex;
                 return (
-                  <article key={item.question} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                  <article key={item.question} className="interactive-card min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                     <div className="flex min-w-0 items-start gap-3">
                       <HelpCircle className="mt-1 h-5 w-5 shrink-0 text-sky-700" />
                       <div className="flex-1">
@@ -176,7 +176,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
                           })}
                         </div>
                         {answered ? (
-                          <p className={`mt-3 rounded-xl p-3 text-sm leading-6 ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
+                          <p className={`mt-3 rounded-xl p-3 text-sm leading-6 animate-soft-pop ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
                             <span className="font-semibold">{correct ? '答对了。' : '还差一点。'}</span>{item.explanation}
                           </p>
                         ) : null}
@@ -187,13 +187,13 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
               })}
             </div>
             {quizComplete ? (
-              <div className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${quizPassed ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-amber-100 bg-amber-50 text-amber-900'}`}>
+              <div className={`mt-4 rounded-2xl border p-4 text-sm leading-6 animate-soft-pop ${quizPassed ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-amber-100 bg-amber-50 text-amber-900'}`}>
                 <p className="font-semibold">{quizPassed ? '小测通过，可以继续下一节。' : '得分偏低，建议先复习本节再继续。'}</p>
                 <p className="mt-1">当前得分 {score}/{quiz.length}。{quizPassed ? '如果分步练习也完成了，就标记本节已完成。' : '可以回到课程讲解和示例，再重新作答。'}</p>
               </div>
             ) : null}
             {answeredCount > 0 ? (
-              <button type="button" onClick={() => setSelectedAnswers({})} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900">
+              <button type="button" onClick={() => setSelectedAnswers({})} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 interactive-button transition hover:text-sky-900">
                 <RotateCcw className="h-4 w-4" />
                 重新作答
               </button>
@@ -219,7 +219,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">完成本节课后，继续推进路线</h2>
             <p className="mt-3 break-words text-sm leading-6 text-slate-600">建议先完成分步练习和小测验，再标记完成。完成后课程总进度会重新计算。</p>
             {lessonCompleted ? (
-              <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
+              <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 animate-soft-pop">
                 <p className="flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4" />本节已完成</p>
                 <p className="mt-1">学习进度已立即更新。下一步建议继续下一节，或回到课程大纲查看整体进度。</p>
               </div>
@@ -229,11 +229,11 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
                 继续下一节
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href={planHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <Link href={planHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 <ListChecks className="h-4 w-4" />
                 返回课程大纲
               </Link>
-              <Link href={myCoursesHref} className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
+              <Link href={myCoursesHref} className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
                 返回我的课堂
               </Link>
             </div>

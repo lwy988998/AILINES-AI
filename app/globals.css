@@ -184,6 +184,67 @@ textarea {
   animation: ailines-skeleton 1.8s ease-in-out infinite;
 }
 
+
+
+@keyframes ailines-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ailines-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ailines-soft-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ailines-check-pop {
+  0% { transform: scale(0.72); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in { animation: ailines-fade-in 320ms ease-out both; }
+.animate-slide-up { animation: ailines-slide-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-soft-pop { animation: ailines-soft-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-check-pop { animation: ailines-check-pop 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.stagger-fade > * { animation: ailines-slide-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger-fade > :nth-child(1) { animation-delay: 0ms; }
+.stagger-fade > :nth-child(2) { animation-delay: 70ms; }
+.stagger-fade > :nth-child(3) { animation-delay: 140ms; }
+.stagger-fade > :nth-child(4) { animation-delay: 210ms; }
+.stagger-fade > :nth-child(5) { animation-delay: 280ms; }
+.stagger-fade > :nth-child(6) { animation-delay: 350ms; }
+.stagger-fade > :nth-child(n + 7) { animation-delay: 420ms; }
+
+.interactive-card {
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  will-change: transform;
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(186 230 253);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+.interactive-button {
+  transition: transform 160ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease, opacity 180ms ease;
+}
+.interactive-button:hover { box-shadow: 0 10px 22px rgba(14, 116, 144, 0.10); }
+.interactive-button:active { transform: scale(0.98); }
+.interactive-button:disabled { cursor: not-allowed; opacity: 0.62; box-shadow: none; }
+
+.soft-progress-fill {
+  transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms ease;
+}
+
+.soft-details > summary { transition: color 160ms ease; }
+.soft-details[open] { animation: ailines-soft-pop 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -193,8 +254,21 @@ textarea {
   .ailines-shimmer,
   .ailines-progress,
   .ailines-soft-float,
-  .ailines-skeleton {
-    animation: none;
+  .ailines-skeleton,
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-soft-pop,
+  .animate-check-pop,
+  .stagger-fade > * {
+    animation: none !important;
+  }
+
+  .interactive-card,
+  .interactive-card:hover,
+  .interactive-button,
+  .interactive-button:active {
+    transform: none !important;
+    transition-duration: 1ms !important;
   }
 }
 

@@ -86,7 +86,7 @@ function NodeCard({ node, depth = 0 }: { node: MindMapNode; depth?: number }) {
 
   return (
     <div className="min-w-0">
-      <div className={`relative min-w-0 break-words rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm ${nodeClasses(depth)} ${isRoot ? 'mx-auto max-w-xl text-center text-base sm:text-lg' : ''}`}>
+      <div className={`interactive-card relative min-w-0 break-words rounded-2xl border px-4 py-3 text-sm font-semibold shadow-sm ${nodeClasses(depth)} ${isRoot ? 'mx-auto max-w-xl text-center text-base sm:text-lg' : ''}`}>
         {node.label || '知识点'}
       </div>
 
@@ -124,7 +124,7 @@ export function CourseMindMap({ mindMap, phases, title = '课程思维导图', d
         <p className="text-sm font-semibold text-amber-700">知识结构图</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">知识结构暂未生成完成</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">{buildUnavailableCourseContentNotice('这张知识结构图')}</p>
-        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
+        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
       </section>
     );
   }

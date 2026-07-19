@@ -149,7 +149,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
         <p className="text-sm font-semibold text-amber-700">互动课程课件</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">课件内容暂未生成完成</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">{buildUnavailableCourseContentNotice('这组课件')}</p>
-        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
+        <Link href={retryHref} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100">重新生成课程</Link>
       </section>
     );
   }
@@ -198,7 +198,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
       </div>
 
       <div className="mb-5 h-2 overflow-hidden rounded-full bg-white/80 ring-1 ring-sky-100">
-        <div className="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-all" style={{ width: `${progressPercent}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 soft-progress-fill" style={{ width: `${progressPercent}%` }} />
       </div>
 
       <div className="mb-5 -mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
@@ -210,7 +210,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
               key={`${slide.title}-${index}`}
               type="button"
               onClick={() => setSlide(index)}
-              className={`min-w-[180px] max-w-[240px] rounded-2xl border px-4 py-3 text-left text-sm transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${selected ? 'border-sky-300 bg-white text-sky-900 shadow-sm' : 'border-white/80 bg-white/65 text-slate-600 hover:border-sky-200 hover:bg-white'}`}
+              className={`min-w-[180px] max-w-[240px] rounded-2xl border px-4 py-3 text-left text-sm interactive-button transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${selected ? 'border-sky-300 bg-white text-sky-900 shadow-sm' : 'border-white/80 bg-white/65 text-slate-600 hover:border-sky-200 hover:bg-white'}`}
             >
               <span className="flex items-center gap-2 text-xs font-semibold">
                 {done ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Layers3 className="h-3.5 w-3.5 text-sky-600" />}
@@ -223,7 +223,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
-        <article className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white/90 p-4 shadow-sm shadow-sky-900/5 sm:p-6 lg:p-7">
+        <article className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white/90 p-4 shadow-sm shadow-sky-900/5 animate-fade-in sm:p-6 lg:p-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">第 {safeCurrentIndex + 1} 页</span>
@@ -238,7 +238,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
             {isNonEmptyText(currentSlide?.content) ? <p className="mt-5 break-words text-sm leading-7 text-slate-700 sm:text-base sm:leading-8">{currentSlide.content}</p> : null}
           </div>
 
-          <div className="mt-7 grid gap-3 md:grid-cols-2">
+          <div className="stagger-fade mt-7 grid gap-3 md:grid-cols-2">
             {concepts.map((concept, index) => {
               const expanded = expandedConceptIndex === index;
               return (
@@ -246,7 +246,7 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
                   key={`${concept.title}-${index}`}
                   type="button"
                   onClick={() => setExpandedConceptIndex(expanded ? -1 : index)}
-                  className={`min-w-0 rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${expanded ? 'border-sky-200 bg-sky-50/80' : 'border-slate-200 bg-slate-50 hover:border-sky-200 hover:bg-white'}`}
+                  className={`min-w-0 rounded-2xl border p-4 text-left interactive-button transition focus:outline-none focus:ring-4 focus:ring-sky-100 ${expanded ? 'border-sky-200 bg-sky-50/80' : 'border-slate-200 bg-slate-50 hover:border-sky-200 hover:bg-white'}`}
                 >
                   <span className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-semibold text-sky-700 shadow-sm">{index + 1}</span>

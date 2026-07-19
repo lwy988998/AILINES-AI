@@ -26,9 +26,9 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
         </div>
         <p className="text-sm text-slate-500">按顺序学，也可以直接选择卡住的知识点。</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="stagger-fade grid gap-4 md:grid-cols-2">
         {stages.map((stage, phaseIndex) => (
-          <article key={stage.stage} className="min-w-0 rounded-2xl border border-slate-200 p-4 sm:p-5">
+          <article key={stage.stage} className="interactive-card min-w-0 rounded-2xl border border-slate-200 p-4 sm:p-5">
             <h3 className="break-words text-lg font-semibold text-slate-950">{stage.stage}</h3>
             <ul className="mt-4 space-y-3">
               {stage.topics.map((topic, topicIndex) => {
@@ -42,7 +42,7 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
                   : '';
 
                 return (
-                  <li key={`${topic}-${topicIndex}`} className={`rounded-2xl border p-3 text-sm leading-6 ${completed ? 'border-emerald-100 bg-emerald-50' : inProgress ? 'border-sky-100 bg-sky-50' : 'border-slate-100 bg-slate-50'}`}>
+                  <li key={`${topic}-${topicIndex}`} className={`rounded-2xl border p-3 text-sm leading-6 transition-all duration-200 hover:border-sky-200 hover:bg-sky-50/70 ${completed ? 'border-emerald-100 bg-emerald-50' : inProgress ? 'border-sky-100 bg-sky-50' : 'border-slate-100 bg-slate-50'}`}>
                     <div className="flex min-w-0 items-start gap-3">
                       {completed ? <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" /> : inProgress ? <PlayCircle className="mt-1 h-4 w-4 shrink-0 text-sky-700" /> : <Circle className="mt-1 h-4 w-4 shrink-0 text-slate-400" />}
                       <div className="min-w-0 flex-1">
@@ -53,7 +53,7 @@ export function CourseStructureSection({ stages, goal, mode = 'deep', courseId, 
                           </span>
                         </div>
                         {canLinkToLearn ? (
-                          <Link href={href} className="mt-3 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-sky-800 ring-1 ring-sky-100 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                          <Link href={href} className="mt-3 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-white px-3 text-xs font-semibold text-sky-800 ring-1 ring-sky-100 interactive-button transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
                             {completed ? '复习这一节' : inProgress ? '继续学习' : '开始学习'}
                             <ArrowRight className="h-3.5 w-3.5" />
                           </Link>

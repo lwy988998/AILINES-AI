@@ -233,10 +233,10 @@ function LearningGenerationPendingState({ regenerateHref, planHref, phaseHref, h
           <p className="mt-3 text-base leading-7 text-slate-600">{message || '这节课暂未生成完成。你可以重新生成，或返回课程大纲选择其他学习点。'}</p>
           <p className="mt-2 text-sm leading-6 text-slate-500">{hasCourseId ? '如果重新生成仍失败，建议先返回阶段页或课程大纲，换一个学习点继续。' : '当前链接缺少 courseId，建议从课程大纲进入本节课，以便 AILINES AI 读取完整课程骨架。'}</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href={regenerateHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成本课</Link>
-            <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>
-            {phaseHref ? <Link href={phaseHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">返回阶段页</Link> : null}
-            {!hasCourseId ? <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回首页</Link> : null}
+            <Link href={regenerateHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成本课</Link>
+            <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 interactive-button transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>
+            {phaseHref ? <Link href={phaseHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 interactive-button transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">返回阶段页</Link> : null}
+            {!hasCourseId ? <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 interactive-button transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回首页</Link> : null}
           </div>
         </section>
       </div>
@@ -256,8 +256,8 @@ function FriendlyMissingState({ courseId }: { courseId?: string }) {
             {courseId ? '这个课程不存在、已失效，或当前账号没有访问权限。请从“我的课堂”或课程大纲重新进入。' : '缺少课程目标或学习点信息。请先生成课程大纲，再进入具体学习点。'}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100"><Home className="h-4 w-4" />返回首页</Link>
-            <Link href={courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : '/'} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
+            <Link href="/" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 interactive-button transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100"><Home className="h-4 w-4" />返回首页</Link>
+            <Link href={courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : '/'} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white interactive-button transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
           </div>
         </section>
       </div>
@@ -412,12 +412,12 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
       {courseId ? <LastVisitedRecorder courseId={courseId} anonymousId={ownedCourse?.anonymousId || anonymousId} goal={courseGoal} mode={mode} lastPageType="learn" lastPhaseIndex={location.phaseIndex} lastPhaseName={location.phaseName} lastTopicIndex={location.topicIndex} lastTopicTitle={location.topic} /> : null}
       <SiteHeader />
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 md:px-6 lg:px-8 lg:py-10 xl:max-w-7xl">
-        <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-4 shadow-sm shadow-sky-900/5 sm:p-8">
+        <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-emerald-50 p-4 shadow-sm shadow-sky-900/5 animate-slide-up sm:p-8">
           <div className="mobile-button-stack flex flex-wrap gap-2 md:gap-3">
-            <Link href={progressHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ArrowLeft className="h-4 w-4" />返回进度页</Link>
-            <Link href={planHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
-            <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><Home className="h-4 w-4" />返回首页</Link>
-            <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"><Sparkles className="h-4 w-4" />换一版讲解</Link>
+            <Link href={progressHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ArrowLeft className="h-4 w-4" />返回进度页</Link>
+            <Link href={planHref} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><ListChecks className="h-4 w-4" />返回课程大纲</Link>
+            <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 interactive-button transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-100"><Home className="h-4 w-4" />返回首页</Link>
+            <Link href={regenerateHref} className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 interactive-button transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-100"><Sparkles className="h-4 w-4" />换一版讲解</Link>
           </div>
 
           <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
@@ -443,19 +443,19 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
         <section id="objectives" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="你将学会" title="这节课的学习目标" />
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="stagger-fade mt-5 grid gap-3 md:grid-cols-2">
             {safeAnswer.checkpoint.slice(0, 5).map((item) => <div key={item} className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{item}</div>)}
           </div>
         </section>
 
         <section id="concepts" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="核心概念" title={`围绕「${location.topic}」先理解这些关键点`} />
-          <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <div className="stagger-fade mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {safeAnswer.keyConcepts.slice(0, 6).map((concept, index) => {
               const relatedStep = safeAnswer.lessonSteps[index % Math.max(1, safeAnswer.lessonSteps.length)];
               const relatedPractice = safeAnswer.practice[index % Math.max(1, safeAnswer.practice.length)];
               return (
-                <article key={`${concept}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <article key={`${concept}-${index}`} className="interactive-card rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <h3 className="break-words font-semibold text-slate-950">{concept}</h3>
                   {relatedStep?.explanation ? <p className="mt-2 break-words text-sm leading-6 text-slate-600">{relatedStep.explanation}</p> : null}
                   {relatedPractice?.task ? <p className="mt-3 rounded-xl bg-white p-3 text-xs leading-5 text-amber-800"><span className="font-semibold">本节练习：</span>{relatedPractice.task}</p> : null}
@@ -467,9 +467,9 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
         <section id="lesson" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="课程讲解" title="按老师讲课的节奏理解它" />
-          <div className="mt-6 space-y-4">
+          <div className="stagger-fade mt-6 space-y-4">
             {safeAnswer.lessonSteps.map((step, index) => (
-              <article key={`${step.title}-${index}`} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <article key={`${step.title}-${index}`} className="interactive-card rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-sky-700 text-sm font-bold text-white">{index + 1}</span>
                   <div>
@@ -489,9 +489,9 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
         <section id="examples" className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">
           <SectionTitle eyebrow="示例" title="看一遍完整案例或解法" />
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="stagger-fade mt-5 grid gap-4 md:grid-cols-2">
             {safeAnswer.examples.map((example, index) => (
-              <article key={`${example.title}-${index}`} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <article key={`${example.title}-${index}`} className="interactive-card min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                 <h3 className="break-words font-semibold text-slate-950">{example.title}</h3>
                 <p className="mt-2 break-words text-sm leading-6 text-slate-700">{example.content}</p>
                 <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm leading-6 text-slate-700">
@@ -525,7 +525,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
             <p className="mt-2 break-words text-sm leading-6 text-slate-600">{safeAnswer.resourceSummary}</p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {safeAnswer.references.map((resource) => (
-                <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100">
                   <div className="flex items-start justify-between gap-3">
                     <div><p className="break-words text-xs font-semibold text-sky-700">{resource.source} · {resource.type}</p><h3 className="mt-2 break-words text-sm font-semibold leading-6 text-slate-950">{resource.title}</h3></div>
                     <ExternalLink className="h-4 w-4 shrink-0 text-sky-700" />

@@ -138,16 +138,16 @@ export function AilinesGeneratingState({
 
           <div className="max-w-full overflow-hidden rounded-2xl border border-sky-100 bg-white/75 shadow-sm shadow-sky-900/5">
             <div className="h-2 overflow-hidden bg-sky-50">
-              <div className="h-full rounded-full bg-gradient-to-r from-sky-300 via-sky-600 to-cyan-300 transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-sky-300 via-sky-600 to-cyan-300 soft-progress-fill" style={{ width: `${progress}%` }} />
             </div>
             <ol className="grid gap-0 divide-y divide-sky-50 p-2 sm:grid-cols-2 sm:divide-y-0">
               {visibleSteps.map((step, index) => {
                 const done = index < activeIndex;
                 const active = index === activeIndex;
                 return (
-                  <li key={`${step}-${index}`} className={`flex min-w-0 items-start gap-3 rounded-xl px-3 py-3 text-sm transition ${active ? 'bg-sky-50 text-sky-950' : done ? 'text-emerald-700' : 'text-slate-500'}`}>
+                  <li key={`${step}-${index}`} className={`flex min-w-0 items-start gap-3 rounded-xl px-3 py-3 text-sm transition-all duration-300 ${active ? 'bg-sky-50 text-sky-950' : done ? 'text-emerald-700' : 'text-slate-500'}`}>
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${done ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : active ? 'bg-sky-700 text-white ring-sky-200' : 'bg-white text-slate-400 ring-slate-200'}`}>
-                      {done ? <CheckCircle2 className="h-4 w-4" /> : active ? index + 1 : <Circle className="h-3.5 w-3.5" />}
+                      {done ? <CheckCircle2 className="h-4 w-4 animate-check-pop" /> : active ? index + 1 : <Circle className="h-3.5 w-3.5" />}
                     </span>
                     <span className={`${active ? 'font-semibold ' : ''}min-w-0 break-words`}>{step}</span>
                   </li>

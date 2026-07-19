@@ -32,38 +32,38 @@ export default async function HomePage() {
             width={1024}
             height={776}
             priority
-            className="h-20 w-auto max-w-full object-contain drop-shadow-sm md:h-48 lg:h-56"
+            className="h-20 w-auto max-w-full object-contain drop-shadow-sm animate-slide-up md:h-48 lg:h-56"
           />
-          <p className="mt-1 max-w-2xl break-words text-base leading-7 text-slate-600 md:mt-2 md:text-lg md:leading-8">
+          <p className="mt-1 max-w-2xl break-words text-base leading-7 text-slate-600 animate-slide-up md:mt-2 md:text-lg md:leading-8" style={{ animationDelay: '80ms' }}>
             把学习目标变成可以一步步完成的课程。
           </p>
-          <p className="mt-1 hidden max-w-2xl break-words text-sm leading-6 text-slate-500 md:mt-2 md:block md:text-base">
+          <p className="mt-1 hidden max-w-2xl break-words text-sm leading-6 text-slate-500 animate-slide-up md:mt-2 md:block md:text-base" style={{ animationDelay: '130ms' }}>
             输入你想学习的内容，AILINES AI 会生成课程路线、学习任务、微课程和进度记录。
           </p>
         </div>
 
-        <div className="mt-4 w-full max-w-3xl md:max-w-5xl xl:max-w-6xl">
+        <div className="mt-4 w-full max-w-3xl animate-slide-up md:max-w-5xl xl:max-w-6xl" style={{ animationDelay: '180ms' }}>
           <GoalForm />
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-slate-600 md:mt-5 md:gap-3">
           {user ? (
-            <Link href="/my-courses" className="rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-sky-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300">
+            <Link href="/my-courses" className="rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-sky-800 shadow-sm interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300">
               继续我的课堂
             </Link>
           ) : (
-            <Link href="/register" className="rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-sky-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300">
+            <Link href="/register" className="rounded-full border border-sky-100 bg-white/80 px-4 py-2 text-sky-800 shadow-sm interactive-button transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300">
               注册体验
             </Link>
           )}
-          <Link href="/membership" className="rounded-full px-4 py-2 transition hover:bg-white/80 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
+          <Link href="/membership" className="rounded-full px-4 py-2 interactive-button transition hover:bg-white/80 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-300">
             会员能力
           </Link>
         </div>
 
-        <div className="mt-6 hidden w-full max-w-5xl grid-cols-1 gap-3 text-left md:grid md:grid-cols-3 xl:max-w-6xl">
+        <div className="stagger-fade mt-6 hidden w-full max-w-5xl grid-cols-1 gap-3 text-left md:grid md:grid-cols-3 xl:max-w-6xl">
           {capabilityNotes.map(([title, description]) => (
-            <div key={title} className="min-w-0 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
+            <div key={title} className="interactive-card min-w-0 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-sky-900/5 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-sky-700" />
                 {title}
