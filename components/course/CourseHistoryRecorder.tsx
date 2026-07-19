@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getOrCreateAnonymousId } from '@/lib/anonymousId';
 import { saveCourseSnapshot } from '@/lib/courseHistory';
 import type { MockPlan } from '@/lib/mockPlan';
@@ -17,6 +18,7 @@ type CourseHistoryRecorderProps = {
 };
 
 export function CourseHistoryRecorder({ goal, mode, title, summary, source = 'ai', plan }: CourseHistoryRecorderProps) {
+  const router = useRouter();
   const savedKeyRef = useRef('');
   const [saveError, setSaveError] = useState('');
 
@@ -52,10 +54,18 @@ export function CourseHistoryRecorder({ goal, mode, title, summary, source = 'ai
         });
 
         if (!response.ok) throw new Error('course save failed');
-        const result = await response.json() as { courseId?: string };
+        const result = await response.json() as { courseId?: string; href?: string };
         if (!cancelled && result.courseId) {
           saveCourseSnapshot({ id: result.courseId, goal, mode, title: localTitle, plan });
           window.dispatchEvent(new Event('ailines-course-history-updated'));
+
+          const nextParams = new URLSearchParams({ courseId: result.courseId });
+          if (anonymousId) nextParams.set('anonymousId', anonymousId);
+          const nextHref = result.href || `/plan?${nextParams.toString()}`;
+          if (window.location.pathname === '/plan' && !new URLSearchParams(window.location.search).get('courseId')) {
+            window.history.replaceState(null, '', nextHref);
+            router.refresh();
+          }
         }
       } catch (error) {
         console.warn('Course database save failed; local history fallback kept.', error instanceof Error ? error.message : 'unknown');
@@ -74,7 +84,7 @@ export function CourseHistoryRecorder({ goal, mode, title, summary, source = 'ai
     return () => {
       cancelled = true;
     };
-  }, [goal, mode, title, summary, source, plan]);
+  }, [goal, mode, title, summary, source, plan, router]);
 
   if (!saveError) return null;
 

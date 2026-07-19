@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createOrUpdateCourseSnapshot, listCoursesForUserOrAnonymous } from '@/lib/course/courseRepository';
 import type { CourseHistoryMode } from '@/lib/courseHistory';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
-import { validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
+import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
+import { normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 
 function normalizeMode(value: unknown): CourseHistoryMode {
   return value === 'lite' || value === 'deep' ? value : 'deep';
@@ -15,6 +16,19 @@ function parseIntegerParam(value: string | null, fallback: number) {
 }
 
 const COURSE_SAVE_TIMEOUT_MS = 12_000;
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function normalizePayloadForSave(payload: unknown, goal: string, mode: CourseHistoryMode) {
+  const record = asRecord(payload);
+  if (Array.isArray(record.roadmap) && Array.isArray(record.courseStructure)) return payload;
+  if (Array.isArray(record.phases)) {
+    return normalizeCoursePlanContent(adaptGeneratedPlan(payload as Parameters<typeof adaptGeneratedPlan>[0], mode), goal);
+  }
+  return payload;
+}
 
 async function withSaveTimeout<T>(promise: Promise<T>): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -106,7 +120,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'COURSE_SAVE_INVALID_INPUT', message: '课程信息不完整。', canRetry: true }, { status: 400 });
   }
 
-  const validation = validateUserVisibleCourseContent(payload, { goal, mode: normalizeMode(data.mode), courseTitle: title });
+  const mode = normalizeMode(data.mode);
+  const normalizedPayload = normalizePayloadForSave(payload, goal, mode);
+  const validation = validateUserVisibleCourseContent(normalizedPayload, { goal, mode, courseTitle: title });
   if (!validation.valid) {
     console.warn('Course snapshot save rejected by quality gate', { fatalReasons: validation.fatalReasons, moduleReasons: validation.moduleReasons, warnings: validation.warnings, fieldPaths: validation.fieldPaths.slice(0, 12), score: validation.score, source: validation.source });
     return NextResponse.json({ ok: false, error: 'COURSE_SNAPSHOT_INVALID', message: '课程内容暂未生成完成，请重新生成后再保存。', canRetry: true }, { status: 422 });
@@ -118,13 +134,15 @@ export async function POST(request: NextRequest) {
       anonymousId,
       userId: user?.id,
       goal,
-      mode: normalizeMode(data.mode),
+      mode,
       title,
       summary,
       source,
-      payload,
+      payload: normalizedPayload,
     }));
-    return NextResponse.json({ ok: true, courseId, href: `/plan?courseId=${encodeURIComponent(courseId)}` });
+    const hrefParams = new URLSearchParams({ courseId });
+    if (anonymousId && !user?.id) hrefParams.set('anonymousId', anonymousId);
+    return NextResponse.json({ ok: true, courseId, href: `/plan?${hrefParams.toString()}` });
   } catch (error) {
     const code = error instanceof Error && error.message === 'course_save_timeout' ? 'COURSE_SAVE_TIMEOUT' : 'COURSE_SAVE_FAILED';
     console.warn('Course snapshot save unavailable', { error: code });

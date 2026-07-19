@@ -17,6 +17,7 @@ type CourseSlidesProps = {
   mode?: PlanMode;
   courseId?: string;
   anonymousId?: string;
+  phaseIndex?: number;
 };
 
 type InteractiveConcept = {
@@ -102,13 +103,13 @@ function getPhaseIndex(slide: CourseSlide | undefined, phases?: RoadmapStage[]) 
   return index >= 0 ? index + 1 : 1;
 }
 
-function createLearnHref(input: { goal: string; mode: PlanMode; courseId?: string; anonymousId?: string; phaseIndex: number; phaseName: string; topic: string }) {
+function createLearnHref(input: { goal: string; mode: PlanMode; courseId?: string; anonymousId?: string; phaseIndex: number; phaseName: string; topicIndex: number; topic: string }) {
   const params = new URLSearchParams({
     goal: input.goal,
     mode: input.mode,
     phaseIndex: String(input.phaseIndex),
     phaseName: input.phaseName,
-    topicIndex: '1',
+    topicIndex: String(input.topicIndex),
     topic: input.topic,
   });
   if (input.courseId) params.set('courseId', input.courseId);
@@ -116,7 +117,7 @@ function createLearnHref(input: { goal: string; mode: PlanMode; courseId?: strin
   return `/learn?${params.toString()}`;
 }
 
-export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件', description = '用可点击、可练习的课件卡片快速理解本课程的学习路径和核心知识。', goal, mode = 'deep', courseId, anonymousId }: CourseSlidesProps) {
+export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件', description = '用可点击、可练习的课件卡片快速理解本课程的学习路径和核心知识。', goal, mode = 'deep', courseId, anonymousId, phaseIndex: fixedPhaseIndex }: CourseSlidesProps) {
   const preparedSlides = useMemo(() => {
     const provided = Array.isArray(slides) ? slides.filter((slide) => (isNonEmptyText(slide.title) || isNonEmptyText(slide.content)) && hasSpecificSlideContent(slide)) : [];
     return provided.length > 0 ? provided : slidesFromPhases(phases);
@@ -134,11 +135,12 @@ export function CourseSlides({ slides, phases, title = 'AILINES AI 互动课件'
   const isLast = safeCurrentIndex >= total - 1;
   const progressPercent = Math.round(((safeCurrentIndex + 1) / total) * 100);
   const currentCompleted = completedSlides.has(safeCurrentIndex);
-  const phaseIndex = getPhaseIndex(currentSlide, phases);
+  const phaseIndex = fixedPhaseIndex || getPhaseIndex(currentSlide, phases);
   const phaseName = currentSlide?.relatedPhase || currentSlide?.subtitle || currentSlide?.title || '当前阶段';
+  const topicIndex = safeCurrentIndex + 1;
   const topic = currentSlide?.title || phaseName;
   const canOpenLearn = Boolean(goal && topic);
-  const learnHref = canOpenLearn ? createLearnHref({ goal: goal!, mode, courseId, anonymousId, phaseIndex, phaseName, topic }) : '';
+  const learnHref = canOpenLearn ? createLearnHref({ goal: goal!, mode, courseId, anonymousId, phaseIndex, phaseName, topicIndex, topic }) : '';
 
   if (preparedSlides.length === 0) {
     const retryHref = goal ? `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}` : '/';

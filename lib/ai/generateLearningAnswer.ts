@@ -274,6 +274,7 @@ export async function generateLearningAnswer(input: GenerateLearningAnswerInput)
       validation = validateUserVisibleCourseContent(answer, { goal: safeInput.goal, mode: safeInput.mode, phaseName: safeInput.phaseName, topic: safeInput.topic, availableTopics: answer.keyConcepts, availableTasks: answer.practice.map((item) => item.title) });
     }
     if (!validation.valid) {
+      console.warn('AI learning quality rejected', { mode: safeInput.mode, retryCount, qualityValid: validation.valid, reasons: validation.reasons, fieldPaths: validation.fieldPaths, score: validation.score });
       throw new AIClientError('invalid_response', 'Learning answer quality gate failed');
     }
     console.log('AI learning quality accepted', { mode: safeInput.mode, rawAIValid: true, qualityValid: validation.valid, retryCount, finalSourceSummary: summarizeCourseContentSources(answer) });

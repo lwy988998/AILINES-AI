@@ -32,6 +32,8 @@ type PhasePageProps = {
     mode?: string;
     courseId?: string;
     anonymousId?: string;
+    forcePhase?: string;
+    retry?: string;
   }>;
 };
 
@@ -123,9 +125,13 @@ async function getPlanStage(input: { goal: string; mode: PlanMode; phaseIndex: n
     if (courseId) {
       const user = await getCurrentUser();
       const ownedCourse = await getCourseOwnedByRequester({ courseId, userId: user?.id, anonymousId });
-      const snapshot = ownedCourse?.snapshots[0]?.payload as MockPlan | undefined;
+      const snapshot = ownedCourse?.snapshots[0]?.payload as (MockPlan & { phases?: unknown[] }) | undefined;
       if (snapshot) {
-        const plan = normalizeCoursePlanContent(markCourseContentSource(snapshot, sourceForStoredCourse(ownedCourse?.source)), ownedCourse?.goal || goal);
+        const storedSource = sourceForStoredCourse(ownedCourse?.source);
+        const hasStoredPlanShape = Array.isArray(snapshot.courseStructure) && Array.isArray(snapshot.roadmap);
+        const plan = hasStoredPlanShape
+          ? normalizeCoursePlanContent(markCourseContentSource(snapshot, storedSource), ownedCourse?.goal || goal)
+          : adaptGeneratedPlan(markCourseContentSource(snapshot as unknown as Parameters<typeof adaptGeneratedPlan>[0], storedSource), mode);
         const planValidation = validateUserVisibleCourseContent(plan, { goal: ownedCourse?.goal || goal, mode, courseTitle: plan.title });
         if (!planValidation.valid) return {};
         const stages = Array.isArray(plan.roadmap) ? plan.roadmap : [];
@@ -165,8 +171,8 @@ function adaptSearchResource(resource: SearchResource): DisplayResource {
 }
 
 
-function PhaseGenerationPendingState({ goal, mode, planHref }: { goal: string; mode: PlanMode; planHref: string }) {
-  const retryHref = `/plan?goal=${encodeURIComponent(goal)}&mode=${mode}&forcePlan=1&retry=${Date.now()}`;
+function PhaseGenerationPendingState({ goal, mode, planHref, phaseHref }: { goal: string; mode: PlanMode; planHref: string; phaseHref: string }) {
+  const retryHref = phaseHref;
   return (
     <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
@@ -176,7 +182,7 @@ function PhaseGenerationPendingState({ goal, mode, planHref }: { goal: string; m
           <p className="mt-3 text-base leading-7 text-slate-600">{buildUnavailableCourseContentNotice('这个阶段')}</p>
           <p className="mt-2 text-sm leading-6 text-slate-500">当前课程结构还不完整，暂时无法生成阶段讲解、任务、课件和知识结构。请回到课程页重新生成或刷新后重试。</p>
           <div className="mt-6 flex flex-col gap-3 md:flex-row sm:justify-center">
-            <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成课程</Link>
+            <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成阶段</Link>
             <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>
           </div>
         </section>
@@ -199,7 +205,12 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const encodedGoal = encodeURIComponent(goal);
   const encodedMode = encodeURIComponent(mode);
   const encodedCourseId = encodeURIComponent(courseId);
-  const planHref = courseId ? `/plan?courseId=${encodedCourseId}` : `/plan?goal=${encodedGoal}&mode=${encodedMode}`;
+  const anonymousQuery = anonymousId ? `&anonymousId=${encodeURIComponent(anonymousId)}` : '';
+  const planHref = courseId ? `/plan?courseId=${encodedCourseId}${anonymousQuery}` : `/plan?goal=${encodedGoal}&mode=${encodedMode}${anonymousQuery}`;
+  const phaseRetryParams = new URLSearchParams({ goal, mode, phaseIndex: String(phaseIndex), phaseName, forcePhase: '1', retry: String(Date.now()) });
+  if (courseId) phaseRetryParams.set('courseId', courseId);
+  if (anonymousId) phaseRetryParams.set('anonymousId', anonymousId);
+  const phaseRetryHref = `/phase?${phaseRetryParams.toString()}`;
   const { stage: planStage, plan } = await getPlanStage({ goal, mode, phaseIndex, phaseName, courseId, anonymousId });
   const stageTitle = planStage?.name || phaseName;
   const stageTopics = plan?.courseStructure?.[phaseIndex - 1]?.topics || planStage?.tasks || [];
@@ -218,7 +229,8 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
   const phaseValidation = validateUserVisibleCourseContent({ teachingSteps, phaseTasks, stageOutput, objective: generatedExpansion?.objective || planStage?.goal, description: generatedExpansion?.overview || planStage?.description }, { goal, mode, phaseName: stageTitle, availableTopics: teachingSteps.map((step) => step.title), availableTasks: phaseTasks.map((task) => task.title) });
   if (!planStage || teachingSteps.length === 0 || !phaseValidation.valid) {
-    return <PhaseGenerationPendingState goal={goal} mode={mode} planHref={planHref} />;
+    console.warn('Phase generation quality rejected', { courseIdPresent: Boolean(courseId), phaseIndex, qualityValid: phaseValidation.valid, reasons: phaseValidation.reasons, fieldPaths: phaseValidation.fieldPaths, score: phaseValidation.score });
+    return <PhaseGenerationPendingState goal={goal} mode={mode} planHref={planHref} phaseHref={phaseRetryHref} />;
   }
   const phaseSlides = (generatedExpansion?.slides?.length ? generatedExpansion.slides : teachingSteps.map((step, index) => ({
     title: step.title || `第 ${index + 1} 步`,
@@ -244,8 +256,8 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
     ...teachingSteps.slice(0, 4).map((step, index) => `步骤 ${index + 1}：${step.title}。${step.explanation}`),
   ].filter(Boolean).join('\n').slice(0, 1000);
   const commonMistakes = Array.isArray(planStage?.commonMistakes) && planStage.commonMistakes.length > 0 ? planStage.commonMistakes : [];
-  const progressHref = courseId ? `/progress?goal=${encodedGoal}&mode=${encodedMode}&courseId=${encodedCourseId}` : `/progress?goal=${encodedGoal}&mode=${encodedMode}`;
-  const askHref = courseId ? `/ask?goal=${encodedGoal}&mode=${encodedMode}&courseId=${encodedCourseId}` : `/ask?goal=${encodedGoal}&mode=${encodedMode}`;
+  const progressHref = courseId ? `/progress?goal=${encodedGoal}&mode=${encodedMode}&courseId=${encodedCourseId}${anonymousQuery}` : `/progress?goal=${encodedGoal}&mode=${encodedMode}${anonymousQuery}`;
+  const askHref = courseId ? `/ask?goal=${encodedGoal}&mode=${encodedMode}&courseId=${encodedCourseId}${anonymousQuery}` : `/ask?goal=${encodedGoal}&mode=${encodedMode}${anonymousQuery}`;
   const resourceSearchQuery = rawPhaseName ? `${goal} ${rawPhaseName} 学习资料 教程 课程 练习` : goal;
   let resources: DisplayResource[] = [];
 
@@ -348,7 +360,7 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
 
         <InteractivePhaseTasks tasks={phaseTasks} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} />
 
-        <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} />
+        <CourseSlides slides={phaseSlides} phases={planStage ? [planStage] : []} title="当前阶段课件" description="把当前阶段拆成可翻页学习的课程卡片。" goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} phaseIndex={phaseIndex} />
 
         <CourseMindMap mindMap={phaseMindMap} phases={planStage ? [planStage] : []} title="当前阶段知识结构" description="从步骤层级理解当前阶段的学习顺序。" goal={goal} mode={mode} />
 

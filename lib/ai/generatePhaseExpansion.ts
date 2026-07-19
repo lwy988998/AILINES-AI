@@ -82,8 +82,11 @@ export async function generatePhaseExpansion(input: { goal: string; mode: PlanMo
   try {
     const content = await createChatCompletion({ purpose: 'ask', messages: messages(input), temperature: input.mode === 'lite' ? 0.25 : 0.3, maxTokens: input.mode === 'lite' ? 2200 : 3200, responseFormat: 'json_object', timeoutMs: timeoutMs(), maxAttempts: 1 });
     const expansion = adapt(parseAIJson<unknown>(content), input.stage);
-    const validation = validateUserVisibleCourseContent({ ...expansion, phases: [{ ...input.stage, topics: input.topics, steps: expansion.steps, tasks: expansion.tasks.map((task) => task.title), output: input.stage.output, checkpoint: input.stage.checkpoint }] }, { goal: input.goal, mode: input.mode, phaseName: input.stage.name, availableTopics: input.topics, availableTasks: expansion.tasks.map((task) => task.title) });
-    if (!validation.valid || expansion.steps.length === 0) throw new AIClientError('invalid_response', 'phase expansion quality gate failed');
+    const validation = validateUserVisibleCourseContent({ teachingSteps: expansion.steps, phaseTasks: expansion.tasks, objective: expansion.objective || input.stage.goal, description: expansion.overview || input.stage.description, stageOutput: input.stage.output, checklist: expansion.checklist, commonMistakes: expansion.commonMistakes }, { goal: input.goal, mode: input.mode, phaseName: input.stage.name, availableTopics: input.topics, availableTasks: expansion.tasks.map((task) => task.title) });
+    if (!validation.valid || expansion.steps.length === 0 || expansion.tasks.length === 0) {
+      console.warn('AI phase expansion quality rejected', { mode: input.mode, phaseIndex: input.phaseIndex, qualityValid: validation.valid, reasons: validation.reasons, fieldPaths: validation.fieldPaths, score: validation.score });
+      throw new AIClientError('invalid_response', 'phase expansion quality gate failed');
+    }
     return expansion;
   } catch (error) {
     const safe = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');

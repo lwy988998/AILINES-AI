@@ -46,8 +46,16 @@ export function createPlanHref(input: { goal: string; mode: PlanMode; courseId?:
   return `/plan?${params.toString()}`;
 }
 
-function safeRelativeUrl(value?: string | null) {
+function safeRelativeUrl(value?: string | null, courseId?: string) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
+  if (courseId && (value.startsWith('/learn') || value.startsWith('/phase') || value.startsWith('/progress'))) {
+    try {
+      const url = new URL(value, 'http://ailines.local');
+      if (url.searchParams.get('courseId') !== courseId) return null;
+    } catch {
+      return null;
+    }
+  }
   return value;
 }
 
@@ -59,7 +67,7 @@ export function getFirstLearnHref(input: { plan: Pick<MockPlan, 'courseStructure
 }
 
 export function getPlanPrimaryCta(input: { plan: Pick<MockPlan, 'courseStructure'>; goal: string; mode: PlanMode; courseId?: string; anonymousId?: string; courseProgress?: CourseProgressSummary | null }) {
-  const restoredUrl = safeRelativeUrl(input.courseProgress?.lastVisitedUrl);
+  const restoredUrl = safeRelativeUrl(input.courseProgress?.lastVisitedUrl, input.courseId);
   const hasProgress = Boolean(input.courseProgress && (input.courseProgress.overallPercent > 0 || input.courseProgress.lastVisitedUrl || input.courseProgress.lastTopicTitle));
   return {
     href: restoredUrl || getFirstLearnHref(input),

@@ -30,6 +30,8 @@ type LearnPageProps = {
     topicIndex?: string;
     courseId?: string;
     regenerate?: string;
+    forceLearn?: string;
+    retry?: string;
     anonymousId?: string;
   }>;
 };
@@ -115,7 +117,7 @@ function resolveLocation(input: {
   };
 }
 
-function createLearnHref(params: { courseId?: string; goal: string; mode: PlanMode; phaseIndex: number; phaseName: string; topicIndex: number; topic: string }) {
+function createLearnHref(params: { courseId?: string; anonymousId?: string; goal: string; mode: PlanMode; phaseIndex: number; phaseName: string; topicIndex: number; topic: string }) {
   const searchParams = new URLSearchParams({
     goal: params.goal,
     mode: params.mode,
@@ -125,34 +127,54 @@ function createLearnHref(params: { courseId?: string; goal: string; mode: PlanMo
     topic: params.topic,
   });
   if (params.courseId) searchParams.set('courseId', params.courseId);
+  if (params.anonymousId) searchParams.set('anonymousId', params.anonymousId);
   return `/learn?${searchParams.toString()}`;
 }
 
-function createProgressHref(goal: string, mode: PlanMode, courseId?: string) {
+function createProgressHref(goal: string, mode: PlanMode, courseId?: string, anonymousId?: string) {
   const params = new URLSearchParams({ goal, mode });
   if (courseId) params.set('courseId', courseId);
+  if (anonymousId) params.set('anonymousId', anonymousId);
   return `/progress?${params.toString()}`;
 }
 
-function createNextHref(courseStructure: CourseStage[], current: LessonLocation, goal: string, mode: PlanMode, courseId?: string) {
+function createPlanHref(goal: string, mode: PlanMode, courseId?: string, anonymousId?: string) {
+  if (courseId) {
+    const params = new URLSearchParams({ courseId });
+    if (anonymousId) params.set('anonymousId', anonymousId);
+    return `/plan?${params.toString()}`;
+  }
+  const params = new URLSearchParams({ goal, mode });
+  if (anonymousId) params.set('anonymousId', anonymousId);
+  return `/plan?${params.toString()}`;
+}
+
+function createPhaseHref(goal: string, mode: PlanMode, current: LessonLocation, courseId?: string, anonymousId?: string) {
+  const params = new URLSearchParams({ goal, mode, phaseIndex: String(current.phaseIndex), phaseName: current.phaseName });
+  if (courseId) params.set('courseId', courseId);
+  if (anonymousId) params.set('anonymousId', anonymousId);
+  return `/phase?${params.toString()}`;
+}
+
+function createNextHref(courseStructure: CourseStage[], current: LessonLocation, goal: string, mode: PlanMode, courseId?: string, anonymousId?: string) {
   const currentPhase = courseStructure[current.phaseIndex - 1];
   const nextTopic = currentPhase?.topics[current.topicIndex];
   if (nextTopic) {
-    return createLearnHref({ courseId, goal, mode, phaseIndex: current.phaseIndex, phaseName: currentPhase.stage, topicIndex: current.topicIndex + 1, topic: nextTopic });
+    return createLearnHref({ courseId, anonymousId, goal, mode, phaseIndex: current.phaseIndex, phaseName: currentPhase.stage, topicIndex: current.topicIndex + 1, topic: nextTopic });
   }
 
   const nextPhase = courseStructure[current.phaseIndex];
   const firstTopic = nextPhase?.topics[0];
   if (nextPhase && firstTopic) {
-    return createLearnHref({ courseId, goal, mode, phaseIndex: current.phaseIndex + 1, phaseName: nextPhase.stage, topicIndex: 1, topic: firstTopic });
+    return createLearnHref({ courseId, anonymousId, goal, mode, phaseIndex: current.phaseIndex + 1, phaseName: nextPhase.stage, topicIndex: 1, topic: firstTopic });
   }
 
-  return courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : `/plan?${new URLSearchParams({ goal, mode }).toString()}`;
+  return createPlanHref(goal, mode, courseId, anonymousId);
 }
 
-function createRegenerateHref(params: { goal: string; mode: PlanMode; courseId?: string; phaseName: string; topic: string; phaseIndex: number; topicIndex: number }) {
+function createRegenerateHref(params: { goal: string; mode: PlanMode; courseId?: string; anonymousId?: string; phaseName: string; topic: string; phaseIndex: number; topicIndex: number }) {
   const href = createLearnHref(params);
-  return `${href}&regenerate=1`;
+  return `${href}&regenerate=1&forceLearn=1&retry=${Date.now()}`;
 }
 
 function getModeText(mode: PlanMode) {
@@ -200,7 +222,7 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 }
 
 
-function LearningGenerationPendingState({ regenerateHref, planHref, message }: { regenerateHref: string; planHref: string; message?: string }) {
+function LearningGenerationPendingState({ regenerateHref, planHref, phaseHref, hasCourseId, message }: { regenerateHref: string; planHref: string; phaseHref?: string; hasCourseId?: boolean; message?: string }) {
   return (
     <main className="learn-app-page min-h-screen bg-[#f5f9ff]">
       <SiteHeader />
@@ -208,11 +230,13 @@ function LearningGenerationPendingState({ regenerateHref, planHref, message }: {
         <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
           <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">这节课暂未生成完成</h1>
-          <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这节微课程')}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-500">这节课暂未生成完整。你可以重新生成本课，或先回到课程大纲选择其它学习点。</p>
+          <p className="mt-3 text-base leading-7 text-slate-600">{message || '这节课暂未生成完成。你可以重新生成，或返回课程大纲选择其他学习点。'}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{hasCourseId ? '如果重新生成仍失败，建议先返回阶段页或课程大纲，换一个学习点继续。' : '当前链接缺少 courseId，建议从课程大纲进入本节课，以便 AILINES AI 读取完整课程骨架。'}</p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href={regenerateHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成本课</Link>
             <Link href={planHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回课程大纲</Link>
+            {phaseHref ? <Link href={phaseHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">返回阶段页</Link> : null}
+            {!hasCourseId ? <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回首页</Link> : null}
           </div>
         </section>
       </div>
@@ -246,7 +270,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const courseId = params.courseId?.trim() || '';
   const anonymousId = params.anonymousId?.trim() || undefined;
   const user = await getCurrentUser();
-  const shouldRegenerate = params.regenerate === '1';
+  const shouldRegenerate = params.regenerate === '1' || params.forceLearn === '1' || Boolean(params.retry);
 
   let courseStructure: CourseStage[] = [];
   let courseGoal = decodeValue(params.goal, '学习');
@@ -279,17 +303,18 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
   if (!courseId && !params.goal?.trim() && !params.topic?.trim()) return <FriendlyMissingState />;
 
-  const progressHref = createProgressHref(courseGoal, mode, courseId);
-  const planHref = courseId ? `/plan?courseId=${encodeURIComponent(courseId)}` : `/plan?${new URLSearchParams({ goal: courseGoal, mode }).toString()}`;
-  const regenerateHref = createRegenerateHref({ goal: courseGoal, mode, courseId, ...location });
-  const nextHref = createNextHref(courseStructure, location, courseGoal, mode, courseId);
+  const sessionAnonymousId = ownedCourse?.anonymousId || anonymousId;
+  const progressHref = createProgressHref(courseGoal, mode, courseId, sessionAnonymousId);
+  const planHref = createPlanHref(courseGoal, mode, courseId, sessionAnonymousId);
+  const phaseHref = createPhaseHref(courseGoal, mode, location, courseId, sessionAnonymousId);
+  const regenerateHref = createRegenerateHref({ goal: courseGoal, mode, courseId, anonymousId: sessionAnonymousId, ...location });
+  const nextHref = createNextHref(courseStructure, location, courseGoal, mode, courseId, sessionAnonymousId);
   const modeText = getModeText(mode);
   const searchQuery = `${courseGoal} ${location.phaseName} ${location.topic} 学习资料 教程 例题 练习`;
   let restoredFromSession = false;
   let answer: LearningAnswer;
   let notice = '';
 
-  const sessionAnonymousId = ownedCourse?.anonymousId || anonymousId;
   const canUseLearningSession = Boolean(courseId || sessionAnonymousId);
   const savedSession = canUseLearningSession && !shouldRegenerate
     ? await getLearningSession({ courseId, anonymousId: sessionAnonymousId, goal: courseGoal, mode, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex, topicTitle: location.topic }).catch((error) => {
@@ -300,7 +325,8 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
   if (savedSession?.content && typeof savedSession.content === 'object') {
     if (savedSession.fallbackUsed || savedSession.source === 'fallback') {
-      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={buildUnavailableCourseContentNotice('这节微课程')} />;
+      console.warn('Learning session invalid cache blocked', { courseIdPresent: Boolean(courseId), phaseIndex: location.phaseIndex, topicIndex: location.topicIndex, source: savedSession.source, fallbackUsed: savedSession.fallbackUsed });
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} phaseHref={phaseHref} hasCourseId={Boolean(courseId)} message={buildUnavailableCourseContentNotice('这节微课程')} />;
     }
     answer = savedSession.content as unknown as LearningAnswer;
     if ((!answer.references || answer.references.length === 0) && Array.isArray(savedSession.references)) {
@@ -314,7 +340,8 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
     let searchNotice = '';
 
     if (!usage.allowed) {
-      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message="今日学习卡片生成次数已用完。这节课暂未生成完成，你可以升级会员或明天重新生成。" />;
+      console.warn('Learning generation blocked by usage limit', { courseIdPresent: Boolean(courseId), phaseIndex: location.phaseIndex, topicIndex: location.topicIndex });
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} phaseHref={phaseHref} hasCourseId={Boolean(courseId)} message="今日学习卡片生成次数已用完。这节课暂未生成完成，你可以升级会员或明天重新生成。" />;
     } else {
       const searchResult = await searchLearningResources(searchQuery);
       resources = searchResult.resources;
@@ -326,7 +353,8 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
     const generatedValidation = validateUserVisibleCourseContent(answer, { goal: courseGoal, mode, phaseName: location.phaseName, topic: location.topic, availableTopics: Array.isArray(answer.keyConcepts) ? answer.keyConcepts : [], availableTasks: Array.isArray(answer.practice) ? answer.practice.map((item) => item.title) : [] });
     if (!generatedValidation.valid || !answer.lessonSteps.length || !answer.practice.length || !answer.checkpoint.length) {
-      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
+      console.warn('Learning generation quality rejected', { courseIdPresent: Boolean(courseId), providerCalled: true, learningSessionBypassed: shouldRegenerate, phaseIndex: location.phaseIndex, topicIndex: location.topicIndex, qualityValid: generatedValidation.valid, reasons: generatedValidation.reasons, fieldPaths: generatedValidation.fieldPaths, score: generatedValidation.score });
+      return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} phaseHref={phaseHref} hasCourseId={Boolean(courseId)} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
     }
 
     const fallbackUsed = Boolean(answer.notice) || !usage.allowed;
@@ -356,7 +384,8 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
 
   const answerValidation = validateUserVisibleCourseContent(answer, { goal: courseGoal, mode, phaseName: location.phaseName, topic: location.topic, availableTopics: Array.isArray(answer.keyConcepts) ? answer.keyConcepts : [], availableTasks: Array.isArray(answer.practice) ? answer.practice.map((item) => item.title) : [] });
   if (!answerValidation.valid || !Array.isArray(answer.lessonSteps) || !answer.lessonSteps.length || !Array.isArray(answer.practice) || !answer.practice.length || !Array.isArray(answer.checkpoint) || !answer.checkpoint.length) {
-    return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
+    console.warn('Learning answer final validation rejected', { courseIdPresent: Boolean(courseId), restoredFromSession, learningSessionBypassed: shouldRegenerate, phaseIndex: location.phaseIndex, topicIndex: location.topicIndex, qualityValid: answerValidation.valid, reasons: answerValidation.reasons, fieldPaths: answerValidation.fieldPaths, score: answerValidation.score });
+    return <LearningGenerationPendingState regenerateHref={regenerateHref} planHref={planHref} phaseHref={phaseHref} hasCourseId={Boolean(courseId)} message={answer.notice || buildUnavailableCourseContentNotice('这节微课程')} />;
   }
 
   const safeAnswer: LearningAnswer = {

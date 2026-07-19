@@ -408,6 +408,14 @@ export function validateUserVisibleCourseContent(content: unknown, context: Cour
 
   const record = content && typeof content === 'object' && !Array.isArray(content) ? content as Record<string, unknown> : {};
   const phases = Array.isArray(record.phases) ? record.phases : Array.isArray(record.roadmap) ? record.roadmap : [];
+  const lessonSteps = Array.isArray(record.lessonSteps) ? record.lessonSteps : [];
+  const practiceItems = Array.isArray(record.practice) ? record.practice : [];
+  const checkpoints = Array.isArray(record.checkpoint) ? record.checkpoint : [];
+  const teachingSteps = Array.isArray(record.teachingSteps) ? record.teachingSteps : [];
+  const phaseTasks = Array.isArray(record.phaseTasks) ? record.phaseTasks : [];
+  const isLessonContent = lessonSteps.length > 0 || practiceItems.length > 0 || checkpoints.length > 0;
+  const isPhaseExpansionContent = teachingSteps.length > 0 || phaseTasks.length > 0 || Boolean(record.objective || record.description);
+
   if (phases.length > 0) {
     const minPhases = context.mode === 'lite' ? 3 : 4;
     const maxPhases = context.mode === 'lite' ? 5 : 6;
@@ -429,6 +437,12 @@ export function validateUserVisibleCourseContent(content: unknown, context: Cour
       });
       if (missingDeepFields) addReason(moduleReasons, 'missing_deep_output_or_checkpoint');
     }
+  } else if (isLessonContent) {
+    if (lessonSteps.length < (context.mode === 'lite' ? 2 : 3)) addReason(fatalReasons, 'thin_lesson_content');
+    if (practiceItems.length < 1 || checkpoints.length < 1) addReason(fatalReasons, 'missing_lesson_practice_or_checkpoint');
+  } else if (isPhaseExpansionContent) {
+    if (teachingSteps.length < (context.mode === 'lite' ? 2 : 3)) addReason(fatalReasons, 'thin_phase_content');
+    if (phaseTasks.length < 1) addReason(fatalReasons, 'missing_phase_tasks');
   } else {
     addReason(fatalReasons, 'missing_course_body');
   }
@@ -436,8 +450,8 @@ export function validateUserVisibleCourseContent(content: unknown, context: Cour
   if (keywordHits < Math.min(3, Math.max(1, keywords.length))) addReason(fatalReasons, 'weak_goal_relevance');
   if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.55))) addReason(fatalReasons, 'repeated_content');
   else if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) addReason(warnings, 'repeated_content');
-  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题|时间线|朝代|年代|事件|吉他|节奏)/i.test(joined)) addReason(fatalReasons, 'missing_specific_action');
-  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准|时间轴|时间线|错题|曲目|弹唱)/i.test(joined)) addReason(fatalReasons, 'missing_output_or_acceptance');
+  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题|时间线|朝代|年代|事件|吉他|节奏|开发|编写|创建|配置|路由|组件|接口|API|页面|上线|调试|提交|发布)/i.test(joined)) addReason(fatalReasons, 'missing_specific_action');
+  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准|时间轴|时间线|错题|曲目|弹唱|页面|接口|组件|仓库|提交|部署|上线|运行结果|测试结果)/i.test(joined)) addReason(fatalReasons, 'missing_output_or_acceptance');
 
   const score = Math.max(0, 100 - fatalGenericHits.length * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 10 : 0) - (fatalReasons.includes('missing_specific_action') ? 15 : 0) - (fatalReasons.includes('missing_output_or_acceptance') ? 15 : 0));
   const taggedSource = getCourseContentSource(content);
@@ -455,7 +469,7 @@ export function validateCourseContentTree(content: unknown, context: CourseConte
 }
 
 export function createRegenerationPromptSuffix(result: CourseContentValidationResult) {
-  return `\n\n质量门禁未通过：${result.reasons.join('、') || '内容过于泛化'}。上一次内容过于泛化，请重新生成具体课程：必须围绕用户目标拆成领域知识点、任务、产出和验收标准；不要输出固定模板或通用学习动作。`;
+  return `\n\n质量门禁未通过：${result.reasons.join('、') || '内容过于泛化'}。上一次内容不够具体或结构缺失，请重新生成当前内容：如果是微课程，必须输出 lessonSteps、practice、checkpoint，且每一步都要包含领域动作、可交付产出和验收标准；如果是阶段或课程，必须围绕用户目标拆成领域知识点、任务、产出和验收标准；不要输出固定模板或通用学习动作。`;
 }
 
 export function buildUnavailableCourseContentNotice(kind = '这部分内容') {
