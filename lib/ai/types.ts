@@ -64,6 +64,10 @@ export type GeneratedPlanProject = {
 };
 
 export type GeneratedPlan = {
+  inferredDomain?: string;
+  learnerGoal?: string;
+  courseTitle?: string;
+  courseSummary?: string;
   title: string;
   goal: string;
   durationWeeks: number;

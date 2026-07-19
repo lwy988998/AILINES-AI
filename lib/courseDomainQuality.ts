@@ -84,7 +84,11 @@ export function isGenericCourseText(text: string): boolean {
   if (forbiddenCoursePatterns.some((pattern) => pattern.test(value))) return true;
   const normalized = normalizeForCompare(value);
   if (genericExactTexts.some((item) => normalizeForCompare(item) === normalized)) return true;
-  if (value.length <= 6 && !/[A-Za-z0-9]|吉他|和弦|节奏|拨弦|Next|数据库|认证|提示词|构图|CPU|GPU|词汇|长难句|光圈|快门|公式|题型/.test(value)) return true;
+  if (value.length <= 6) {
+    if (genericExactTexts.some((item) => normalizeForCompare(item) === normalized)) return true;
+    if (/^[一二三四五六七八九十\d]+$/.test(value)) return true;
+    return false;
+  }
   return false;
 }
 

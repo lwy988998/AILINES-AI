@@ -156,13 +156,13 @@ function createLearningPromptMessages(input: GenerateLearningAnswerInput, resour
   return [
     {
       role: 'system' as const,
-      content: `你是 AILINES AI 学习导师。你已经拿到联网搜索资料摘要。你必须先理解、筛选、整合资料，再用自己的教学语言生成一节完整微课程。正文必须像老师讲课：为什么学 -> 是什么 -> 怎么用 -> 具体例子 -> 可执行练习 -> 小测验 -> 总结。不要直接复制资料，不要把搜索结果列表当正文，不要空泛鸡汤，不要只列大纲。references 必须只来自用户提供的 resources.url，且只放在最后参考资料。只输出严格 JSON。`,
+      content: `你是 AILINES AI 通用学习导师。你已经拿到联网搜索资料摘要。你的能力不受预设领域限制：必须先理解用户目标、阶段和 topic，自行判断本节课所属 inferredDomain，再筛选、整合资料，用自己的教学语言生成一节完整微课程。topic 是什么就讲什么：例如 topic 是“咖啡奶泡打发”就讲奶泡打发，不要改讲“核心目标”。正文必须像老师讲课：为什么学 -> 是什么 -> 怎么用 -> 具体例子 -> 可执行练习 -> 小测验 -> 总结。不要直接复制资料，不要把搜索结果列表当正文，不要空泛鸡汤，不要只列大纲。references 必须只来自用户提供的 resources.url，且只放在最后参考资料。只输出严格 JSON。`,
     },
     {
       role: 'user' as const,
       content: JSON.stringify({
         task: '根据学习目标、阶段和学习点，生成资料整合后的高质量微课程。',
-        teachingStyle: ['通俗、具体、像老师在讲课', '围绕 topic，不跑题', '适合目标人群，不拔高到不相关层级', '每段都要能帮助用户真正学会或完成练习'],
+        teachingStyle: ['通俗、具体、像老师在讲课', '先从 goal/phaseName/topic 推断 inferredDomain', '围绕 topic，不跑题，不套固定领域模板', '适合目标人群，不拔高到不相关层级', '每段都要能帮助用户真正学会或完成练习'],
         avoid: ['深入学习相关知识', '掌握基本概念', '多加练习', '参考相关资料', '提升综合能力', '只给链接', '只列大纲', '课程导入', '关键抓手', '不要只背名词', '至少完成一次解释和练习', '理解阶段目标', '用练习把知识变成能力', '复盘并形成阶段产出', 'fallback', 'mock', 'demo', 'debug'],
         requirements: {
           summary: '说明这节课解决什么问题、适合谁、学完能做什么。',
@@ -177,6 +177,7 @@ function createLearningPromptMessages(input: GenerateLearningAnswerInput, resour
           references: '只能引用输入 resources 里的 title/source/url/type，不得新增链接。',
         },
         outputSchema: {
+          inferredDomain: 'string',
           title: 'string',
           summary: 'string',
           keyConcepts: ['string'],

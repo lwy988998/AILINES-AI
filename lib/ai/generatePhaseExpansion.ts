@@ -39,7 +39,7 @@ function briefResources(resources: SearchResource[]) {
 
 function messages(input: { goal: string; mode: PlanMode; phaseIndex: number; stage: RoadmapStage; topics: string[]; resources: SearchResource[] }) {
   return [
-    { role: 'system' as const, content: '你是 AILINES AI 阶段课程设计师。当前是 Level 2：Phase Expansion。只展开当前阶段，不生成全课程，不写长教材。输出严格 JSON。不要 mock/fallback/demo/template。资料只做参考，不要把链接列表当正文。' },
+    { role: 'system' as const, content: '你是 AILINES AI 通用阶段课程设计师。当前是 Level 2：Phase Expansion。你的能力不受预设领域限制：必须从 goal、课程骨架、当前 phase 和 topics 自行推断学习领域，只展开当前阶段，不生成全课程，不写长教材。输出严格 JSON。不要 mock/fallback/demo/template。资料只做参考，不要把链接列表当正文。' },
     { role: 'user' as const, content: JSON.stringify({
       task: '根据课程骨架中的当前阶段，生成阶段导学、分步讲解、任务卡片、轻量课件和验收清单。',
       goal: input.goal,
@@ -50,13 +50,14 @@ function messages(input: { goal: string; mode: PlanMode; phaseIndex: number; sta
       resources: briefResources(input.resources),
       rules: [
         '只展开当前 phase；不要补全其他阶段。',
-        'steps 必须围绕 topics，一般 3-6 个；每步 explanation 60-120 字，action/check 具体可执行。',
-        'tasks 2-5 个，必须有 duration/description/output。',
+        '先从 goal/phase/topics 推断 inferredDomain；如果是小众领域，也按该领域真实学习路径展开。',
+        'steps 必须围绕 topics，一般 3-6 个；每步 explanation 60-120 字，action/check 必须包含该领域的具体对象、动作、工具、材料、作品或验收方式。',
+        'tasks 2-5 个，必须有 duration/description/output，output 要是可检查成果，不要写“学习记录”这类空泛产物。',
         'slides 3-5 张轻量课件，只写阶段内关键点。',
-        'knowledgeTopics 只列当前阶段知识结构节点。',
-        '不要输出泛化句：深入学习相关知识、掌握基本概念、多加练习、提升综合能力。',
+        'knowledgeTopics 只列当前阶段知识结构节点，必须是领域内真实概念。',
+        '不要输出泛化句：深入学习相关知识、掌握基本概念、多加练习、提升综合能力、目标拆解、核心知识、练习复盘。',
       ],
-      outputSchema: { objective: 'string', overview: 'string', steps: [{ title: 'string', explanation: 'string', example: 'string', action: 'string', check: 'string' }], tasks: [{ title: 'string', duration: 'string', description: 'string', output: 'string' }], slides: [{ title: 'string', subtitle: 'string', content: 'string', bullets: ['string'], speakerNote: 'string', relatedPhase: 'string' }], knowledgeTopics: ['string'], checklist: ['string'], commonMistakes: ['string'] },
+      outputSchema: { inferredDomain: 'string', objective: 'string', overview: 'string', steps: [{ title: 'string', explanation: 'string', example: 'string', action: 'string', check: 'string' }], tasks: [{ title: 'string', duration: 'string', description: 'string', output: 'string' }], slides: [{ title: 'string', subtitle: 'string', content: 'string', bullets: ['string'], speakerNote: 'string', relatedPhase: 'string' }], knowledgeTopics: ['string'], checklist: ['string'], commonMistakes: ['string'] },
     }) },
   ];
 }

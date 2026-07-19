@@ -1,5 +1,5 @@
 import { normalizeCourseMindMap } from '@/lib/courseKnowledgeMap';
-import { dedupeCourseItems, isGenericCourseText, modulesForGoal, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
+import { dedupeCourseItems, isGenericCourseText, normalizeSpecificCoursePlan } from '@/lib/courseDomainQuality';
 import { getCourseContentSource, markCourseContentSource, summarizeCourseContentSources, type CourseContentSource } from '@/lib/courseContentSource';
 import type { MockPlan, RoadmapStage, CourseStep } from '@/lib/mockPlan';
 
@@ -359,17 +359,39 @@ function addReason(target: string[], reason: string) {
   if (!target.includes(reason)) target.push(reason);
 }
 
+function deriveGoalKeywords(goal: string) {
+  const normalized = goal
+    .replace(/[，。；：、,.!?！？;:「」“”'"（）()【】\[\]]/g, ' ')
+    .replace(/^(我想|我要|想要|希望|请帮我|帮我|如何|怎么|怎样)/, '')
+    .trim();
+  const compact = normalized.replace(/\s+/g, '');
+  const withoutLearningPrefix = compact.replace(/^(学习|学会|学|入门|掌握|了解|练会|练习)/, '');
+  const parts = normalized.split(/\s+/).filter((item) => item.length >= 2);
+  const cjkChunks = compact.match(/[\u4e00-\u9fa5A-Za-z0-9.+#-]{2,}/g) || [];
+  const grams: string[] = [];
+  [compact, withoutLearningPrefix, ...parts, ...cjkChunks].forEach((item) => {
+    const value = item.trim();
+    if (!value) return;
+    grams.push(value);
+    if (/^[\u4e00-\u9fa5]+$/.test(value) && value.length >= 4) {
+      for (let size = 2; size <= Math.min(4, value.length); size += 1) {
+        for (let index = 0; index <= value.length - size; index += 1) grams.push(value.slice(index, index + size));
+      }
+    }
+  });
+  return grams.filter((item) => item.length >= 2 && !/^(学习|学会|入门|基础|提升|掌握|了解|课程|目标|计划|方案)$/.test(item));
+}
+
 function contextKeywords(context: CourseContentValidationContext) {
-  const moduleKeywords = modulesForGoal(context.goal).flatMap((module) => [module.name, module.goal, ...module.topics]);
   return dedupeCourseItems([
     context.goal,
+    ...deriveGoalKeywords(context.goal),
     context.courseTitle || '',
     context.phaseName || '',
     context.topic || '',
     context.taskTitle || '',
     ...(context.availableTopics || []),
     ...(context.availableTasks || []),
-    ...moduleKeywords,
   ].filter(Boolean));
 }
 
@@ -447,13 +469,14 @@ export function validateUserVisibleCourseContent(content: unknown, context: Cour
     addReason(fatalReasons, 'missing_course_body');
   }
 
-  if (keywordHits < Math.min(3, Math.max(1, keywords.length))) addReason(fatalReasons, 'weak_goal_relevance');
+  const requiredKeywordHits = Math.min(3, Math.max(1, Math.ceil(Math.min(keywords.length, 6) / 2)));
+  if (keywordHits < requiredKeywordHits) addReason(fatalReasons, 'weak_goal_relevance');
   if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.55))) addReason(fatalReasons, 'repeated_content');
   else if (uniqueCount < Math.max(1, Math.floor(visibleTextCount * 0.7))) addReason(warnings, 'repeated_content');
-  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|调音|拨弦|和弦|部署|认证|数据库|提示词|CPU|GPU|主旨题|细节题|时间线|朝代|年代|事件|吉他|节奏|开发|编写|创建|配置|路由|组件|接口|API|页面|上线|调试|提交|发布)/i.test(joined)) addReason(fatalReasons, 'missing_specific_action');
-  if (!/(产出|输出|成果|清单|项目|录音|代码|作品|记录|报告|配置|检查|验收|标准|时间轴|时间线|错题|曲目|弹唱|页面|接口|组件|仓库|提交|部署|上线|运行结果|测试结果)/i.test(joined)) addReason(fatalReasons, 'missing_output_or_acceptance');
+  if (!/(练|做|写|搭建|实现|完成|输出|记录|检查|验证|制作|设计|整理|拆解|分析|对比|观察|拍摄|剪辑|维护|保养|操作|演示|复盘|调试|提交|发布|部署|创建|配置|编写|安装|测量|标注|讲述|表达|对话|沟通|冲泡|打发|拉花|控球|运球|落子|布局|塑形|修坯|上釉|养护|诊断|CPU|GPU|API)/i.test(joined)) addReason(fatalReasons, 'missing_specific_action');
+  if (!/(产出|输出|成果|清单|项目|作品|记录|报告|配置|检查|验收|标准|结果|成品|样片|视频|口语录音|对话稿|数据看板|表格|图表|棋谱|保养清单|设计方案|草图|模型|运行结果|测试结果|练习记录|复盘)/i.test(joined)) addReason(fatalReasons, 'missing_output_or_acceptance');
 
-  const score = Math.max(0, 100 - fatalGenericHits.length * 25 - Math.max(0, 3 - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 10 : 0) - (fatalReasons.includes('missing_specific_action') ? 15 : 0) - (fatalReasons.includes('missing_output_or_acceptance') ? 15 : 0));
+  const score = Math.max(0, 100 - fatalGenericHits.length * 25 - Math.max(0, requiredKeywordHits - keywordHits) * 15 - (uniqueCount < visibleTextCount * 0.7 ? 10 : 0) - (fatalReasons.includes('missing_specific_action') ? 15 : 0) - (fatalReasons.includes('missing_output_or_acceptance') ? 15 : 0));
   const taggedSource = getCourseContentSource(content);
   const sourceSummary = summarizeCourseContentSources(content);
   (['domain-fallback', 'template', 'invalid'] as CourseContentSource[]).forEach((sourceName) => {
