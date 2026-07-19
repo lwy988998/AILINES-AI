@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, HelpCircle, ListChecks, RotateCcw } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardCheck, HelpCircle, ListChecks, RotateCcw, Trophy } from 'lucide-react';
 import { LearnCompletionButton } from '@/components/LearnCompletionButton';
 import type { LearningAnswer } from '@/lib/learning/mockLearningAnswer';
 
@@ -62,10 +62,13 @@ function buildQuiz(answer: LearningAnswer): QuizItem[] {
 export function LearnInteractiveLesson({ answer, completion, nextHref, planHref, myCoursesHref = '/my-courses' }: LearnInteractiveLessonProps) {
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [lessonCompleted, setLessonCompleted] = useState(false);
   const quiz = useMemo(() => buildQuiz(answer), [answer]);
   const checkedCount = Object.values(checkedSteps).filter(Boolean).length;
   const answeredCount = Object.keys(selectedAnswers).length;
   const score = quiz.reduce((count, item, index) => count + (selectedAnswers[index] === item.answerIndex ? 1 : 0), 0);
+  const quizComplete = quiz.length > 0 && answeredCount === quiz.length;
+  const quizPassed = quiz.length > 0 && score / quiz.length >= 0.7;
 
   return (
     <>
@@ -76,7 +79,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">跟着做，而不是只看懂</h2>
             <p className="mt-2 break-words text-sm leading-6 text-slate-600">勾选状态保存在当前页面；点击“标记本节已完成”后会同步本学习点整体进度。</p>
           </div>
-          <span className="w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-800">{checkedCount} / {answer.lessonSteps.length} 步</span>
+          <span className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${checkedCount === answer.lessonSteps.length ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-800'}`}>{checkedCount} / {answer.lessonSteps.length} 步已完成</span>
         </div>
         <div className="mt-6 space-y-3">
           {answer.lessonSteps.map((step, index) => {
@@ -183,6 +186,12 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
                 );
               })}
             </div>
+            {quizComplete ? (
+              <div className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${quizPassed ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-amber-100 bg-amber-50 text-amber-900'}`}>
+                <p className="font-semibold">{quizPassed ? '小测通过，可以继续下一节。' : '得分偏低，建议先复习本节再继续。'}</p>
+                <p className="mt-1">当前得分 {score}/{quiz.length}。{quizPassed ? '如果分步练习也完成了，就标记本节已完成。' : '可以回到课程讲解和示例，再重新作答。'}</p>
+              </div>
+            ) : null}
             {answeredCount > 0 ? (
               <button type="button" onClick={() => setSelectedAnswers({})} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900">
                 <RotateCcw className="h-4 w-4" />
@@ -209,8 +218,14 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             <p className="text-sm font-semibold text-sky-700">底部操作区</p>
             <h2 className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950">完成本节课后，继续推进路线</h2>
             <p className="mt-3 break-words text-sm leading-6 text-slate-600">建议先完成分步练习和小测验，再标记完成。完成后课程总进度会重新计算。</p>
+            {lessonCompleted ? (
+              <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
+                <p className="flex items-center gap-2 font-semibold"><Trophy className="h-4 w-4" />本节已完成</p>
+                <p className="mt-1">学习进度已立即更新。下一步建议继续下一节，或回到课程大纲查看整体进度。</p>
+              </div>
+            ) : null}
             <div className="mobile-button-stack mt-5 flex flex-col gap-3 md:flex-row md:flex-wrap">
-              <Link href={nextHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+              <Link href={nextHref} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold transition focus:outline-none focus:ring-4 ${lessonCompleted ? 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-200' : 'bg-sky-700 text-white hover:bg-sky-800 focus:ring-sky-200'}`}>
                 继续下一节
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -224,7 +239,7 @@ export function LearnInteractiveLesson({ answer, completion, nextHref, planHref,
             </div>
           </div>
           <div className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-4 sm:p-5">
-            <LearnCompletionButton {...completion} />
+            <LearnCompletionButton {...completion} onCompleted={() => setLessonCompleted(true)} />
           </div>
         </div>
       </section>

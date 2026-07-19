@@ -17,6 +17,7 @@ type LearnCompletionButtonProps = {
   topicIndex: number;
   topic: string;
   progressHref?: string;
+  onCompleted?: () => void;
 };
 
 function getTopicStorageKey(goal: string, phaseName: string, topic: string) {
@@ -42,7 +43,7 @@ function writeCompletedId(goal: string, taskId?: string) {
   window.localStorage.setItem(storageKey, JSON.stringify(nextIds));
 }
 
-export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex, phaseName, topicIndex, topic, progressHref }: LearnCompletionButtonProps) {
+export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex, phaseName, topicIndex, topic, progressHref, onCompleted }: LearnCompletionButtonProps) {
   const [status, setStatus] = useState<LearningCardStatus>('not_started');
   const [syncLabel, setSyncLabel] = useState('学习状态会自动保存');
   const latestSaveRef = useRef(0);
@@ -135,8 +136,14 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
   }
 
   function markCompleted() {
+    if (completed) {
+      setSyncLabel('本节已完成，可以继续下一节');
+      onCompleted?.();
+      return;
+    }
     setStatus('completed');
-    setSyncLabel('正在保存学习状态…');
+    setSyncLabel('已完成，本地状态已更新，正在同步…');
+    onCompleted?.();
     try {
       writeLocal('completed');
     } catch {
@@ -157,9 +164,9 @@ export function LearnCompletionButton({ goal, mode, courseId, taskId, phaseIndex
         }`}
       >
         <CheckCircle2 className="h-4 w-4" />
-        {completed ? '已学完这一项' : '我已学完这一项'}
+        {completed ? '已完成' : '标记本节已完成'}
       </button>
-      <p className="text-xs font-medium text-sky-700">{syncLabel}</p>
+      <p className={`text-xs font-medium ${completed ? 'text-emerald-700' : 'text-sky-700'}`}>{completed ? '完成得很好。现在可以继续下一节，或回到课程大纲复习。' : syncLabel}</p>
       {progressHref ? (
         <Link href={progressHref} className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 transition hover:text-sky-900">
           <ListChecks className="h-3.5 w-3.5" />

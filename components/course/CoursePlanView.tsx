@@ -59,7 +59,7 @@ export function CoursePlanView({ goal, mode, plan, modeLabel, modeDescription, r
         {notice}
         {slidesAccess.allowed ? <CourseSlides slides={plan.slides} phases={plan.roadmap} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} /> : <LockedFeatureCard feature="course_slides" title="课程课件是 Pro 功能" requiredTier={slidesAccess.requiredTier || 'pro'} />}
         {mindMapAccess.allowed ? <CourseMindMap mindMap={plan.mindMap} phases={plan.roadmap} goal={goal} mode={mode} /> : <LockedFeatureCard feature="mind_map" title="思维导图是 Pro 功能" requiredTier={mindMapAccess.requiredTier || 'pro'} />}
-        <RoadmapSection goal={goal} stages={plan.roadmap} courseStructure={plan.courseStructure} mode={mode} courseId={courseId} anonymousId={anonymousId} />
+        <RoadmapSection goal={goal} stages={plan.roadmap} courseStructure={plan.courseStructure} mode={mode} courseId={courseId} anonymousId={anonymousId} cardProgressItems={cardProgressItems} />
         <CourseStructureSection stages={plan.courseStructure} goal={goal} mode={mode} courseId={courseId} anonymousId={anonymousId} cardProgressItems={cardProgressItems} />
         <section className="rounded-3xl border border-sky-100 bg-white px-5 py-4 text-sm font-medium text-sky-800 shadow-sm shadow-sky-900/5 sm:px-6">
           {resourceSourceMessage}

@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
   const anonymousId = optionalString(data.anonymousId);
   const goal = optionalString(data.goal) || '';
   const phaseIndex = parseNonNegativeInt(data.phaseIndex);
-  const topicIndex = parseNonNegativeInt(data.topicIndex);
+  const parsedTopicIndex = parseNonNegativeInt(data.topicIndex);
+  const topicIndex = parsedTopicIndex === 0 ? 1 : parsedTopicIndex;
   const phaseName = optionalString(data.phaseName) || '';
   const topicTitle = optionalString(data.topicTitle) || '';
   const status = normalizeLearningCardStatus(data.status);
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
           lastPageType: 'learn',
           lastPhaseIndex: phaseIndex,
           lastPhaseName: phaseName,
-          lastTopicIndex: topicIndex + 1,
+          lastTopicIndex: topicIndex,
           lastTopicTitle: topicTitle,
         });
       }

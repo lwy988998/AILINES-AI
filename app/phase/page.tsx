@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, Route, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bot, CheckCircle2, ClipboardCheck, Clock3, ExternalLink, ListChecks, PlayCircle, Route, Trophy } from 'lucide-react';
 import { FloatingAilinesChat } from '@/components/assistant/FloatingAilinesChat';
 import { CourseMindMap } from '@/components/course/CourseMindMap';
 import { CourseSlides } from '@/components/course/CourseSlides';
@@ -19,6 +19,8 @@ import type { SearchResource } from '@/lib/search/resourceTypes';
 import { buildUnavailableCourseContentNotice, normalizeCoursePlanContent, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
 import { generatePhaseExpansion } from '@/lib/ai/generatePhaseExpansion';
 import { markCourseContentSource, type CourseContentSource } from '@/lib/courseContentSource';
+import { listLearningCardProgress } from '@/lib/course/learningCardProgressRepository';
+import { createLearnHref } from '@/lib/course/courseLearningNavigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -215,6 +217,16 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
   const stageTitle = planStage?.name || phaseName;
   const stageTopics = plan?.courseStructure?.[phaseIndex - 1]?.topics || planStage?.tasks || [];
   const stageOutput = planStage?.output || '';
+  const cardProgressItems = courseId || anonymousId ? await listLearningCardProgress({ courseId: courseId || undefined, anonymousId, goal, mode, phaseIndex, phaseName: stageTitle }).catch(() => []) : [];
+  const completedTopicCount = stageTopics.filter((_topic, index) => cardProgressItems.some((item) => item.phaseIndex === phaseIndex && item.topicIndex === index + 1 && item.status === 'completed')).length;
+  const inProgressTopicCount = stageTopics.filter((_topic, index) => cardProgressItems.some((item) => item.phaseIndex === phaseIndex && item.topicIndex === index + 1 && item.status === 'in_progress')).length;
+  const stageTopicTotal = stageTopics.length;
+  const stagePercent = stageTopicTotal > 0 ? Math.max(0, Math.min(100, Math.round((completedTopicCount / stageTopicTotal) * 100))) : 0;
+  const phaseCompleted = stageTopicTotal > 0 && completedTopicCount >= stageTopicTotal;
+  const firstIncompleteTopicIndex = Math.max(0, stageTopics.findIndex((_topic, index) => !cardProgressItems.some((item) => item.phaseIndex === phaseIndex && item.topicIndex === index + 1 && item.status === 'completed')));
+  const primaryTopicIndex = firstIncompleteTopicIndex >= 0 ? firstIncompleteTopicIndex + 1 : 1;
+  const primaryTopic = stageTopics[primaryTopicIndex - 1] || stageTitle;
+  const primaryLearnHref = createLearnHref({ goal, mode, courseId: courseId || undefined, anonymousId, phaseIndex, phaseName: stageTitle, topicIndex: primaryTopicIndex, topic: primaryTopic });
   let teachingSteps = stepsFromStage(planStage);
   let phaseTasks = tasksFromStage(planStage, stageOutput);
   let generatedExpansion = null as Awaited<ReturnType<typeof generatePhaseExpansion>>;
@@ -300,6 +312,15 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
               </div>
               <h1 className="break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{stageTitle}</h1>
               <p className="mt-4 max-w-3xl break-words text-base leading-8 text-slate-600 sm:text-lg">针对「{goal}」的阶段学习计划</p>
+              <div className="mt-4 rounded-2xl border border-sky-100 bg-white/80 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+                  <span>{phaseCompleted ? '本阶段已完成' : inProgressTopicCount > 0 || completedTopicCount > 0 ? '当前阶段进度' : '本阶段未开始'}</span>
+                  <span>{stagePercent}% · {completedTopicCount}/{stageTopicTotal || 0} 节</span>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-sky-700" style={{ width: `${stagePercent}%` }} />
+                </div>
+              </div>
               <div className="mt-5 max-w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm shadow-sm sm:w-fit">
                 <p className="font-semibold text-sky-800">当前模式：{modeLabel}</p>
                 <p className="mt-1 leading-6 text-slate-600">{modeDescription}</p>
@@ -307,11 +328,11 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             </div>
             <div className="mobile-button-stack grid min-w-0 gap-3 md:grid-cols-2 lg:grid-cols-1">
               <Link
-                href={progressHref}
+                href={primaryLearnHref}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
               >
-                <ListChecks className="h-4 w-4" />
-                进入进度追踪
+                <PlayCircle className="h-4 w-4" />
+                {phaseCompleted ? '复习本阶段' : completedTopicCount > 0 || inProgressTopicCount > 0 ? '继续本阶段' : '开始本阶段学习'}
               </Link>
               <Link
                 href={askHref}
@@ -354,7 +375,39 @@ export default async function PhasePage({ searchParams }: PhasePageProps) {
             <p className="mt-4 break-words rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-900">为什么先学：{stageWhy || planStage.description}</p>
             <p className="mt-3 break-words rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">阶段产出：{stageOutput}</p>
           </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {stageTopics.map((topic, index) => {
+              const topicNo = index + 1;
+              const status = cardProgressItems.find((item) => item.phaseIndex === phaseIndex && item.topicIndex === topicNo)?.status || 'not_started';
+              const href = createLearnHref({ goal, mode, courseId: courseId || undefined, anonymousId, phaseIndex, phaseName: stageTitle, topicIndex: topicNo, topic });
+              return (
+                <article key={`${topic}-${topicNo}`} className={`rounded-2xl border p-4 ${status === 'completed' ? 'border-emerald-100 bg-emerald-50' : status === 'in_progress' ? 'border-sky-100 bg-sky-50' : 'border-slate-200 bg-slate-50'}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-sky-700">第 {topicNo} 节</p>
+                      <h3 className="mt-1 break-words font-semibold text-slate-950">{topic}</h3>
+                      <p className="mt-2 text-sm text-slate-600">{status === 'completed' ? '已完成，可以复习巩固。' : status === 'in_progress' ? '当前学习中，继续完成本节。' : '还未开始，从这里进入微课程。'}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'completed' ? 'bg-emerald-100 text-emerald-700' : status === 'in_progress' ? 'bg-sky-100 text-sky-800' : 'bg-white text-slate-600'}`}>{status === 'completed' ? '已完成' : status === 'in_progress' ? '学习中' : '未开始'}</span>
+                  </div>
+                  <Link href={href} className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-sky-800 ring-1 ring-sky-100 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
+                    学习这一节<ArrowRight className="h-4 w-4" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
         </section>
+
+        {phaseCompleted ? (
+          <section className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm shadow-sky-900/5 sm:p-6">
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><Trophy className="h-4 w-4" />本阶段已完成</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Link href={planHref} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">返回课程总览</Link>
+              <Link href={primaryLearnHref} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">复习本阶段</Link>
+            </div>
+          </section>
+        ) : null}
 
         <InteractiveLearningSteps steps={teachingSteps} goal={goal} mode={mode} courseId={courseId} phaseIndex={phaseIndex} phaseName={phaseName} commonMistakes={commonMistakes} />
 

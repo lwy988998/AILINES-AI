@@ -502,7 +502,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
           </div>
         </section>
 
-        <LearnInteractiveLesson answer={safeAnswer} completion={{ goal: courseGoal, mode, courseId, taskId, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex - 1, topic: location.topic, progressHref }} nextHref={nextHref} planHref={planHref} />
+        <LearnInteractiveLesson answer={safeAnswer} completion={{ goal: courseGoal, mode, courseId, taskId, phaseIndex: location.phaseIndex, phaseName: location.phaseName, topicIndex: location.topicIndex, topic: location.topic, progressHref }} nextHref={nextHref} planHref={planHref} />
 
         <section id="summary" className="grid gap-6 lg:grid-cols-2">
           <div className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-8">

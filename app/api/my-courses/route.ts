@@ -181,10 +181,12 @@ export async function GET(request: NextRequest) {
           createdAt: course.createdAt.toISOString(),
           updatedAt: course.updatedAt.toISOString(),
           lastStudiedAt,
+          lastLearningLabel: latestSession?.topicTitle || course.courseProgress?.lastTopicTitle || course.courseProgress?.lastPhaseName || null,
           progressPercent,
           completedCards,
           totalCards,
           status,
+          needsRegeneration: !validSnapshotPlan,
           continueUrl,
           planUrl,
         };

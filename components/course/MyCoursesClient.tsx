@@ -16,10 +16,12 @@ type MyCourseItem = {
   createdAt: string;
   updatedAt: string;
   lastStudiedAt?: string | null;
+  lastLearningLabel?: string | null;
   progressPercent: number;
   completedCards: number;
   totalCards: number;
   status: CourseStatus;
+  needsRegeneration?: boolean;
   continueUrl: string;
   planUrl: string;
 };
@@ -233,8 +235,10 @@ export function MyCoursesClient() {
           <section className="grid gap-4 lg:grid-cols-2">
             {courses.map((course) => {
               const percent = normalizePercent(course.progressPercent);
-              const meta = statusMeta[course.status] || statusMeta.not_started;
+              const meta = course.needsRegeneration ? { label: '需要重新生成', className: 'bg-amber-100 text-amber-800' } : statusMeta[course.status] || statusMeta.not_started;
               const modeLabel = getModeLabel(course.mode);
+              const primaryLabel = course.needsRegeneration ? '重新生成课程' : course.status === 'completed' ? '复习课程' : course.status === 'not_started' ? '开始学习' : '继续学习';
+              const primaryHref = course.needsRegeneration ? `/?goal=${encodeURIComponent(course.goal)}&mode=${course.mode === 'lite' ? 'lite' : 'deep'}` : (course.continueUrl || course.planUrl);
               return (
                 <article key={course.id} className="min-w-0 rounded-3xl border border-sky-100 bg-white p-4 shadow-sm shadow-sky-900/5 sm:p-6">
                   <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
@@ -270,13 +274,20 @@ export function MyCoursesClient() {
                     <div className="grid min-w-0 gap-2 text-sm text-slate-500 sm:grid-cols-2">
                       <p className="flex min-w-0 items-center gap-2 break-words"><CheckCircle2 className="h-4 w-4 text-emerald-600" />完成卡片：{course.completedCards} / {course.totalCards}</p>
                       <p className="flex min-w-0 items-center gap-2 break-words"><Clock3 className="h-4 w-4 text-sky-600" />创建：{formatDateTime(course.createdAt)}</p>
-                      <p className="break-words sm:col-span-2">最近学习：{formatDateTime(course.lastStudiedAt || course.updatedAt)}</p>
+                      <p className="break-words sm:col-span-2">最近学习：{course.lastLearningLabel || '暂无学习位置'} · {formatDateTime(course.lastStudiedAt || course.updatedAt)}</p>
                     </div>
                   </div>
 
+                  {course.needsRegeneration ? (
+                    <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                      <p className="font-semibold">课程内容未生成完整</p>
+                      <p className="mt-1">这门课不会展示假内容。请重新生成后再继续学习。</p>
+                    </div>
+                  ) : null}
+
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <Link href={course.continueUrl || course.planUrl} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
-                      <PlayCircle className="h-4 w-4" />继续学习
+                    <Link href={primaryHref} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">
+                      <PlayCircle className="h-4 w-4" />{primaryLabel}
                     </Link>
                     <Link href={course.planUrl} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">
                       <BookOpen className="h-4 w-4" />查看课程

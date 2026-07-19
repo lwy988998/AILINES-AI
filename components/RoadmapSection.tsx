@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Clock3, PlayCircle, Target } from 'lucide-react';
-import { createLearnHref, createPhaseHref, getStageTopics } from '@/lib/course/courseLearningNavigation';
+import { createLearnHref, createPhaseHref, createProgressLookup, getStageTopics } from '@/lib/course/courseLearningNavigation';
+import type { LearningCardProgressItem } from '@/lib/course/learningCardProgressRepository';
 import type { CourseStage, RoadmapStage } from '@/lib/mockPlan';
 
 type RoadmapSectionProps = {
@@ -10,9 +11,11 @@ type RoadmapSectionProps = {
   mode?: 'lite' | 'deep';
   courseId?: string;
   anonymousId?: string;
+  cardProgressItems?: LearningCardProgressItem[];
 };
 
-export function RoadmapSection({ goal, stages, courseStructure = [], mode = 'deep', courseId, anonymousId }: RoadmapSectionProps) {
+export function RoadmapSection({ goal, stages, courseStructure = [], mode = 'deep', courseId, anonymousId, cardProgressItems = [] }: RoadmapSectionProps) {
+  const getStatus = createProgressLookup(cardProgressItems);
   return (
     <section className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm shadow-sky-900/5 sm:p-8">
       <div className="mb-6">
@@ -26,6 +29,10 @@ export function RoadmapSection({ goal, stages, courseStructure = [], mode = 'dee
           const topics = getStageTopics(stage, courseStructure[index]);
           const firstTopic = topics[0];
           const firstLearnHref = firstTopic ? createLearnHref({ goal, mode, courseId, anonymousId, phaseIndex: phaseNo, phaseName: stage.name, topicIndex: 1, topic: firstTopic }) : phaseHref;
+          const completedCount = topics.filter((_topic, topicIndex) => getStatus(phaseNo, topicIndex + 1) === 'completed').length;
+          const inProgressCount = topics.filter((_topic, topicIndex) => getStatus(phaseNo, topicIndex + 1) === 'in_progress').length;
+          const phaseCompleted = topics.length > 0 && completedCount >= topics.length;
+          const phaseLearning = !phaseCompleted && (completedCount > 0 || inProgressCount > 0);
 
           return (
             <article key={stage.name} className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition sm:p-5 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-lg hover:shadow-sky-900/10">
@@ -42,7 +49,10 @@ export function RoadmapSection({ goal, stages, courseStructure = [], mode = 'dee
                     </span>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 font-medium text-slate-600">
                       <Target className="h-3.5 w-3.5 text-sky-700" />
-                      学习目标
+                      {topics.length} 个学习点
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold ${phaseCompleted ? 'bg-emerald-100 text-emerald-700' : phaseLearning ? 'bg-sky-100 text-sky-800' : 'bg-white text-slate-600'}`}>
+                      {phaseCompleted ? '已完成' : phaseLearning ? `学习中 ${completedCount}/${topics.length}` : '未开始'}
                     </span>
                   </div>
                   <p className="mt-4 break-words font-medium leading-7 text-slate-800">{stage.goal}</p>
