@@ -38,10 +38,13 @@ type ClientConfig = {
   baseUrl: string;
   model: string;
   provider: string;
+  apiEndpoint: string; // pre-built full /v1/chat/completions URL
 };
 
 const DEFAULT_AI_BASE_URL = 'https://api.deepseek.com';
 const DEFAULT_AI_MODEL = 'deepseek-chat';
+const DEFAULT_FALLBACK_BASE_URL = 'https://api.deepseek.com/v1';
+const DEFAULT_FALLBACK_MODEL = 'deepseek-chat';
 const DEFAULT_TIMEOUT_MS = 35_000;
 const RETRY_DELAYS_MS = [800];
 
@@ -78,12 +81,47 @@ export function getAIConfig(modelOverride?: string): ClientConfig {
   const model = (modelOverride || process.env.AI_MODEL || process.env.OPENAI_MODEL || DEFAULT_AI_MODEL).trim();
   const provider = process.env.AI_PROVIDER || new URL(baseUrl).hostname;
 
+  const apiEndpoint = baseUrl.endsWith('/v1/chat/completions')
+    ? baseUrl
+    : baseUrl.endsWith('/v1')
+      ? `${baseUrl}/chat/completions`
+      : `${baseUrl}/v1/chat/completions`;
+
   return {
     apiKey,
     baseUrl: baseUrl.replace(/\/$/, ''),
     model,
     provider,
+    apiEndpoint,
   };
+}
+
+/** Resolve DeepSeek fallback config. Returns null if not configured. */
+function getFallbackAIConfig(): ClientConfig | null {
+  const apiKey = (process.env.DEEPSEEK_API_KEY || '').trim();
+  if (!apiKey) return null;
+
+  const baseUrl = (process.env.DEEPSEEK_BASE_URL || DEFAULT_FALLBACK_BASE_URL).trim();
+  const model = (process.env.DEEPSEEK_MODEL || DEFAULT_FALLBACK_MODEL).trim();
+
+  const apiEndpoint = baseUrl.endsWith('/v1/chat/completions')
+    ? baseUrl
+    : baseUrl.endsWith('/v1')
+      ? `${baseUrl}/chat/completions`
+      : `${baseUrl}/v1/chat/completions`;
+
+  return {
+    apiKey,
+    baseUrl: baseUrl.replace(/\/$/, ''),
+    model,
+    provider: 'deepseek-fallback',
+    apiEndpoint,
+  };
+}
+
+/** Return true when fallback is a distinct provider from primary. */
+function isDistinctFallback(primary: ClientConfig, fallback: ClientConfig) {
+  return primary.apiKey !== fallback.apiKey || primary.baseUrl !== fallback.baseUrl;
 }
 
 function classifyStatus(status: number): AIErrorType {
@@ -95,6 +133,11 @@ function classifyStatus(status: number): AIErrorType {
 
 function shouldRetry(error: AIClientError) {
   return error.type === 'timeout' || error.type === 'rate_limited' || error.type === 'provider_5xx' || error.type === 'network_error';
+}
+
+/** Errors that are worth trying a fallback provider (not config/auth errors). */
+function shouldFallback(error: AIClientError) {
+  return error.type !== 'missing_config' && error.type !== 'auth_error';
 }
 
 function delay(ms: number) {
@@ -133,6 +176,17 @@ function logAttempt(config: ClientConfig, error: AIClientError, attempt: number,
   });
 }
 
+function logFallback(primary: ClientConfig, fallback: ClientConfig, error: AIClientError) {
+  console.warn('AI primary provider failed, switching to fallback', {
+    primaryProvider: primary.provider,
+    primaryModel: primary.model,
+    fallbackProvider: fallback.provider,
+    fallbackModel: fallback.model,
+    errorType: error.type,
+    status: error.status,
+  });
+}
+
 async function postChatCompletion(
   config: ClientConfig,
   body: Record<string, unknown>,
@@ -144,7 +198,7 @@ async function postChatCompletion(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(`${config.baseUrl}/v1/chat/completions`, {
+    const response = await fetch(config.apiEndpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
@@ -183,9 +237,13 @@ async function postChatCompletion(
   }
 }
 
-export async function createChatCompletion(options: ChatCompletionOptions) {
-  const config = getAIConfig(options.model);
-  const timeoutMs = getAIRequestTimeoutMs(options.timeoutMs);
+/** Single-provider call with retries. Used for primary and fallback independently. */
+async function callProviderWithRetry(
+  config: ClientConfig,
+  options: ChatCompletionOptions,
+  timeoutMs: number,
+  label: string,
+): Promise<string> {
   const promptBytes = JSON.stringify(options.messages).length;
   const baseBody = {
     model: config.model,
@@ -204,7 +262,11 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
     const body = lastError?.status === 400 ? { ...baseBody, response_format: undefined } : baseBody;
 
     try {
-      return await postChatCompletion(config, body, timeoutMs, attempt, promptBytes);
+      const content = await postChatCompletion(config, body, timeoutMs, attempt, promptBytes);
+      if (label === 'fallback') {
+        console.log('AI fallback provider succeeded', { provider: config.provider, model: config.model });
+      }
+      return content;
     } catch (error) {
       const classified = sanitizeError(error);
       lastError = classified;
@@ -223,6 +285,38 @@ export async function createChatCompletion(options: ChatCompletionOptions) {
   }
 
   throw lastError || new AIClientError('unknown', 'AI provider unknown error');
+}
+
+export async function createChatCompletion(options: ChatCompletionOptions) {
+  const config = getAIConfig(options.model);
+  const timeoutMs = getAIRequestTimeoutMs(options.timeoutMs);
+
+  // Primary call
+  try {
+    return await callProviderWithRetry(config, options, timeoutMs, 'primary');
+  } catch (error) {
+    const classified = sanitizeError(error);
+
+    // Only try fallback for course text generation (not image)
+    if (options.purpose === 'image' || !shouldFallback(classified)) {
+      throw classified;
+    }
+
+    const fallbackConfig = getFallbackAIConfig();
+    if (!fallbackConfig || !isDistinctFallback(config, fallbackConfig)) {
+      console.warn('AI fallback unavailable or same as primary', {
+        primaryProvider: config.provider,
+        hasFallback: Boolean(fallbackConfig),
+        distinct: fallbackConfig ? isDistinctFallback(config, fallbackConfig) : false,
+      });
+      throw classified;
+    }
+
+    logFallback(config, fallbackConfig, classified);
+
+    // Fallback call
+    return await callProviderWithRetry(fallbackConfig, options, timeoutMs, 'fallback');
+  }
 }
 
 export function toSafeAIError(error: unknown, fallbackType: AIErrorType = 'unknown') {
