@@ -8,7 +8,7 @@ import { SiteHeader } from '@/components/site-header';
 import { AilinesGeneratingState } from '@/components/ui/AilinesGeneratingState';
 import { adaptGeneratedPlan, isRenderablePlan } from '@/lib/ai/adaptGeneratedPlan';
 import { getCurrentUser } from '@/lib/auth/currentUser';
-import { generatePlanWithAI } from '@/lib/ai/generatePlan';
+import { GeneratePlanError, generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { type MockPlan } from '@/lib/mockPlan';
 import { searchResources } from '@/lib/search/searchResources';
@@ -34,18 +34,30 @@ function buildRetryHref(input: { goal: string; mode: PlanMode; anonymousId?: str
   return `/plan?${params.toString()}`;
 }
 
+function getGenerationFailureMessage(error: unknown) {
+  const type = error instanceof GeneratePlanError ? error.type : 'unknown';
+  if (type === 'timeout') return '\u751f\u6210\u8d85\u65f6\uff0c\u8bf7\u91cd\u8bd5\u3002';
+  if (type === 'auth_error') return '\u5f53\u524d\u6a21\u578b\u63a5\u53e3\u8ba4\u8bc1\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u670d\u52a1\u914d\u7f6e\u540e\u91cd\u8bd5\u3002';
+  if (type === 'rate_limited') return 'AI \u670d\u52a1\u8bf7\u6c42\u8fc7\u4e8e\u9891\u7e41\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002';
+  if (type === 'invalid_response' || type === 'json_parse_error' || type === 'quality_rejected') return '\u751f\u6210\u5185\u5bb9\u672a\u901a\u8fc7\u8d28\u91cf\u68c0\u67e5\uff0c\u8bf7\u91cd\u65b0\u751f\u6210\u3002';
+  if (type === 'missing_config') return '\u5f53\u524d\u6a21\u578b\u63a5\u53e3\u5c1a\u672a\u914d\u7f6e\uff0c\u8bf7\u68c0\u67e5\u670d\u52a1\u914d\u7f6e\u3002';
+  return 'AI \u670d\u52a1\u6682\u65f6\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002';
+}
+
 function CourseGenerationPendingState({ goal, mode, anonymousId, message }: { goal: string; mode: PlanMode; anonymousId?: string; message?: string }) {
   const retryHref = buildRetryHref({ goal, mode, anonymousId });
+  const liteRetryHref = '/plan?' + new URLSearchParams({ goal, mode: 'lite', forcePlan: '1', bypassCache: 'true', retry: String(Date.now()), ...(anonymousId ? { anonymousId } : {}) }).toString();
+  const fallbackMessage = buildUnavailableCourseContentNotice('\u8fd9\u95e8\u8bfe\u7a0b');
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center justify-center px-4 py-12">
       <section className="rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm shadow-sky-900/5">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">课程内容暂未生成完成</h1>
-        <p className="mt-3 text-base leading-7 text-slate-600">{message || buildUnavailableCourseContentNotice('这门课程')}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">这部分内容暂未生成完整。请点击重新生成，AILINES AI 会再次根据「{goal}」生成具体学习路径。</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{'\u8bfe\u7a0b\u751f\u6210\u6682\u672a\u5b8c\u6210'}</h1>
+        <p className="mt-3 text-base leading-7 text-slate-600">{message || fallbackMessage}</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{'\u4f60\u53ef\u4ee5\u70b9\u51fb\u91cd\u8bd5\uff0cAILINES AI \u4f1a\u91cd\u65b0\u6839\u636e'}{'"'}{goal}{'"'}{'\u751f\u6210\u5b66\u4e60\u8def\u7ebf\u3002\u684c\u9762\u5f00\u53d1\u73af\u5883\u8bf7\u786e\u8ba4\u672c\u5730\u670d\u52a1\u5df2\u542f\u52a8\uff0c\u6a21\u578b\u914d\u7f6e\u53ef\u7528\u3002'}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">重新生成深度课程</Link>
-          {mode === 'deep' ? <Link href={`/plan?${new URLSearchParams({ goal, mode: 'lite', forcePlan: '1', bypassCache: 'true', retry: String(Date.now()), ...(anonymousId ? { anonymousId } : {}) }).toString()}`} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">先生成快速规划</Link> : null}
-          <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">返回首页</Link>
+          <Link href={retryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-sky-700 px-5 text-sm font-semibold text-white transition hover:bg-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200">{'\u91cd\u8bd5\u751f\u6210'}</Link>
+          {mode === 'deep' ? <Link href={liteRetryHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100">{'\u5148\u751f\u6210\u5feb\u901f\u89c4\u5212'}</Link> : null}
+          <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-100">{'\u8fd4\u56de\u9996\u9875'}</Link>
         </div>
       </section>
     </div>
@@ -157,9 +169,17 @@ async function GeneratedPlanContent({ params }: { params: Awaited<PlanPageProps[
         }
         isAIPlan = true;
         await incrementUsage('course_generate', usage.scope);
-      } catch {
-        await incrementUsage('course_generate', usage.scope);
-        return <CourseGenerationPendingState goal={goal} mode={mode} anonymousId={anonymousId} />;
+      } catch (error) {
+        console.warn(`Plan page generation failed ${JSON.stringify({
+          name: error instanceof Error ? error.name : 'UnknownError',
+          message: error instanceof Error ? error.message : 'unknown error',
+          code: error instanceof GeneratePlanError ? error.type : 'unknown',
+          status: error instanceof GeneratePlanError ? error.status : undefined,
+          route: 'GET /plan',
+          mode,
+          goalLength: rawGoal.length,
+        })}`);
+        return <CourseGenerationPendingState goal={goal} mode={mode} anonymousId={anonymousId} message={getGenerationFailureMessage(error)} />;
       }
     }
 

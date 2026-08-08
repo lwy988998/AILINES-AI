@@ -295,7 +295,6 @@ function sanitizeSlides(slides: CourseSlide[] | undefined) {
 }
 
 export function normalizeSpecificCoursePlan(plan: MockPlan, goal: string): MockPlan {
-  const modules = modulesForGoal(goal);
   // Domain module fallbacks are no longer allowed to rebuild a complete user-visible course.
   // Keep any usable AI/legacy structure and let the quality gate hide invalid modules.
   const sourcePlan = plan;
@@ -314,9 +313,9 @@ export function normalizeSpecificCoursePlan(plan: MockPlan, goal: string): MockP
 }
 
 export function buildDomainSpecificFallbackStep(input: { goal: string; phaseName: string; title: string; index: number }): CourseStep | null {
-  const module = modulesForGoal(input.goal).find((item) => item.name === input.phaseName) || modulesForGoal(input.goal)[0];
-  if (!module) return null;
-  return stepForModule(input.goal, module, input.title.replace(/^第\s*\d+\s*步[:：]?\s*/, ''), input.index);
+  const domainModule = modulesForGoal(input.goal).find((item) => item.name === input.phaseName) || modulesForGoal(input.goal)[0];
+  if (!domainModule) return null;
+  return stepForModule(input.goal, domainModule, input.title.replace(/^第\s*\d+\s*步[:：]?\s*/, ''), input.index);
 }
 
 export function buildDomainSpecificText(input: { goal: string; phaseName?: string; topic?: string; taskTitle?: string; index?: number }) {

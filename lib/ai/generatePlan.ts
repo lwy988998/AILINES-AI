@@ -1,5 +1,5 @@
 import { AIClientError, createChatCompletion, getAIRequestTimeoutMs, toSafeAIError } from '@/lib/ai/aiClient';
-import { createGeneratePlanMessages, createRepairPlanMessages } from '@/lib/ai/generatePlanPrompt';
+import { createGeneratePlanMessages, createJsonParseRetrySuffix, createRepairPlanMessages } from '@/lib/ai/generatePlanPrompt';
 import { parseAIJson } from '@/lib/ai/parseAIJson';
 import { adaptGeneratedPlan } from '@/lib/ai/adaptGeneratedPlan';
 import { createRegenerationPromptSuffix, summarizeCourseQualityIssues, validateUserVisibleCourseContent } from '@/lib/courseContentQuality';
@@ -8,7 +8,8 @@ import { markCourseContentSource, summarizeCourseContentSources } from '@/lib/co
 import type { GeneratedPlan, PlanMode } from '@/lib/ai/types';
 
 const PLAN_ATTEMPT_TIMEOUT_MS: Record<PlanMode, number> = { lite: 75_000, deep: 80_000 };
-const PLAN_TOTAL_TIMEOUT_MS: Record<PlanMode, number> = { lite: 170_000, deep: 190_000 };
+const PLAN_TOTAL_TIMEOUT_MS: Record<PlanMode, number> = { lite: 200_000, deep: 220_000 };
+const PLAN_MAX_TOKENS: Record<PlanMode, number> = { lite: 4800, deep: 7600 };
 
 
 export class GeneratePlanError extends Error {
@@ -37,6 +38,23 @@ function summarizeValidation(validation: ReturnType<typeof validateUserVisibleCo
     fieldPaths: validation.fieldPaths.slice(0, 12),
     score: validation.score,
   };
+}
+
+function createParseFailureValidation(content: string): ReturnType<typeof validateUserVisibleCourseContent> {
+  return {
+    valid: false,
+    source: 'empty',
+    reasons: ['json_parse_error', `AI 返回内容无法解析为 JSON（长度 ${content.length}）`],
+    fatalReasons: ['json_parse_error'],
+    moduleReasons: [],
+    warnings: [],
+    fieldPaths: ['root'],
+    score: 0,
+  };
+}
+
+function isParseFailureValidation(validation: ReturnType<typeof validateUserVisibleCourseContent>) {
+  return validation.fatalReasons.includes('json_parse_error');
 }
 
 function truncateForRepair(content: string) {
@@ -105,22 +123,42 @@ export async function generatePlanWithAI(goal: string, mode: PlanMode = 'deep', 
       let adaptedValid = false;
 
       for (let attempt = 0; attempt < 2; attempt += 1) {
+        const retrySuffix = lastValidation ? (isParseFailureValidation(lastValidation) ? createJsonParseRetrySuffix() : createRegenerationPromptSuffix(lastValidation)) : '';
         const messages = attempt === 0
           ? createGeneratePlanMessages(safeGoal, safeMode)
-          : createGeneratePlanMessages(`
-${safeGoal}${lastValidation ? createRegenerationPromptSuffix(lastValidation) : ''}`, safeMode);
+          : createGeneratePlanMessages(`\n${safeGoal}${retrySuffix}`, safeMode);
         const content = await createChatCompletion({
           purpose: 'plan',
           messages,
           temperature: safeMode === 'lite' ? 0.25 : 0.3,
-          maxTokens: safeMode === 'lite' ? 2600 : 3200,
+          maxTokens: PLAN_MAX_TOKENS[safeMode],
           responseFormat: 'json_object',
           timeoutMs: getPlanAttemptTimeoutMs(safeMode),
           maxAttempts: 1,
         });
 
         lastRawContent = content;
-        const plan = markCourseContentSource(parseAIJson<GeneratedPlan>(content), 'ai');
+        let plan: GeneratedPlan;
+
+        try {
+          plan = markCourseContentSource(parseAIJson<GeneratedPlan>(content), 'ai');
+        } catch (error) {
+          const safeError = toSafeAIError(error);
+
+          if (safeError.type !== 'json_parse_error') throw error;
+
+          lastValidation = createParseFailureValidation(content);
+          console.warn('AI plan JSON parse failed', {
+            mode: safeMode,
+            goalHash: safeGoalHash(safeGoal),
+            attempt: attempt + 1,
+            provider: safeError.provider,
+            model: safeError.model,
+            rawLength: content.length,
+          });
+          continue;
+        }
+
         lastPlan = plan;
         const rawValidation = validateUserVisibleCourseContent(plan, { goal: safeGoal, mode: safeMode });
         const adaptedPlan = adaptGeneratedPlan(plan, safeMode);
@@ -147,7 +185,7 @@ ${safeGoal}${lastValidation ? createRegenerationPromptSuffix(lastValidation) : '
             failureSummary: JSON.stringify(summarizeValidation(lastValidation)),
           }),
           temperature: 0.15,
-          maxTokens: safeMode === 'lite' ? 2600 : 3200,
+          maxTokens: safeMode === 'lite' ? 4200 : 5600,
           responseFormat: 'json_object',
           timeoutMs: getPlanAttemptTimeoutMs(safeMode),
           maxAttempts: 1,
@@ -164,17 +202,23 @@ ${safeGoal}${lastValidation ? createRegenerationPromptSuffix(lastValidation) : '
         }
       }
 
-      throw new AIClientError('invalid_response', 'AI plan quality gate failed');
+      throw new AIClientError('quality_rejected', 'AI plan quality gate failed');
     })(), PLAN_TOTAL_TIMEOUT_MS[safeMode]);
   } catch (error) {
     const safeError = error instanceof AIClientError ? error : toSafeAIError(error, 'unknown');
-    console.warn('AI plan generation failed', {
-      errorType: safeError.type,
+    console.warn(`AI plan generation failed ${JSON.stringify({
+      name: safeError.name,
+      message: safeError.message,
+      code: safeError.type,
       status: safeError.status,
+      provider: safeError.provider,
+      baseUrl: safeError.baseUrl,
+      model: safeError.model,
+      route: 'generatePlanWithAI',
       mode: safeMode,
       goalHash: safeGoalHash(safeGoal),
       providerCalled: safeError.type !== 'missing_config',
-    });
+    })}`);
     throw toGeneratePlanError(safeError);
   }
 }

@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
+    "test": "node --test \"test/*.test.mjs\"",
     "start": "next start --hostname 0.0.0.0",
-    "lint": "next lint",
+    "lint": "eslint .",
     "desktop": "electron desktop/main.js",
     "desktop:build": "electron-builder --win",
     "desktop:build:dir": "electron-builder --win --dir"
@@ -27,6 +28,8 @@
     "@types/react-dom": "latest",
     "electron": "^43.1.0",
     "electron-builder": "^26.15.3",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.0",
     "prisma": "^6.19.3",
     "typescript": "latest"
   },

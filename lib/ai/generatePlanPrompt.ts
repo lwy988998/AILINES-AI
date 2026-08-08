@@ -32,6 +32,10 @@ function getModeRules(mode: PlanMode) {
   return `mode=deep：深度课程骨架。durationWeeks 6-10；phases 4-6 个；每阶段 topics 4-6 个。更系统，但仍然只生成目录、目标、产出和检查点。不要长文。`;
 }
 
+export function createJsonParseRetrySuffix() {
+  return `\n\n上一次输出不是合法 JSON（可能被截断，或包含 Markdown 代码块、注释、尾逗号、多余文字）。请重新生成，只输出一个完整、严格、未截断的 JSON 对象：不要 Markdown 代码块围栏，不要任何解释文字，不要注释，不要尾逗号。`;
+}
+
 export function createGeneratePlanMessages(goal: string, mode: PlanMode = 'deep') {
   return [
     { role: 'system', content: `${sharedSkeletonRules}\n${getModeRules(mode)}` },
@@ -47,7 +51,7 @@ export function createRepairPlanMessages(input: { goal: string; mode: PlanMode; 
     { role: 'system', content: `${sharedSkeletonRules}\n${getModeRules(input.mode)}\n你现在只修复 Plan Skeleton：补齐结构、去除泛化和重复、保持短输出。不要把它扩写成教材。` },
     {
       role: 'user',
-      content: `学习目标：${input.goal}\n模式：${input.mode}\n失败摘要：${input.failureSummary}\n上一版输出：\n${input.previousJsonText}\n请重写为合格的 Plan Skeleton JSON。`,
+      content: `学习目标：${input.goal}\n模式：${input.mode}\n失败摘要：${input.failureSummary}\n${input.failureSummary.includes('json_parse_error') ? '失败原因是 JSON 解析错误：上一次输出不是合法 JSON。本次必须输出一个完整、严格、未截断的 JSON 对象，不要 Markdown 代码块，不要解释文字。' : ''}\n上一版输出：\n${input.previousJsonText}\n请重写为合格的 Plan Skeleton JSON。`,
     },
   ] as const;
 }
