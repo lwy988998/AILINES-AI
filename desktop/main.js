@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 
-const APP_URL = process.env.AILINES_DESKTOP_URL || 'http://38.76.169.175:3002/';
+const APP_URL = process.env.AILINES_DESKTOP_URL || 'http://localhost:3000/';
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -50,7 +50,7 @@ function createWindow() {
         <body>
           <main>
             <h1>AILINES AI</h1>
-            <p>无法连接 AILINES AI 服务，请检查网络或稍后重试。</p>
+            <p>无法连接 AILINES AI 服务。开发环境请先运行 npm run dev，或设置 AILINES_DESKTOP_URL 指向可用服务。</p>
           </main>
         </body>
       </html>

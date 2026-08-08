@@ -1,11 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { GeneratePlanError, generatePlanWithAI } from '@/lib/ai/generatePlan';
 import type { PlanMode } from '@/lib/ai/types';
 import { getCurrentUserFromRequest } from '@/lib/auth/currentUser';
 import { canUseFeature } from '@/lib/membership/permissions';
 import { checkUsageLimit, incrementUsage } from '@/lib/membership/usage';
 
+function getRequestId(request: NextRequest) {
+  return request.headers.get('x-request-id') || request.headers.get('x-vercel-id') || undefined;
+}
+
+function mapGenerationFailure(type: string) {
+  if (type === 'timeout') {
+    return { code: 'COURSE_GENERATION_TIMEOUT', message: '生成超时，请稍后重试。' };
+  }
+  if (type === 'auth_error') {
+    return { code: 'AI_AUTH_FAILED', message: '当前模型接口认证失败，请检查服务配置。' };
+  }
+  if (type === 'rate_limited') {
+    return { code: 'AI_RATE_LIMITED', message: 'AI 服务请求过于频繁，请稍后重试。' };
+  }
+  if (type === 'invalid_response' || type === 'json_parse_error' || type === 'quality_rejected') {
+    return { code: 'COURSE_QUALITY_REJECTED', message: '生成内容未通过质量检查，请重新生成。' };
+  }
+  if (type === 'missing_config') {
+    return { code: 'AI_PROVIDER_MISSING_CONFIG', message: '当前模型接口尚未配置，请检查服务配置。' };
+  }
+  return { code: 'COURSE_GENERATION_UNAVAILABLE', message: 'AI 服务暂时不可用，请稍后重试。' };
+}
+
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request);
   let body: unknown;
 
   try {
@@ -50,16 +74,27 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const type = error instanceof GeneratePlanError ? error.type : 'unknown';
     const status = error instanceof GeneratePlanError ? error.status : 502;
-    const code = type === 'timeout' ? 'COURSE_GENERATION_TIMEOUT' : type === 'invalid_response' ? 'COURSE_QUALITY_REJECTED' : 'COURSE_GENERATION_UNAVAILABLE';
-    console.warn('Generate plan API unavailable', { errorType: type, status, mode, goalLength: goal.length, providerCalled: type !== 'missing_config', bypassCache });
-    await incrementUsage('course_generate', usage.scope);
+    const failure = mapGenerationFailure(type);
+    console.warn(`Generate plan API unavailable ${JSON.stringify({
+      name: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : 'unknown error',
+      code: failure.code,
+      status,
+      errorType: type,
+      route: 'POST /api/generate-plan',
+      requestId,
+      mode,
+      goalLength: goal.length,
+      providerCalled: type !== 'missing_config',
+      bypassCache,
+    })}`);
     return NextResponse.json({
       ok: false,
-      code,
-      error: code,
-      message: '课程内容暂未生成完成，请重新生成。',
+      code: failure.code,
+      error: failure.code,
+      message: failure.message,
       canRetry: true,
-      usage: { ...usage, used: usage.used + 1, remaining: Math.max(usage.remaining - 1, 0) },
+      usage,
     }, { status });
   }
 }
